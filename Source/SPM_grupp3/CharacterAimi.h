@@ -1,5 +1,3 @@
-// In your character header
-
 #pragma once
 
 #include "CoreMinimal.h"
@@ -11,6 +9,7 @@ class UInputMappingContext;
 class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
+class AInteractableActor;
 
 UCLASS()
 class SPM_GRUPP3_API ACharacterAimi : public ACharacter
@@ -22,19 +21,19 @@ public:
 
 protected:
 	virtual void BeginPlay() override;
-	
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	virtual void Tick(float DeltaTime) override;
+	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputMappingContext> DefaultMappingContext;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> MoveAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> LookAction;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction;
 
 	UFUNCTION()
@@ -45,17 +44,25 @@ protected:
 
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
-	
-	UPROPERTY(EditAnywhere, Category="Input")
-	USpringArmComponent* SpringArm;
-	
-	UPROPERTY(EditAnywhere, Category="Input")
-	UCameraComponent* Camera;
-	
-	UFUNCTION()
-	void PerformInteractionTrace();
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<USpringArmComponent> SpringArm;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	TObjectPtr<UCameraComponent> Camera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	float InteractionTraceDistance = 500.f;
-};
+	float InteractionRadius = 150.f;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	float InteractionForwardOffset = 120.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	float MaxInteractionDistance = 250.f;
+
+	UPROPERTY()
+	TObjectPtr<AInteractableActor> CurrentInteractable;
+
+	void UpdateInteractableCandidate();
+	void SetCurrentInteractable(AInteractableActor* NewInteractable);
+};

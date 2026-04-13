@@ -1,6 +1,7 @@
 #include "InteractableActor.h"
+
 #include "Components/StaticMeshComponent.h"
-#include "Engine/Engine.h"
+#include "Components/WidgetComponent.h"
 
 AInteractableActor::AInteractableActor()
 {
@@ -8,21 +9,29 @@ AInteractableActor::AInteractableActor()
 
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = Mesh;
-}
 
-void AInteractableActor::BeginPlay()
-{
-	Super::BeginPlay();
+	PromptWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PromptWidget"));
+	PromptWidget->SetupAttachment(RootComponent);
+	PromptWidget->SetRelativeLocation(FVector(0.f, 0.f, 100.f));
+	PromptWidget->SetDrawAtDesiredSize(true);
+	PromptWidget->SetWidgetSpace(EWidgetSpace::World);
+	PromptWidget->SetVisibility(false);
 }
 
 void AInteractableActor::Interact()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Interactable actor was interacted with"));
+	UE_LOG(LogTemp, Warning, TEXT("Actor interacted!"));
+	Destroy();
+}
 
-	if (GEngine)
+void AInteractableActor::SetPromptVisible(bool bVisible)
+{
+	
+	UE_LOG(LogTemp, Warning, TEXT("SetPromptVisible called on %s"), *GetName());
+	if (!IsValid(PromptWidget))
 	{
-		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("Actor interacted!"));
+		return;
 	}
 
-	Destroy();
+	PromptWidget->SetVisibility(bVisible);
 }
