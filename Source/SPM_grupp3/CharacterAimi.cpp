@@ -115,7 +115,7 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
     PerformInteractionTrace();
 }
 
-
+/*
 void ACharacterAimi::PerformInteractionTrace()
 {
     if (!Controller) return;
@@ -145,6 +145,55 @@ void ACharacterAimi::PerformInteractionTrace()
     if (bHit)
     {
         UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *Hit.GetActor()->GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No hit"));
+    }
+}
+*/
+
+void ACharacterAimi::PerformInteractionTrace()
+{
+    if (!Controller) return;
+
+    FVector Start;
+    FRotator ViewRotation;
+    Controller->GetPlayerViewPoint(Start, ViewRotation);
+
+    const FVector Forward = ViewRotation.Vector();
+    const FVector TraceStart = Start + Forward * 50.f;
+    const FVector TraceEnd = TraceStart + Forward * InteractionTraceDistance;
+
+    FHitResult Hit;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+
+    const float SphereRadius = 30.f;
+    const FCollisionShape Sphere = FCollisionShape::MakeSphere(SphereRadius);
+
+    const bool bHit = GetWorld()->SweepSingleByChannel(
+        Hit,
+        TraceStart,
+        TraceEnd,
+        FQuat::Identity,
+        ECC_Visibility,
+        Sphere,
+        QueryParams
+    );
+
+    DrawDebugSphere(GetWorld(), TraceStart, SphereRadius, 12, FColor::Blue, false, 2.f);
+    DrawDebugSphere(GetWorld(), TraceEnd, SphereRadius, 12, FColor::Blue, false, 2.f);
+    DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 2.f, 0, 1.5f);
+
+    if (bHit)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *Hit.GetActor()->GetName());
+
+        if (AInteractableActor* InteractableActor = Cast<AInteractableActor>(Hit.GetActor()))
+        {
+            InteractableActor->Interact();
+        }
     }
     else
     {
