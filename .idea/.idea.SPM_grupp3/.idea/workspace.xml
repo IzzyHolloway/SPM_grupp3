@@ -9,7 +9,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f4bfe794-2146-4707-9192-d5433c265b8e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/SPM_grupp3.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/SPM_grupp3.uproject" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/LevelPrototyping/Aimi/BP_ThirdPersonCharacterAimi.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/LevelPrototyping/Aimi/BP_ThirdPersonGameModeAimi.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/LevelPrototyping/Aimi/BP_ThirdPersonGameModeAimi.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/CharacterAimi.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/CharacterAimi.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/CharacterAimi.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/CharacterAimi.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -19,29 +23,30 @@
   <component name="Git.Settings">
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
-  <component name="ProjectColorInfo"><![CDATA[{
-  "associatedIndex": 4,
-  "fromUser": false
-}]]></component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="false" />
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 4,
+  &quot;fromUser&quot;: false
+}</component>
   <component name="ProjectId" id="3CIXyzDyPiiU7xBWwHzfDZmqHlE" />
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.cidr.known.project.marker": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.readMode.enableVisualFormatting": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "cidr.known.project.marker": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "git-widget-placeholder": "Aimi",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;Aimi&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   }
-}]]></component>
+}</component>
   <component name="RunManager" selected="C/C++ Project.SPM_grupp3">
     <configuration name="SPM_grupp3" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
@@ -125,7 +130,10 @@
       <method v="2" />
     </configuration>
     <configuration default="true" type="docker-deploy" factoryName="dockerfile" temporary="true">
-      <deployment type="dockerfile" />
+      <deployment type="dockerfile">
+        <settings />
+      </deployment>
+      <EXTENSION ID="com.jetbrains.rider.docker.debug" isFastModeEnabled="true" isSslEnabled="false" />
       <method v="2" />
     </configuration>
   </component>
@@ -137,12 +145,15 @@
       <option name="presentableId" value="Default" />
       <updated>1776074316458</updated>
       <workItem from="1776074317938" duration="1140000" />
+      <workItem from="1776081251134" duration="501000" />
+      <workItem from="1776081778253" duration="3419000" />
     </task>
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
     <option name="version" value="3" />
   </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="false" />
   <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
   <component name="VcsManagerConfiguration">
     <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />

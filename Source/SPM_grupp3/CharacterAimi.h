@@ -45,5 +45,11 @@ protected:
 
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	USpringArmComponent* SpringArm;
+	
+	UPROPERTY(EditAnywhere, Category="Input")
+	UCameraComponent* Camera;
 };
 

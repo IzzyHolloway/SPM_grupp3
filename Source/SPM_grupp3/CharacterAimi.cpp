@@ -5,11 +5,29 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputAction.h"
 #include "InputMappingContext.h"
+#include "GameFramework/CharacterMovementComponent.h"
+#include "Camera/CameraComponent.h"
+#include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerController.h"
 
 ACharacterAimi::ACharacterAimi()
 {
     PrimaryActorTick.bCanEverTick = true;
+
+    SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
+    SpringArm->SetupAttachment(RootComponent);
+    SpringArm->TargetArmLength = 300.0f;
+    SpringArm->bUsePawnControlRotation = true;
+
+    Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+    Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
+    Camera->bUsePawnControlRotation = true;
+
+    bUseControllerRotationYaw = false;
+    bUseControllerRotationPitch = true;
+    bUseControllerRotationRoll = false;
+
+    GetCharacterMovement()->bOrientRotationToMovement = true;
 }
 
 void ACharacterAimi::BeginPlay()
