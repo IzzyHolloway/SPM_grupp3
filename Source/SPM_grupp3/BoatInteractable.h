@@ -4,10 +4,10 @@
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
-#include "PickupInteractable.generated.h"
+#include "BoatInteractable.generated.h"
 
 UCLASS()
-class SPM_GRUPP3_API APickupInteractable : public AInteractableActor
+class SPM_GRUPP3_API ABoatInteractable : public AInteractableActor
 {
 	GENERATED_BODY()
 
