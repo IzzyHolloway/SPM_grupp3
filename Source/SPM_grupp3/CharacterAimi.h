@@ -13,7 +13,7 @@ class UCameraComponent;
 class USpringArmComponent;
 
 UCLASS()
-class YOURPROJECT_API ACharacterAimi : public ACharacter
+class SPM_GRUPP3_API ACharacterAimi : public ACharacter
 {
 	GENERATED_BODY()
 
