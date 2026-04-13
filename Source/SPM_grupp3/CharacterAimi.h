@@ -1,29 +1,49 @@
-// Fill out your copyright notice in the Description page of Project Settings.
+// In your character header
 
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
+#include "InputActionValue.h"
 #include "CharacterAimi.generated.h"
 
+class UInputMappingContext;
+class UInputAction;
+class UCameraComponent;
+class USpringArmComponent;
+
 UCLASS()
-class SPM_GRUPP3_API ACharacterAimi : public ACharacter
+class YOURPROJECT_API ACharacterAimi : public ACharacter
 {
 	GENERATED_BODY()
 
 public:
-	// Sets default values for this character's properties
 	ACharacterAimi();
 
 protected:
-	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
+	
 	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	TObjectPtr<UInputMappingContext> DefaultMappingContext;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	TObjectPtr<UInputAction> MoveAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	TObjectPtr<UInputAction> LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category="Input")
+	TObjectPtr<UInputAction> InteractAction;
+
+	UFUNCTION()
+	void Move(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void Look(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void Interact(const FInputActionValue& Value);
 };
+
