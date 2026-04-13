@@ -10,6 +10,10 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "GameFramework/PlayerController.h"
 
+#include "InteractableActor.h"
+#include "Camera/CameraComponent.h"
+#include "DrawDebugHelpers.h"
+
 ACharacterAimi::ACharacterAimi()
 {
     PrimaryActorTick.bCanEverTick = true;
@@ -21,10 +25,10 @@ ACharacterAimi::ACharacterAimi()
 
     Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
     Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
-    Camera->bUsePawnControlRotation = true;
+    Camera->bUsePawnControlRotation = false;
 
     bUseControllerRotationYaw = false;
-    bUseControllerRotationPitch = true;
+    bUseControllerRotationPitch = false;
     bUseControllerRotationRoll = false;
 
     GetCharacterMovement()->bOrientRotationToMovement = true;
@@ -102,4 +106,48 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
     UE_LOG(LogTemp, Warning, TEXT("Interact pressed"));
+
+    if (GEngine)
+    {
+        GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("Interact pressed"));
+    }
+
+    PerformInteractionTrace();
+}
+
+
+void ACharacterAimi::PerformInteractionTrace()
+{
+    if (!Controller) return;
+
+    FVector Start;
+    FRotator ViewRotation;
+    Controller->GetPlayerViewPoint(Start, ViewRotation);
+
+    const FVector Forward = ViewRotation.Vector();
+    const FVector TraceStart = Start + Forward * 50.f;
+    const FVector TraceEnd = TraceStart + Forward * InteractionTraceDistance;
+
+    FHitResult Hit;
+    FCollisionQueryParams QueryParams;
+    QueryParams.AddIgnoredActor(this);
+
+    const bool bHit = GetWorld()->LineTraceSingleByChannel(
+        Hit,
+        TraceStart,
+        TraceEnd,
+        ECC_Visibility,
+        QueryParams
+    );
+
+    DrawDebugLine(GetWorld(), TraceStart, TraceEnd, bHit ? FColor::Green : FColor::Red, false, 2.f, 0, 2.f);
+
+    if (bHit)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Hit actor: %s"), *Hit.GetActor()->GetName());
+    }
+    else
+    {
+        UE_LOG(LogTemp, Warning, TEXT("No hit"));
+    }
 }

@@ -51,5 +51,11 @@ protected:
 	
 	UPROPERTY(EditAnywhere, Category="Input")
 	UCameraComponent* Camera;
+	
+	UFUNCTION()
+	void PerformInteractionTrace();
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
+	float InteractionTraceDistance = 500.f;
 };
 
