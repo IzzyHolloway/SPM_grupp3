@@ -24,7 +24,7 @@ protected:
 
 public:
 	UFUNCTION()
-	void Interact();
+	virtual void Interact();
 
 	void SetPromptVisible(bool bVisible);
 };

@@ -190,6 +190,16 @@ void ACharacterAimi::UpdateInteractableCandidate()
 			}
 		}
 	}
+	
+	DrawDebugSphere(
+	GetWorld(),
+	Center,
+	InteractionRadius,
+	16,
+	CurrentInteractable ? FColor::Green : FColor::Red,
+	false,
+	0.0f
+);
 
 	SetCurrentInteractable(BestCandidate);
 }
@@ -212,4 +222,26 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	{
 		CurrentInteractable->SetPromptVisible(true);
 	}
+}
+
+void ACharacterAimi::AddCollectedItem(int32 Amount)
+{
+	CollectedItemCount += Amount;
+
+	UE_LOG(LogTemp, Warning, TEXT("Collected items: %d / %d"), CollectedItemCount, RequiredItemCount);
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			2.f,
+			FColor::Yellow,
+			FString::Printf(TEXT("Collected items: %d / %d"), CollectedItemCount, RequiredItemCount)
+		);
+	}
+}
+
+bool ACharacterAimi::HasRequiredItems() const
+{
+	return CollectedItemCount >= RequiredItemCount;
 }

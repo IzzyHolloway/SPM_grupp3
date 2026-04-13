@@ -18,6 +18,11 @@ class SPM_GRUPP3_API ACharacterAimi : public ACharacter
 
 public:
 	ACharacterAimi();
+	
+
+	
+	void AddCollectedItem(int32 Amount = 1);
+	bool HasRequiredItems() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -52,7 +57,7 @@ protected:
 	TObjectPtr<UCameraComponent> Camera;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	float InteractionRadius = 150.f;
+	float InteractionRadius = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	float InteractionForwardOffset = 120.f;
@@ -65,4 +70,10 @@ protected:
 
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objectives")
+	int32 CollectedItemCount = 0;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	int32 RequiredItemCount = 2;
 };
