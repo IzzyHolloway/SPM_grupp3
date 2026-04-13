@@ -21,7 +21,7 @@ AInteractableActor::AInteractableActor()
 void AInteractableActor::Interact()
 {
 	UE_LOG(LogTemp, Warning, TEXT("Actor interacted!"));
-	Destroy();
+	//Destroy();
 }
 
 void AInteractableActor::SetPromptVisible(bool bVisible)
