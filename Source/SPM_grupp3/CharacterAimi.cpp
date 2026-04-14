@@ -260,6 +260,7 @@ void ACharacterAimi::AddCollectedItem(int32 Amount)
 	}
 }
 
+// This one is hardcoded. I am going to remove after testing and updating.
 bool ACharacterAimi::HasRequiredItems() const
 {
 	return CollectedItemCount >= RequiredItemCount;
