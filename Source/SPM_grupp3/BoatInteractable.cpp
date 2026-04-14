@@ -2,8 +2,8 @@
 
 #include "BoatInteractable.h"
 #include "CharacterAimi.h"
+#include "DialogueManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "Engine/Engine.h"
 
 void ABoatInteractable::Interact()
 {
@@ -13,22 +13,26 @@ void ABoatInteractable::Interact()
 		return;
 	}
 
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
 	if (PlayerCharacter->HasRequiredItems())
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player can board the boat"));
 
-		if (GEngine)
+		if (DialogueManager)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green, TEXT("All items found. You can board the boat."));
+			DialogueManager->ShowMessage(SuccessMessage);
 		}
 	}
 	else
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player is missing items"));
 
-		if (GEngine)
+		if (DialogueManager)
 		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Red, TEXT("Hmm... It feels like I'm missing something..."));
+			DialogueManager->ShowMessage(BlockedMessage);
 		}
 	}
 }
