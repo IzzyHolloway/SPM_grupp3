@@ -1,5 +1,18 @@
-# Visual Studio 2015 user specific files
+# Visual Studio user specific files
 .vs/
+*.vsconfig
+
+# JetBrains Rider / IntelliJ
+.idea/
+*.iml
+
+# Claude Code
+.claude/
+
+# OS-specific
+.DS_Store
+Thumbs.db
+desktop.ini
 
 # Compiled Object files
 *.slo
