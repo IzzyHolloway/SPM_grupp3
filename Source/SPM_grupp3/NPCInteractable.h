@@ -4,10 +4,11 @@
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
-#include "PickupInteractable.generated.h"
+#include "DialogueLines.h"
+#include "NPCInteractable.generated.h"
 
 UCLASS()
-class SPM_GRUPP3_API APickupInteractable : public AInteractableActor
+class SPM_GRUPP3_API ANPCInteractable : public AInteractableActor
 {
 	GENERATED_BODY()
 
@@ -16,8 +17,8 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText PickupMessage = FText::FromString("I found something useful.");
+	TArray<FDialogueLines> DialogueBeforeRequirement;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText FinalPickupMessage = FText::FromString("Great, I found everything. Let's move on!");
+	TArray<FDialogueLines> DialogueAfterRequirement;
 };
