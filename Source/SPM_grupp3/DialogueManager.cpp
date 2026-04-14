@@ -1,8 +1,8 @@
 
 #include "DialogueManager.h"
 #include "Blueprint/UserWidget.h"
+#include "DialogueWidgetBase.h"
 #include "Engine/Engine.h"
-
 ADialogueManager::ADialogueManager()
 {
 	PrimaryActorTick.bCanEverTick = false;
@@ -11,6 +11,17 @@ ADialogueManager::ADialogueManager()
 void ADialogueManager::BeginPlay()
 {
 	Super::BeginPlay();
+
+	if (DialogueWidgetClass)
+	{
+		DialogueWidgetInstance = CreateWidget<UDialogueWidgetBase>(GetWorld(), DialogueWidgetClass);
+
+		if (DialogueWidgetInstance)
+		{
+			DialogueWidgetInstance->AddToViewport();
+			DialogueWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+		}
+	}
 }
 
 void ADialogueManager::ShowMessage(const FText& Message)
@@ -19,22 +30,17 @@ void ADialogueManager::ShowMessage(const FText& Message)
 
 	UE_LOG(LogTemp, Warning, TEXT("Dialogue Message: %s"), *Message.ToString());
 
-	if (GEngine)
+	if (DialogueWidgetInstance)
 	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,
-			2.5f,
-			FColor::Cyan,
-			Message.ToString()
-		);
+		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+		DialogueWidgetInstance->SetDialogueText(Message);
 	}
-
-	// Widget connect comes later when Unreal is open again
 }
 
 void ADialogueManager::HideMessage()
 {
-	UE_LOG(LogTemp, Warning, TEXT("Dialogue hidden"));
-
-	// Widget hiding comes later
+	if (DialogueWidgetInstance)
+	{
+		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
+	}
 }

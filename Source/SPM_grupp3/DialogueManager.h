@@ -5,7 +5,7 @@
 #include "GameFramework/Actor.h"
 #include "DialogueManager.generated.h"
 
-class UUserWidget;
+class UDialogueWidgetBase;
 
 UCLASS()
 class SPM_GRUPP3_API ADialogueManager : public AActor
@@ -25,10 +25,10 @@ protected:
 	virtual void BeginPlay() override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TSubclassOf<UUserWidget> DialogueWidgetClass;
+	TSubclassOf<UDialogueWidgetBase> DialogueWidgetClass;
 
 	UPROPERTY()
-	TObjectPtr<UUserWidget> DialogueWidgetInstance;
+	TObjectPtr<UDialogueWidgetBase> DialogueWidgetInstance;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText CurrentMessage;
