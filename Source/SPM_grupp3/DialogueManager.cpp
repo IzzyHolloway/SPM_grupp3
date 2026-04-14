@@ -35,7 +35,7 @@ void ADialogueManager::ShowMessage(const FText& Message)
 	if (DialogueWidgetInstance)
 	{
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Visible);
-		DialogueWidgetInstance->SetDialogueText(Message);
+		DialogueWidgetInstance->SetDialogueData(FText::GetEmpty(), Message);
 	}
 }
 
@@ -102,7 +102,15 @@ void ADialogueManager::ShowCurrentDialogueLine()
 		return;
 	}
 
-	ShowMessage(ActiveDialogueLines[CurrentDialogueIndex].LineText);
+	const FDialogueLines& CurrentLine = ActiveDialogueLines[CurrentDialogueIndex];
+
+	CurrentMessage = CurrentLine.LineText;
+
+	if (DialogueWidgetInstance)
+	{
+		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Visible);
+		DialogueWidgetInstance->SetDialogueData(CurrentLine.SpeakerName, CurrentLine.LineText);
+	}
 }
 
 void ADialogueManager::SetPlayerMovementEnabled(bool bEnabled)
