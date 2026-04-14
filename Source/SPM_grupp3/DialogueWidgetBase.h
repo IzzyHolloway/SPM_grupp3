@@ -15,9 +15,12 @@ class SPM_GRUPP3_API UDialogueWidgetBase : public UUserWidget
 
 public:
 	UFUNCTION(BlueprintCallable)
-	void SetDialogueText(const FText& NewText);
-
+	void SetDialogueData(const FText& SpeakerName, const FText& NewText);
+	
 protected:
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UTextBlock> SpeakerNameText;
+	
 	UPROPERTY(meta = (BindWidget))
 	TObjectPtr<UTextBlock> DialogueText;
 };

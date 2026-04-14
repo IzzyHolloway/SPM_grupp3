@@ -12,9 +12,6 @@
   <component name="ChangeListManager">
     <list default="true" id="f4bfe794-2146-4707-9192-d5433c265b8e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Grupp03_Test/Madde/AI/BB_AICompanion.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Grupp03_Test/Madde/AI/BB_AICompanion.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/Content/Grupp03_Test/Madde/AI/BT_AICompanion.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/Grupp03_Test/Madde/AI/BT_AICompanion.uasset" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/SPM_grupp3.uproject" beforeDir="false" afterPath="$PROJECT_DIR$/SPM_grupp3.uproject" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,6 +24,8 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/UnrealBuildTool/Configuration/CompileWarnings/ApplyWarningsFilterAttribute.cs" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Templates/IsArrayOrRefOfType.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/BTTaskNode_Idle.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/BTTaskNode_Idle.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="false" />
   <component name="ProjectColorInfo">{
@@ -188,6 +187,13 @@
       <workItem from="1776167979709" duration="116000" />
       <workItem from="1776168107157" duration="3000" />
       <workItem from="1776168115091" duration="2506000" />
+      <workItem from="1776171865441" duration="5000" />
+      <workItem from="1776171886763" duration="3000" />
+      <workItem from="1776171896992" duration="889000" />
+      <workItem from="1776174476473" duration="2000" />
+      <workItem from="1776174487148" duration="234000" />
+      <workItem from="1776174734781" duration="6000" />
+      <workItem from="1776174753837" duration="2097000" />
     </task>
     <servers />
   </component>
