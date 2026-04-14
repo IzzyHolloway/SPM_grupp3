@@ -3,7 +3,9 @@
 
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
+#include "TimerManager.h"
 #include "DialogueManager.generated.h"
+
 
 class UDialogueWidgetBase;
 
@@ -17,6 +19,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ShowMessage(const FText& Message);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	float MessageDisplayTime = 2.0f;
+
+	FTimerHandle MessageHideTimerHandle;
 
 	UFUNCTION(BlueprintCallable)
 	void HideMessage();

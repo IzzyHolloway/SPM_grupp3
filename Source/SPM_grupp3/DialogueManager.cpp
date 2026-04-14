@@ -32,10 +32,26 @@ void ADialogueManager::ShowMessage(const FText& Message)
 {
 	CurrentMessage = Message;
 
+	// Korta gameplay-meddelanden ska inte räknas som aktiv dialog
+	bDialogueActive = false;
+
 	if (DialogueWidgetInstance)
 	{
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Visible);
 		DialogueWidgetInstance->SetDialogueData(FText::GetEmpty(), Message);
+	}
+
+	// Rensa eventuell gammal timer först
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
+		GetWorld()->GetTimerManager().SetTimer(
+			MessageHideTimerHandle,
+			this,
+			&ADialogueManager::HideMessage,
+			MessageDisplayTime,
+			false
+		);
 	}
 }
 
@@ -45,6 +61,11 @@ void ADialogueManager::HideMessage()
 	{
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
 	}
+
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
+	}
 }
 
 void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
@@ -52,6 +73,11 @@ void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 	if (InLines.IsEmpty())
 	{
 		return;
+	}
+
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
 	}
 
 	ActiveDialogueLines = InLines;
