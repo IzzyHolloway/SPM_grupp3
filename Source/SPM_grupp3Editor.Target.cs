@@ -8,7 +8,8 @@ public class SPM_grupp3EditorTarget : TargetRules
 	public SPM_grupp3EditorTarget(TargetInfo Target) : base(Target)
 	{
 		Type = TargetType.Editor;
-		DefaultBuildSettings = BuildSettingsVersion.V5;
+		DefaultBuildSettings = BuildSettingsVersion.V6;
+		IncludeOrderVersion = EngineIncludeOrderVersion.Unreal5_6;
 
 		ExtraModuleNames.AddRange( new string[] { "SPM_grupp3" } );
 	}
