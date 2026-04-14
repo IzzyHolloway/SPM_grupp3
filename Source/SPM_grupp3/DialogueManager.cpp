@@ -1,6 +1,7 @@
 #include "DialogueManager.h"
 #include "DialogueWidgetBase.h"
 #include "CharacterAimi.h"
+#include "DialogueLines.h"
 
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -46,7 +47,7 @@ void ADialogueManager::HideMessage()
 	}
 }
 
-void ADialogueManager::StartDialogue(const TArray<FText>& InLines)
+void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 {
 	if (InLines.IsEmpty())
 	{
@@ -101,7 +102,7 @@ void ADialogueManager::ShowCurrentDialogueLine()
 		return;
 	}
 
-	ShowMessage(ActiveDialogueLines[CurrentDialogueIndex]);
+	ShowMessage(ActiveDialogueLines[CurrentDialogueIndex].LineText);
 }
 
 void ADialogueManager::SetPlayerMovementEnabled(bool bEnabled)

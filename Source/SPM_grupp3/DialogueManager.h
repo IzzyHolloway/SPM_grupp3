@@ -22,7 +22,7 @@ public:
 	void HideMessage();
 
 	UFUNCTION(BlueprintCallable)
-	void StartDialogue(const TArray<FText>& InLines);
+	void StartDialogue(const TArray<FDialogueLines>& InLines);
 
 	UFUNCTION(BlueprintCallable)
 	void AdvanceDialogue();
@@ -52,7 +52,7 @@ protected:
 	bool bDialogueActive = false;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FText> ActiveDialogueLines;
+	TArray<FDialogueLines> ActiveDialogueLines;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	int32 CurrentDialogueIndex = 0;
