@@ -10,8 +10,15 @@ void ANPCInteractable::Interact()
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	if (DialogueManager)
+	if (!DialogueManager)
 	{
-		DialogueManager->ShowMessage(NPCMessage);
+		return;
 	}
+
+	if (DialogueLines.IsEmpty())
+	{
+		return;
+	}
+
+	DialogueManager->StartDialogue(DialogueLines);
 }

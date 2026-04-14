@@ -16,5 +16,5 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText NPCMessage = FText::FromString("Hello there.");
+	TArray<FText> DialogueLines;
 };
