@@ -17,5 +17,8 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FDialogueLines> DialogueLines;
+	TArray<FDialogueLines> DialogueBeforeRequirement;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	TArray<FDialogueLines> DialogueAfterRequirement;
 };

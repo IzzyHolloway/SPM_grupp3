@@ -2,6 +2,7 @@
 
 #include "NPCInteractable.h"
 #include "DialogueManager.h"
+#include "CharacterAimi.h"
 #include "Kismet/GameplayStatics.h"
 
 void ANPCInteractable::Interact()
@@ -15,10 +16,30 @@ void ANPCInteractable::Interact()
 		return;
 	}
 
-	if (DialogueLines.IsEmpty())
+	ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(
+		UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)
+	);
+
+	if (!PlayerCharacter)
 	{
 		return;
 	}
 
-	DialogueManager->StartDialogue(DialogueLines);
+	const TArray<FDialogueLines>* SelectedDialogue = nullptr;
+
+	if (PlayerCharacter->HasRequiredItems())
+	{
+		SelectedDialogue = &DialogueAfterRequirement;
+	}
+	else
+	{
+		SelectedDialogue = &DialogueBeforeRequirement;
+	}
+
+	if (!SelectedDialogue || SelectedDialogue->IsEmpty())
+	{
+		return;
+	}
+
+	DialogueManager->StartDialogue(*SelectedDialogue);
 }
