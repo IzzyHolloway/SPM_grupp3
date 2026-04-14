@@ -135,6 +135,17 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	{
 		return;
 	}
+	
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	
 
 	const FVector Forward = GetActorForwardVector();
 	const FVector Center = GetActorLocation() + Forward * InteractionForwardOffset;
