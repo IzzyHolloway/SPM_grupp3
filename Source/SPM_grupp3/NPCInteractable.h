@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
+#include "DialogueLines.h"
 #include "NPCInteractable.generated.h"
 
 UCLASS()
@@ -16,5 +17,5 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FText> DialogueLines;
+	TArray<FDialogueLines> DialogueLines;
 };
