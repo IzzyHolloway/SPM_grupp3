@@ -13,7 +13,11 @@ class SPM_GRUPP3_API APickupInteractable : public AInteractableActor
 
 public:
 	virtual void Interact() override;
-	
+
+protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText PickupMessage = FText::FromString("Found an item!");
+	FText PickupMessage = FText::FromString("I found something useful.");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FText FinalPickupMessage = FText::FromString("Great, I found everything. Let's move on!");
 };
