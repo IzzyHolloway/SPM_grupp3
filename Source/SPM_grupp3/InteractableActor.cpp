@@ -27,7 +27,7 @@ void AInteractableActor::Interact()
 void AInteractableActor::SetPromptVisible(bool bVisible)
 {
 	
-	UE_LOG(LogTemp, Warning, TEXT("SetPromptVisible called on %s"), *GetName());
+	//UE_LOG(LogTemp, Warning, TEXT("SetPromptVisible called on %s"), *GetName());
 	if (!IsValid(PromptWidget))
 	{
 		return;
