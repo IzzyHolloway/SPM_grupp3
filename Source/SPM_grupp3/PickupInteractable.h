@@ -13,4 +13,7 @@ class SPM_GRUPP3_API APickupInteractable : public AInteractableActor
 
 public:
 	virtual void Interact() override;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FText PickupMessage = FText::FromString("Found an item!");
 };
