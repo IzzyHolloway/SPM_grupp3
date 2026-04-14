@@ -1,11 +1,12 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
-#include "DialogueLines.h"
+#include "DialogueEntry.h"
 #include "NPCInteractable.generated.h"
+
+class UDialogueDataAsset;
 
 UCLASS()
 class SPM_GRUPP3_API ANPCInteractable : public AInteractableActor
@@ -17,8 +18,7 @@ public:
 
 protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FDialogueLines> DialogueBeforeRequirement;
+	TObjectPtr<UDialogueDataAsset> DialogueData;
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	TArray<FDialogueLines> DialogueAfterRequirement;
+	bool DoesEntryMatch(class AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const;
 };

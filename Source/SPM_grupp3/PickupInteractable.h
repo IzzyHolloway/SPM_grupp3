@@ -20,4 +20,7 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText FinalPickupMessage = FText::FromString("Great, I found everything. Let's move on!");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName ProgressFlagToAdd;
 };

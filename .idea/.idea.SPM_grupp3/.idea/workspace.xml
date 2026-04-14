@@ -6,12 +6,25 @@
     <projectFile>../../../../Program Files/Epic Games/UE_5.6/Engine/Source/Programs/AutomationTool/AutomationTool.csproj</projectFile>
     <projectFile kind="Docker">../../../../Program Files/Epic Games/UE_5.6/Engine/Source/Programs/Shared/EpicGames.Perforce.Fixture/EpicGames.Perforce.Fixture.csproj</projectFile>
     <projectFile>../../../../Program Files/Epic Games/UE_5.6/Engine/Source/Programs/UnrealBuildTool/UnrealBuildTool.csproj</projectFile>
+    <projectFile kind="Docker">../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/Shared/EpicGames.Perforce.Fixture/EpicGames.Perforce.Fixture.csproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/SPM_grupp3.vcxproj</projectFile>
     <projectFile>Intermediate/ProjectFiles/UE5.vcxproj</projectFile>
+  </component>
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="f4bfe794-2146-4707-9192-d5433c265b8e" name="Changes" comment="">
       <change beforePath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/.idea.SPM_grupp3/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Grupp03_Test/Aimi/Lvl_AimiNakataniTest/2/64/ZQ5IBR9YB9FJ8592BFT7IH.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Grupp03_Test/Aimi/Lvl_AimiNakataniTest/7/9Z/W1P0BYF52YKAEB8M116LMI.uasset" beforeDir="false" afterPath="$PROJECT_DIR$/Content/__ExternalActors__/Grupp03_Test/Aimi/Lvl_AimiNakataniTest/7/9Z/W1P0BYF52YKAEB8M116LMI.uasset" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Content/__ExternalActors__/Grupp03_Test/Aimi/Lvl_AimiNakataniTest/A/BF/KCXG1OHNB7QBP4JNRP3ZI9.uasset" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/DialogueManager.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/DialogueManager.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/DialogueManager.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/DialogueManager.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/NPCInteractable.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/NPCInteractable.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/NPCInteractable.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/NPCInteractable.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/PickupInteractable.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/PickupInteractable.cpp" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/Source/SPM_grupp3/PickupInteractable.h" beforeDir="false" afterPath="$PROJECT_DIR$/Source/SPM_grupp3/PickupInteractable.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -22,10 +35,14 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="HighlightingSettingsPerFile">
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Programs/UnrealBuildTool/Configuration/CompileWarnings/ApplyWarningsFilterAttribute.cs" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/../../../../../Program Files/Epic Games/UE_5.7/Engine/Source/Runtime/Core/Public/Templates/IsArrayOrRefOfType.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/BTTaskNode_Idle.cpp" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/BTTaskNode_Idle.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueConditionType.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueConditionType.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueDataAsset.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueDataAsset.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueEntry.cpp" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/Source/SPM_grupp3/DialogueEntry.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="false" />
   <component name="ProjectColorInfo">{
@@ -37,20 +54,21 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.readMode.enableVisualFormatting&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;cidr.known.project.marker&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;MaddeNew&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "cidr.known.project.marker": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "git-widget-placeholder": "AimiNew",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RunManager" selected="C/C++ Project.SPM_grupp3">
     <configuration name="SPM_grupp3" type="CppProject" factoryName="C++ Project">
       <configuration_1 setup="1">
