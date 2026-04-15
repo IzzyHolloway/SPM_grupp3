@@ -2,6 +2,7 @@
 #include "DialogueWidgetBase.h"
 #include "CharacterAimi.h"
 #include "DialogueLines.h"
+#include "ProgressionManager.h"
 
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/CharacterMovementComponent.h"
@@ -80,6 +81,9 @@ void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
 	}
 
+	bSetFlagOnDialogueEnd = false;
+	PendingFlagToSetOnDialogueEnd = NAME_None;
+
 	ActiveDialogueLines = InLines;
 	CurrentDialogueIndex = 0;
 	bDialogueActive = true;
@@ -114,6 +118,21 @@ void ADialogueManager::EndDialogue()
 
 	HideMessage();
 	SetPlayerMovementEnabled(true);
+
+	if (bSetFlagOnDialogueEnd && !PendingFlagToSetOnDialogueEnd.IsNone())
+	{
+		AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+		);
+
+		if (ProgressionManager)
+		{
+			ProgressionManager->AddFlag(PendingFlagToSetOnDialogueEnd);
+		}
+	}
+
+	bSetFlagOnDialogueEnd = false;
+	PendingFlagToSetOnDialogueEnd = NAME_None;
 }
 
 bool ADialogueManager::IsDialogueActive() const
@@ -161,4 +180,27 @@ void ADialogueManager::SetPlayerMovementEnabled(bool bEnabled)
 			MoveComp->DisableMovement();
 		}
 	}
+}
+
+void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLines, FName FlagToSetOnEnd)
+{
+	if (InLines.IsEmpty())
+	{
+		return;
+	}
+
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
+	}
+
+	ActiveDialogueLines = InLines;
+	CurrentDialogueIndex = 0;
+	bDialogueActive = true;
+
+	bSetFlagOnDialogueEnd = !FlagToSetOnEnd.IsNone();
+	PendingFlagToSetOnDialogueEnd = FlagToSetOnEnd;
+
+	SetPlayerMovementEnabled(false);
+	ShowCurrentDialogueLine();
 }

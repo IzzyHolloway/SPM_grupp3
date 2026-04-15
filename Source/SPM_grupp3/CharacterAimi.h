@@ -11,6 +11,13 @@ class UCameraComponent;
 class USpringArmComponent;
 class AInteractableActor;
 
+/*
+ * Main player character used for movement, interaction
+ * This is a prototype, the movment is not finalized
+ * 
+ * IMPORTANT: The Camera Spring Arm doesn't change angle correctly, meaning that the angle is very weird now. I need to fix this.
+ */
+
 UCLASS()
 class SPM_GRUPP3_API ACharacterAimi : public ACharacter
 {
@@ -20,13 +27,15 @@ public:
 	ACharacterAimi();
 	
 
-	
+	// Prototype item counter
 	void AddCollectedItem(int32 Amount = 1);
 	bool HasRequiredItems() const;
 
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+	
+	// INPUT MAPPING AND ACTIONS
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
@@ -50,12 +59,14 @@ protected:
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
 
+	// SPRING ARM AND CAMERA
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCameraComponent> Camera;
 
+	// INTERACTION DISTANCES AND VALUES
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	float InteractionRadius = 300.f;
 

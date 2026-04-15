@@ -6,6 +6,10 @@
 #include "InteractableActor.h"
 #include "BoatInteractable.generated.h"
 
+/*
+ * Prototype, checks whether the player has collected enough items
+ */
+
 UCLASS()
 class SPM_GRUPP3_API ABoatInteractable : public AInteractableActor
 {

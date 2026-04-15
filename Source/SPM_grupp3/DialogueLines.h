@@ -5,6 +5,11 @@
 #include "CoreMinimal.h"
 #include "DialogueLines.generated.h"
 
+/*
+ * Single line of dialogue
+ * 
+ */
+
 USTRUCT(BlueprintType)
 struct FDialogueLines
 {
