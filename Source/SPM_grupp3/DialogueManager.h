@@ -30,6 +30,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void StartDialogue(const TArray<FDialogueLines>& InLines);
+	
+	UFUNCTION(BlueprintCallable)
+	void StartDialogueWithFlag(const TArray<FDialogueLines>& InLines, FName FlagToSetOnEnd);
 
 	UFUNCTION(BlueprintCallable)
 	void AdvanceDialogue();
@@ -39,6 +42,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	bool IsDialogueActive() const;
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	bool bSetFlagOnDialogueEnd = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FName PendingFlagToSetOnDialogueEnd;
 
 protected:
 	virtual void BeginPlay() override;
