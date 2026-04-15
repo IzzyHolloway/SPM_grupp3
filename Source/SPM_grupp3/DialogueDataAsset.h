@@ -7,6 +7,13 @@
 #include "DialogueEntry.h"
 #include "DialogueDataAsset.generated.h"
 
+/*
+ * Data asset containing dialogue entries for one NPC or one reusable conversation set
+ * 
+ * Keeping dialogue in a data asset makes it easier for teammates to edit content without touching the NPC class itself
+ * 
+ */
+
 UCLASS(BlueprintType)
 class SPM_GRUPP3_API UDialogueDataAsset : public UDataAsset
 {

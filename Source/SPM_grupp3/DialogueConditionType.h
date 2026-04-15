@@ -5,6 +5,17 @@
 #include "CoreMinimal.h"
 #include "DialogueConditionType.generated.h"
 
+/*
+ * Condition types used by dialogue entries
+ * 
+ * None					-> Entry is always valid
+ * Requires Flag		-> Entry is valid only if the specifies flag exists.
+ * Blocked by Flag		->Entry is valid only if the specified flag does NOT exist
+ * 
+ * INFO: If you have a better naming to these to make it more understandlable, great.
+ * 
+ */
+
 UENUM(BlueprintType)
 enum class EDialogueConditionType : uint8
 {

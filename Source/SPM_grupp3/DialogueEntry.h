@@ -7,6 +7,14 @@
 #include "DialogueConditionType.h"
 #include "DialogueEntry.generated.h"
 
+/*
+ * Dialogue entry is one possible conversation branch for NPC
+ * 
+ * The NPC evaluates entries from top to bottom and picks the first one whose condition matches the current progresstion state
+ * 
+ * 
+ */
+
 USTRUCT(BlueprintType)
 struct FDialogueEntry
 {
