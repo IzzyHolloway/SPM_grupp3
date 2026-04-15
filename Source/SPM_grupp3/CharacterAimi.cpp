@@ -1,5 +1,7 @@
 #include "CharacterAimi.h"
 #include "InteractableActor.h"
+#include "DialogueManager.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "Camera/CameraComponent.h"
 #include "EnhancedInputComponent.h"
@@ -108,25 +110,42 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		DialogueManager->AdvanceDialogue();
+		return;
+	}
+
 	if (CurrentInteractable)
 	{
 		CurrentInteractable->Interact();
 
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
-
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Green,
-				FString::Printf(TEXT("Interacted with: %s"), *CurrentInteractable->GetName()));
-		}
 	}
 }
+
+
 void ACharacterAimi::UpdateInteractableCandidate()
 {
 	if (!GetWorld())
 	{
 		return;
 	}
+	
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	
 
 	const FVector Forward = GetActorForwardVector();
 	const FVector Center = GetActorLocation() + Forward * InteractionForwardOffset;
@@ -191,6 +210,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		}
 	}
 	
+	// Drawing the interaction spehere around the player. Generous for cozy gameplay
 	DrawDebugSphere(
 	GetWorld(),
 	Center,
@@ -241,6 +261,7 @@ void ACharacterAimi::AddCollectedItem(int32 Amount)
 	}
 }
 
+// This one is hardcoded. I am going to remove after testing and updating.
 bool ACharacterAimi::HasRequiredItems() const
 {
 	return CollectedItemCount >= RequiredItemCount;
