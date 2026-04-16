@@ -210,6 +210,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		}
 	}
 	
+	/*
 	// Drawing the interaction spehere around the player. Generous for cozy gameplay
 	DrawDebugSphere(
 	GetWorld(),
@@ -220,7 +221,8 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	false,
 	0.0f
 );
-
+*/
+	
 	SetCurrentInteractable(BestCandidate);
 }
 
