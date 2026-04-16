@@ -1,9 +1,27 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #include "NPCInteractable.h"
 #include "DialogueManager.h"
-#include "CharacterAimi.h"
+#include "ProgressionManager.h"
+#include "DialogueDataAsset.h"
 #include "Kismet/GameplayStatics.h"
+
+bool ANPCInteractable::DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const
+{
+	switch (Entry.ConditionType)
+	{
+	case EDialogueConditionType::None:
+		return true;
+
+	case EDialogueConditionType::RequiresFlag:
+		return ProgressionManager && ProgressionManager->HasFlag(Entry.ConditionFlag);
+
+	case EDialogueConditionType::BlockedByFlag:
+		return !ProgressionManager || !ProgressionManager->HasFlag(Entry.ConditionFlag);
+
+	default:
+		return false;
+	}
+}
 
 void ANPCInteractable::Interact()
 {
@@ -11,35 +29,32 @@ void ANPCInteractable::Interact()
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	if (!DialogueManager)
+	if (!DialogueManager || !DialogueData)
 	{
 		return;
 	}
 
-	ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(
-		UGameplayStatics::GetPlayerCharacter(GetWorld(), 0)
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
 	);
 
-	if (!PlayerCharacter)
+	for (const FDialogueEntry& Entry : DialogueData->DialogueEntries)
 	{
-		return;
-	}
+		if (DoesEntryMatch(ProgressionManager, Entry))
+		{
+			if (!Entry.DialogueLines.IsEmpty())
+			{
+				if (Entry.bSetFlagOnDialogueEnd && !Entry.FlagToSetOnDialogueEnd.IsNone())
+				{
+					DialogueManager->StartDialogueWithFlag(Entry.DialogueLines, Entry.FlagToSetOnDialogueEnd);
+				}
+				else
+				{
+					DialogueManager->StartDialogue(Entry.DialogueLines);
+				}
 
-	const TArray<FDialogueLines>* SelectedDialogue = nullptr;
-
-	if (PlayerCharacter->HasRequiredItems())
-	{
-		SelectedDialogue = &DialogueAfterRequirement;
+				return;
+			}
+		}
 	}
-	else
-	{
-		SelectedDialogue = &DialogueBeforeRequirement;
-	}
-
-	if (!SelectedDialogue || SelectedDialogue->IsEmpty())
-	{
-		return;
-	}
-
-	DialogueManager->StartDialogue(*SelectedDialogue);
 }
