@@ -19,8 +19,6 @@ public:
 	
 	UPROPERTY(EditAnywhere, Category = "Blackoard")
 	FBlackboardKeySelector RandomPosition;
-	UPROPERTY(EditAnywhere, Category = "Details")
-	float Radius = 500.0f;
 	
 protected:
 	virtual EBTNodeResult::Type ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory) override;
@@ -28,5 +26,7 @@ protected:
 private:
 	UPROPERTY()
 	UBlackboardComponent* Blackboard = nullptr;
+	UPROPERTY(EditAnywhere, Category = "Details")
+	float Radius = 500.0f;
 	
 };
