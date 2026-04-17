@@ -43,3 +43,23 @@ void AProgressionManager::ClearAllFlags()
 
 	UE_LOG(LogTemp, Warning, TEXT("Cleared all progression flags"));
 }
+
+void AProgressionManager::SetCurrentObjectiveText(const FText& NewObjectiveText)
+{
+	CurrentObjectiveText = NewObjectiveText;
+}
+
+FText AProgressionManager::GetCurrentObjectiveText() const
+{
+	return CurrentObjectiveText;
+}
+
+void AProgressionManager::SetCurrentObjectiveID(FName NewObjectiveID)
+{
+	CurrentObjectiveID = NewObjectiveID;
+}
+
+FName AProgressionManager::GetCurrentObjectiveID() const
+{
+	return CurrentObjectiveID;
+}
