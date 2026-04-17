@@ -13,9 +13,10 @@ UBTService_TooAwayFarCheck::UBTService_TooAwayFarCheck()
 	NodeName = "TooAwayFarCheck";
 }
 
+//A service where we check every tick if the AI is too far away from the player where we set the chosen
+//key to either true or false. The key and AcceptableDistance is chosen in the behavior tree. 
 void UBTService_TooAwayFarCheck::TickNode(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory, float DeltaSeconds)
 {
-	UE_LOG(LogTemp, Warning, TEXT("We are in the script!"));
 	PlayerCharacter = UGameplayStatics::GetPlayerCharacter(OwnerComp.GetWorld(), 0);
 	Blackboard = OwnerComp.GetBlackboardComponent();
 	AAIController* Controller = OwnerComp.GetAIOwner();
@@ -25,6 +26,8 @@ void UBTService_TooAwayFarCheck::TickNode(UBehaviorTreeComponent& OwnerComp, uin
 	
 	PlayerLocation = PlayerCharacter->GetActorLocation();
 	AILocation = AIPawn->GetActorLocation();
+	
+	//Checks the distance between two 
 	float Distance = (PlayerLocation - AILocation).Length();
 	UE_LOG(LogTemp, Warning, TEXT("Distance between AI and Player: %f"), Distance);
 	

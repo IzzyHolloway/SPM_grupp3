@@ -7,12 +7,16 @@
 #include "NavigationSystem.h"
 #include "BehaviorTree/BlackboardComponent.h"
 #include "GameFramework/Character.h"
+#include "BTService_TooAwayFarCheck.h"
+#include "AIController.h"
 
 UBTTaskNode_Idle::UBTTaskNode_Idle()
 {
 	NodeName = "Idle";
 }
 
+//A task that will get a random point around the player with the same radius as the AcceptableDistance 
+//and where the chose key will be set. The key and Radius is set in the behavior tree. 
 EBTNodeResult::Type UBTTaskNode_Idle::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	UWorld* World = OwnerComp.GetWorld();
