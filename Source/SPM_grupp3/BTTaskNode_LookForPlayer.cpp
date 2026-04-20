@@ -11,6 +11,8 @@ UBTTaskNode_LookForPlayer::UBTTaskNode_LookForPlayer()
 	NodeName = "LookForPlayer";
 }
 
+//A task where you get the player and the AIs blackboard and set the value of the chosen key
+//to the position of the player. The key is chosen in the behavior tree. 
 EBTNodeResult::Type UBTTaskNode_LookForPlayer::ExecuteTask(UBehaviorTreeComponent& OwnerComp, uint8* NodeMemory)
 {
 	PlayerCharacter = UGameplayStatics::GetPlayerCharacter(OwnerComp.GetWorld(), 0);
