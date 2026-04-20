@@ -82,9 +82,12 @@ protected:
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
 	
+	/*
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objectives")
 	int32 CollectedItemCount = 0;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	int32 RequiredItemCount = 2;
+	
+	*/
 };

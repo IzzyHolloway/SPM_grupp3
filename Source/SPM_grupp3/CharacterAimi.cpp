@@ -246,6 +246,8 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	}
 }
 
+
+/*
 void ACharacterAimi::AddCollectedItem(int32 Amount)
 {
 	CollectedItemCount += Amount;
@@ -268,3 +270,4 @@ bool ACharacterAimi::HasRequiredItems() const
 {
 	return CollectedItemCount >= RequiredItemCount;
 }
+*/

@@ -1,14 +1,16 @@
 // Fill out your copyright notice in the Description page of Project Settings.
-
 #include "BoatInteractable.h"
-#include "CharacterAimi.h"
 #include "DialogueManager.h"
+#include "ProgressionManager.h"
 #include "Kismet/GameplayStatics.h"
 
 void ABoatInteractable::Interact()
 {
-	ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(GetWorld(), 0));
-	if (!PlayerCharacter)
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
 	{
 		return;
 	}
@@ -17,7 +19,11 @@ void ABoatInteractable::Interact()
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	if (PlayerCharacter->HasRequiredItems())
+	const bool bCanUseBoat =
+		!RequiredProgressFlag.IsNone() &&
+		ProgressionManager->HasFlag(RequiredProgressFlag);
+
+	if (bCanUseBoat)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Player can board the boat"));
 
@@ -28,7 +34,7 @@ void ABoatInteractable::Interact()
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player is missing items"));
+		UE_LOG(LogTemp, Warning, TEXT("Player is missing required progression"));
 
 		if (DialogueManager)
 		{
