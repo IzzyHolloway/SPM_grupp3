@@ -7,6 +7,18 @@
 #include "NPCInteractable.generated.h"
 
 class UDialogueDataAsset;
+class AProgressionManager;
+
+/*
+ * 
+ * Interactable NPC that starts dialogue from DialogueDataAsset
+ * 
+ * Reads dialogue entries from data asset
+ * Pick first dialogue entry whose condition matches progression state
+ * Start Dialogue through DialogueManager
+ * 
+ * 
+ */
 
 UCLASS()
 class SPM_GRUPP3_API ANPCInteractable : public AInteractableActor
@@ -20,5 +32,5 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TObjectPtr<UDialogueDataAsset> DialogueData;
 
-	bool DoesEntryMatch(class AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const;
+	bool DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const;
 };

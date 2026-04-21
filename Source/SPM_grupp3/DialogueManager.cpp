@@ -33,7 +33,7 @@ void ADialogueManager::ShowMessage(const FText& Message)
 {
 	CurrentMessage = Message;
 
-	// Korta gameplay-meddelanden ska inte räknas som aktiv dialog
+	// Short gameplay messages are not considered "active dialogue".
 	bDialogueActive = false;
 
 	if (DialogueWidgetInstance)
@@ -42,7 +42,7 @@ void ADialogueManager::ShowMessage(const FText& Message)
 		DialogueWidgetInstance->SetDialogueData(FText::GetEmpty(), Message);
 	}
 
-	// Rensa eventuell gammal timer först
+	// Reset and restart the auto-hide timer for short messages.
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
@@ -81,6 +81,7 @@ void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 		GetWorld()->GetTimerManager().ClearTimer(MessageHideTimerHandle);
 	}
 
+	// No pending progression update for this dialogue.
 	bSetFlagOnDialogueEnd = false;
 	PendingFlagToSetOnDialogueEnd = NAME_None;
 
@@ -101,6 +102,7 @@ void ADialogueManager::AdvanceDialogue()
 
 	CurrentDialogueIndex++;
 
+	// If there are no more lines, finish the dialogue.
 	if (!ActiveDialogueLines.IsValidIndex(CurrentDialogueIndex))
 	{
 		EndDialogue();
@@ -119,6 +121,7 @@ void ADialogueManager::EndDialogue()
 	HideMessage();
 	SetPlayerMovementEnabled(true);
 
+	// Apply pending progression update only after the dialogue fully completes.
 	if (bSetFlagOnDialogueEnd && !PendingFlagToSetOnDialogueEnd.IsNone())
 	{
 		AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
@@ -131,6 +134,7 @@ void ADialogueManager::EndDialogue()
 		}
 	}
 
+	// Clear pending progression state after use.
 	bSetFlagOnDialogueEnd = false;
 	PendingFlagToSetOnDialogueEnd = NAME_None;
 }
@@ -198,6 +202,7 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 	CurrentDialogueIndex = 0;
 	bDialogueActive = true;
 
+	// Store progression flag to be awarded after the dialogue completes
 	bSetFlagOnDialogueEnd = !FlagToSetOnEnd.IsNone();
 	PendingFlagToSetOnDialogueEnd = FlagToSetOnEnd;
 
