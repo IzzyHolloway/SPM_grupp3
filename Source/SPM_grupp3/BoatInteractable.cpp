@@ -6,39 +6,26 @@
 
 void ABoatInteractable::Interact()
 {
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
-	);
-
-	if (!ProgressionManager)
-	{
-		return;
-	}
-
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	const bool bCanUseBoat =
-		!RequiredProgressFlag.IsNone() &&
-		ProgressionManager->HasFlag(RequiredProgressFlag);
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
 
-	if (bCanUseBoat)
+	if (!DialogueManager || !ProgressionManager)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player can board the boat"));
+		return;
+	}
 
-		if (DialogueManager)
-		{
-			DialogueManager->ShowMessage(SuccessMessage);
-		}
+	// The boat only allows progression if the required flag is present.
+	if (!RequiredProgressFlag.IsNone() && ProgressionManager->HasFlag(RequiredProgressFlag))
+	{
+		DialogueManager->ShowMessage(SuccessMessage);
 	}
 	else
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Player is missing required progression"));
-
-		if (DialogueManager)
-		{
-			DialogueManager->ShowMessage(BlockedMessage);
-		}
+		DialogueManager->ShowMessage(BlockedMessage);
 	}
 }

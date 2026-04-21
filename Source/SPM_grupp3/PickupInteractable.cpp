@@ -16,7 +16,7 @@ void APickupInteractable::Interact()
 		return;
 	}
 
-	// Add the flag for this pickup so the game remembers it was collected.
+	// Remember that this pickup has been collected.
 	if (!ProgressFlagToAdd.IsNone())
 	{
 		ProgressionManager->AddFlag(ProgressFlagToAdd);
@@ -24,8 +24,8 @@ void APickupInteractable::Interact()
 
 	bool bAllRequiredFlagsCollected = true;
 
-	// Check whether all required pickup flags are now present.
-	for (const FName RequiredFlag : RequiredFlagsForCompletion)
+	// Check whether all required progression flags for this milestone are present.
+	for (const FName& RequiredFlag : RequiredFlagsForCompletion)
 	{
 		if (RequiredFlag.IsNone())
 		{
@@ -39,10 +39,24 @@ void APickupInteractable::Interact()
 		}
 	}
 
-	// If the collection goal is complete, add the next progression flag.
-	if (bAllRequiredFlagsCollected && !CompletionFlagToAdd.IsNone())
+	// If all required flags are present, unlock the next progression step
+	// and update the current objective if configured.
+	if (bAllRequiredFlagsCollected)
 	{
-		ProgressionManager->AddFlag(CompletionFlagToAdd);
+		if (!CompletionFlagToAdd.IsNone())
+		{
+			ProgressionManager->AddFlag(CompletionFlagToAdd);
+		}
+
+		if (!ObjectiveTextOnCompletion.IsEmpty())
+		{
+			ProgressionManager->SetCurrentObjectiveText(ObjectiveTextOnCompletion);
+		}
+
+		if (!ObjectiveIDOnCompletion.IsNone())
+		{
+			ProgressionManager->SetCurrentObjectiveID(ObjectiveIDOnCompletion);
+		}
 	}
 
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(

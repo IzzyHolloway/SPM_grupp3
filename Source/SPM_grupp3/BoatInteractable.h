@@ -9,6 +9,8 @@
 /**
  * Boat interaction that checks progression flags to decide
  * whether the player is allowed to continue.
+ * 
+ * Reads progression state from ProgressionManager
  */
 
 UCLASS()

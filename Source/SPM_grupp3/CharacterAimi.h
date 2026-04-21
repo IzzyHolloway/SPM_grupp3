@@ -28,8 +28,8 @@ public:
 	
 
 	// Prototype item counter
-	void AddCollectedItem(int32 Amount = 1);
-	bool HasRequiredItems() const;
+	//void AddCollectedItem(int32 Amount = 1);
+	//bool HasRequiredItems() const;
 
 protected:
 	virtual void BeginPlay() override;
@@ -49,6 +49,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> InteractAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> JumpAction;
 
 	UFUNCTION()
 	void Move(const FInputActionValue& Value);
@@ -58,6 +61,12 @@ protected:
 
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
+	
+	UFUNCTION()
+	void StartJump();
+	
+	UFUNCTION()
+	void StopJump();
 
 	// SPRING ARM AND CAMERA
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")

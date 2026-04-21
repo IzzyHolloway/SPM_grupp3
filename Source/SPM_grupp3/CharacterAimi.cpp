@@ -80,6 +80,19 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		{
 			EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterAimi::Interact);
 		}
+		
+		if (JumpAction)
+		{
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacterAimi::StartJump);
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacterAimi::StopJump);
+		}
+		
+		/*
+		if (JumpAction)
+		{
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacterAimi::Jump);
+		}
+		*/
 	}
 }
 
@@ -127,6 +140,7 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
 	}
 }
+
 
 
 void ACharacterAimi::UpdateInteractableCandidate()
@@ -244,6 +258,16 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	{
 		CurrentInteractable->SetPromptVisible(true);
 	}
+}
+
+void ACharacterAimi::StartJump()
+{
+	Jump();
+}
+
+void ACharacterAimi::StopJump()
+{
+	StopJumping();
 }
 
 
