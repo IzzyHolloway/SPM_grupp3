@@ -18,6 +18,8 @@
  * 
  */
 
+class UObjectiveWidgetBase;
+
 UCLASS()
 class SPM_GRUPP3_API AProgressionManager : public AActor
 {
@@ -25,6 +27,8 @@ class SPM_GRUPP3_API AProgressionManager : public AActor
 
 public:
 	AProgressionManager();
+	
+	virtual void BeginPlay() override;
 
 	// Adding a Progression Flag
 	UFUNCTION(BlueprintCallable)
@@ -70,5 +74,13 @@ protected:
 	// Objective identifier
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objective")
 	FName CurrentObjectiveID;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
+	TSubclassOf<UObjectiveWidgetBase> ObjectiveWidgetClass;
+
+	UPROPERTY()
+	TObjectPtr<UObjectiveWidgetBase> ObjectiveWidgetInstance;
+	
+	void RefreshObjectiveWidget();
 	
 };
