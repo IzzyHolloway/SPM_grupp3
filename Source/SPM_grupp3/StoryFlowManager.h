@@ -35,6 +35,8 @@ protected:
 
 	
 	
+	/******************   LEVEL 1    ********************/
+	
 	//Returns true if all melody piece flags are currently collected.
 	bool AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const;
 
@@ -80,4 +82,8 @@ protected:
 	// Flag that marks Island 1 as fully solved.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName Island1SolvedFlag = "Island1Solved";
+	
+	
+	
+	/***********************   NEXT LEVEL???    ****************************/
 };
