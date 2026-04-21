@@ -1,221 +1,141 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #include "PlayerPawn_Izzy.h"
 #include "Camera/CameraComponent.h"
-#include "Components/PrimitiveComponent.h"
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
-#include "InputAction.h"
-#include "InputActionValue.h"
-#include "InputMappingContext.h"
 
 APlayerPawn_Izzy::APlayerPawn_Izzy()
 {
-	PrimaryActorTick.bCanEverTick = true;
-	AutoPossessPlayer = EAutoReceiveInput::Player0;
+    PrimaryActorTick.bCanEverTick = true;
+    
+    // Gör så att denna pawn automatiskt styrs av spelaren
+    AutoPossessPlayer = EAutoReceiveInput::Player0;
 
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+    
+    VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
+    VisualMesh->SetupAttachment(RootComponent);
 
-	VisualMesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
-	VisualMesh->SetupAttachment(RootComponent);
-	VisualMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
-
-	static ConstructorHelpers::FObjectFinder<UStaticMesh> CubeAsset(
-		TEXT("/Engine/BasicShapes/Cube.Cube"));
-	if (CubeAsset.Succeeded())
-	{
-		VisualMesh->SetStaticMesh(CubeAsset.Object);
-	}
-
-	PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
-	PlayerCamera->SetupAttachment(RootComponent);
-	PlayerCamera->SetRelativeLocation(FVector(0.f, 1600.f, 200.f));
-	PlayerCamera->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
-	PlayerCamera->ProjectionMode = ECameraProjectionMode::Orthographic;
-	PlayerCamera->OrthoWidth = 3200.f;
+    PlayerCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("PlayerCamera"));
+    PlayerCamera->SetupAttachment(RootComponent);
+    
+    // Standardposition för 2D-kamera
+    PlayerCamera->SetRelativeLocation(FVector(0.f, 1600.f, 200.f));
+    PlayerCamera->SetRelativeRotation(FRotator(0.f, -90.f, 0.f));
+    PlayerCamera->ProjectionMode = ECameraProjectionMode::Orthographic;
+    PlayerCamera->OrthoWidth = 2000.f;
 }
 
 void APlayerPawn_Izzy::BeginPlay()
 {
-	Super::BeginPlay();
+    Super::BeginPlay();
 
-	// Lägg till IMC i spelarens input subsystem
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
-			ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
-		{
-			if (InputMapping)
-			{
-				Subsystem->AddMappingContext(InputMapping, 0);
-			}
-		}
-	}
+    // Lägg till din IMC_Izzy
+    if (APlayerController* PC = Cast<APlayerController>(GetController()))
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))
+        {
+            if (InputMapping) 
+            {
+                Subsystem->AddMappingContext(InputMapping, 0);
+            }
+        }
+    }
 }
 
 void APlayerPawn_Izzy::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	Super::SetupPlayerInputComponent(PlayerInputComponent);
+    Super::SetupPlayerInputComponent(PlayerInputComponent);
 
-	if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent))
-	{
-		if (MoveAction)
-		{
-			EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerPawn_Izzy::OnMove);
-			EIC->BindAction(MoveAction, ETriggerEvent::Completed, this, &APlayerPawn_Izzy::OnMove);
-		}
-		if (JumpAction)
-		{
-			EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerPawn_Izzy::OnJump);
-		}
-	}
+    if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PlayerInputComponent))
+    {
+        EIC->BindAction(MoveAction, ETriggerEvent::Triggered, this, &APlayerPawn_Izzy::OnMove);
+        EIC->BindAction(MoveAction, ETriggerEvent::Completed, this, &APlayerPawn_Izzy::OnMove);
+        EIC->BindAction(JumpAction, ETriggerEvent::Started, this, &APlayerPawn_Izzy::OnJump);
+    }
 }
 
 void APlayerPawn_Izzy::OnMove(const FInputActionValue& Value)
 {
-	const FVector2D Axis = Value.Get<FVector2D>();
-	// 2D side-scroller: bara horisontell (X). Vertikal (Y) används inte.
-	CurrentInput = FVector(Axis.X, 0.f, 0.f);
+    FVector2D MoveVec = Value.Get<FVector2D>();
+    CurrentInput = FVector(MoveVec.X, 0.f, 0.f); // Endast X för 2D
 }
 
 void APlayerPawn_Izzy::OnJump(const FInputActionValue& Value)
 {
-	if (IsGrounded())
-	{
-		Velocity.Z = JumpStrength;
-	}
+    FHitResult Hit;
+    FVector Start = GetActorLocation();
+    FVector End = Start + FVector::DownVector * (GroundCheckDistance + SkinWidth);
+    
+    FCollisionQueryParams Params;
+    Params.AddIgnoredActor(this);
+
+    // Hoppa bara om vi rör marken
+    if (GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, TraceChannel, FCollisionShape::MakeBox(CollisionExtent), Params))
+    {
+        Velocity.Z = JumpHeight;
+    }
 }
 
 void APlayerPawn_Izzy::Tick(float DeltaTime)
 {
-	Super::Tick(DeltaTime);
+    Super::Tick(DeltaTime);
 
-	// 1. Gravitation
-	Velocity.Z += GetWorld()->GetGravityZ() * DeltaTime;
+    // 1. Applicera Gravitation
+    Velocity.Z += GetWorld()->GetGravityZ() * DeltaTime;
 
-	// 2. Input-baserad acceleration
-	Velocity += CurrentInput.GetSafeNormal() * Acceleration * DeltaTime;
+    // 2. Applicera Input (Acceleration)
+    Velocity += CurrentInput * Acceleration * DeltaTime;
 
-	// 3. Luftmotstånd (exponentiell decay)
-	Velocity.X *= FMath::Pow(AirResistance, DeltaTime);
+    // 3. Luftmotstånd (Exponential)
+    Velocity.X *= FMath::Pow(AirResistance, DeltaTime);
 
-	// 4. Lös kollisioner och uppdatera hastighet
-	ResolveCollisions(DeltaTime);
+    // 4. Hantera Kollision
+    CollisionFunction(DeltaTime);
 
-	// 5. Flytta karaktären
-	SetActorLocation(GetActorLocation() + Velocity * DeltaTime);
-
-	// 6. Hantera överlappningar (safety net)
-	Depenetrate();
+    // 5. Slutgiltig förflyttning
+    AddActorWorldOffset(Velocity * DeltaTime);
 }
 
-void APlayerPawn_Izzy::ResolveCollisions(float DeltaTime)
+void APlayerPawn_Izzy::CollisionFunction(float DeltaTime)
 {
-	int32 Counter = 0;
-	bool bHit = false;
+    int32 Counter = 0;
+    bool bHit = false;
 
-	do
-	{
-		if (Velocity.SizeSquared() < 0.01f)
-		{
-			Velocity = FVector::ZeroVector;
-			return;
-		}
+    do {
+        FVector Movement = Velocity * DeltaTime;
+        if (Velocity.SizeSquared() < 0.001f || Counter++ > 5) return;
 
-		if (Counter++ >= 5)
-		{
-			Velocity = FVector::ZeroVector;
-			return;
-		}
+        FVector Start = GetActorLocation();
+        // Vi kastar strålen lite längre (SkinWidth) för att upptäcka ytor vi nästan nuddar
+        FVector End = Start + Movement.GetSafeNormal() * (Movement.Size() + SkinWidth);
 
-		FVector Origin, Extent;
-		GetActorBounds(true, Origin, Extent);
+        FHitResult Hit;
+        FCollisionQueryParams Params;
+        Params.AddIgnoredActor(this);
 
-		const FVector Movement = Velocity * DeltaTime;
-		const FVector TraceStart = Origin;
-		const FVector TraceEnd = Origin + Movement.GetSafeNormal() * (Movement.Size() + SkinWidth);
+        bHit = GetWorld()->SweepSingleByChannel(Hit, Start, End, FQuat::Identity, TraceChannel, FCollisionShape::MakeBox(CollisionExtent), Params);
 
-		FCollisionQueryParams Params;
-		Params.AddIgnoredActor(this);
+        if (bHit)
+        {
+            // Hur mycket av vår rörelse är tillåten innan vi nuddar ytan?
+            float Dot = FVector::DotProduct(Movement.GetSafeNormal(), Hit.Normal);
+            float DistToSurface = Hit.Distance - SkinWidth;
+            
+            if (DistToSurface > 0)
+            {
+                AddActorWorldOffset(Movement.GetSafeNormal() * DistToSurface);
+            }
 
-		FHitResult Hit;
-		bHit = GetWorld()->SweepSingleByChannel(
-			Hit, TraceStart, TraceEnd, FQuat::Identity,
-			TraceChannel, FCollisionShape::MakeBox(Extent), Params);
-
-		if (bHit)
-		{
-			const FVector NormalForce = CalculateNormalForce(Velocity, Hit.Normal);
-			Velocity += NormalForce;
-			ApplyFriction(NormalForce.Size());
-		}
-	} while (bHit);
+            // Applicera Normalkraft så vi glider längs ytan istället för att fastna
+            Velocity += CalculateNormalForce(Velocity, Hit.Normal);
+        }
+    } while (bHit);
 }
 
 FVector APlayerPawn_Izzy::CalculateNormalForce(FVector Force, FVector Normal) const
 {
-	const float Dot = FVector::DotProduct(Force, Normal);
-0	if (Dot >= 0.f)
-	{
-		return FVector::ZeroVector;
-	}
-	const FVector Projection = Dot * Normal;
-	return -Projection;
-}
+    float Dot = FVector::DotProduct(Force, Normal);
+    if (Dot >= 0.f) return FVector::ZeroVector;
 
-void APlayerPawn_Izzy::ApplyFriction(float NormalForceMagnitude)
-{
-	if (Velocity.Size() < NormalForceMagnitude * StaticFriction)
-	{
-		Velocity = FVector::ZeroVector;
-	}
-	else
-	{
-		Velocity -= Velocity.GetSafeNormal() * NormalForceMagnitude * KineticFriction;
-	}
-}
-
-void APlayerPawn_Izzy::Depenetrate()
-{
-	FVector Origin, Extent;
-	GetActorBounds(true, Origin, Extent);
-
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-
-	TArray<FOverlapResult> Overlaps;
-	if (GetWorld()->OverlapMultiByChannel(
-		Overlaps, Origin, FQuat::Identity, TraceChannel,
-		FCollisionShape::MakeBox(Extent), Params))
-	{
-		for (const FOverlapResult& Overlap : Overlaps)
-		{
-			if (!Overlap.Component.IsValid()) continue;
-
-			FMTDResult MTD;
-			if (Overlap.Component->ComputePenetration(
-				MTD, FCollisionShape::MakeBox(Extent + FVector(SkinWidth)),
-				Origin, FQuat::Identity))
-			{
-				SetActorLocation(GetActorLocation() + MTD.Direction * (MTD.Distance + SkinWidth));
-				Velocity += CalculateNormalForce(Velocity, -MTD.Direction);
-				break; // Lös en i taget
-			}
-		}
-	}
-}
-
-bool APlayerPawn_Izzy::IsGrounded() const
-{
-	FVector Origin, Extent;
-	GetActorBounds(true, Origin, Extent);
-
-	FCollisionQueryParams Params;
-	Params.AddIgnoredActor(this);
-
-	FHitResult Hit;
-	return GetWorld()->SweepSingleByChannel(
-		Hit, Origin, Origin + FVector::DownVector * (GroundCheckDistance + SkinWidth),
-		FQuat::Identity, TraceChannel,
-		FCollisionShape::MakeBox(Extent), Params);
+    return -(Dot * Normal);
 }

@@ -1,85 +1,73 @@
-// Fill out your copyright notice in the Description page of Project Settings.
-
 #pragma once
 
 #include "CoreMinimal.h"
 #include "GameFramework/Pawn.h"
+#include "InputActionValue.h"
 #include "PlayerPawn_Izzy.generated.h"
 
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
-struct FInputActionValue;
 
 UCLASS()
 class SPM_GRUPP3_API APlayerPawn_Izzy : public APawn
 {
-	GENERATED_BODY()
+    GENERATED_BODY()
 
 public:
-	APlayerPawn_Izzy();
+    APlayerPawn_Izzy();
 
-	virtual void Tick(float DeltaTime) override;
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+    virtual void Tick(float DeltaTime) override;
+    virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
 
 protected:
-	virtual void BeginPlay() override;
+    virtual void BeginPlay() override;
 
-	// Components
-	UPROPERTY(VisibleAnywhere)
-	UStaticMeshComponent* VisualMesh;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UStaticMeshComponent* VisualMesh;
 
-	UPROPERTY(VisibleAnywhere)
-	UCameraComponent* PlayerCamera;
+    UPROPERTY(VisibleAnywhere, BlueprintReadOnly)
+    UCameraComponent* PlayerCamera;
 
-	// Input
-	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputMappingContext* InputMapping;
+    // --- INPUT ASSETS (Måste sättas i BP) ---
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputMappingContext* InputMapping;
 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* MoveAction;
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* MoveAction;
 
-	UPROPERTY(EditAnywhere, Category = "Input")
-	UInputAction* JumpAction;
+    UPROPERTY(EditAnywhere, Category = "Input")
+    UInputAction* JumpAction;
 
-	// Movement tuning
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Pawn;
+    // --- INSTÄLLNINGAR ---
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    TEnumAsByte<ECollisionChannel> TraceChannel = ECC_Visibility;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float Acceleration = 2000.f;
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    FVector CollisionExtent = FVector(50.f, 50.f, 50.f); // Storlek på boxen
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float JumpStrength = 900.f;
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float Acceleration = 2500.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float AirResistance = 0.3f; // 0-1, högre = mer motstånd
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float JumpHeight = 1200.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float StaticFriction = 0.6f;
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float AirResistance = 0.15f; // Hur mycket fart vi tappar (0.1 = 10% kvar efter 1 sek)
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float KineticFriction = 0.4f;
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float SkinWidth = 2.f;
 
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float SkinWidth = 2.f;
-
-	UPROPERTY(EditAnywhere, Category = "Movement")
-	float GroundCheckDistance = 5.f;
+    UPROPERTY(EditAnywhere, Category = "Movement")
+    float GroundCheckDistance = 10.f;
 
 private:
-	// Input callbacks
-	void OnMove(const FInputActionValue& Value);
-	void OnJump(const FInputActionValue& Value);
-
-	// Physics
-	void ResolveCollisions(float DeltaTime);
-	FVector CalculateNormalForce(FVector Force, FVector Normal) const;
-	void ApplyFriction(float NormalForceMagnitude);
-	void Depenetrate();
-	bool IsGrounded() const;
-
-	// State
-	FVector CurrentInput = FVector::ZeroVector;
-	FVector Velocity = FVector::ZeroVector;
+    void OnMove(const FInputActionValue& Value);
+    void OnJump(const FInputActionValue& Value);
+    
+    void CollisionFunction(float DeltaTime);
+    FVector CalculateNormalForce(FVector Force, FVector Normal) const;
+    
+    FVector CurrentInput = FVector::ZeroVector;
+    FVector Velocity = FVector::ZeroVector;
 };
