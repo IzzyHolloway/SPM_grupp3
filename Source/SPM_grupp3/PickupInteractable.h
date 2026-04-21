@@ -9,8 +9,8 @@
  * Simple interactable pickup.
  *
  * Responsibilities:
- * -  Add one progression flag when collected
- * -Show a short gameplay message
+ * - Add a progression flag when collected
+ * - Show a short gameplay message
  * - Destroy itself after collection
  *
  * This class should stay simple.
@@ -25,7 +25,7 @@ public:
 	virtual void Interact() override;
 
 protected:
-	// Message shown when the pickup is collected. (debug)
+	// Message shown when the pickup is collected. (debug, just to see if it picked up)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText PickupMessage = FText::FromString("I found something useful.");
 
