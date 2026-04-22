@@ -13,6 +13,9 @@
 #include "InputMappingContext.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+/* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
+#include "ProgressionManager.h"
+
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -85,6 +88,11 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		{
 			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacterAimi::StartJump);
 			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacterAimi::StopJump);
+		}
+		
+		if (DebugSolveIsland1Action)
+		{
+			EnhancedInput->BindAction(DebugSolveIsland1Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland1);
 		}
 		
 		/*
@@ -268,6 +276,33 @@ void ACharacterAimi::StartJump()
 void ACharacterAimi::StopJump()
 {
 	StopJumping();
+}
+
+
+void ACharacterAimi::DebugSolveIsland1()
+{
+	if (!bEnableDebugKeys)
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	ProgressionManager->AddFlag("Island1Solved");
+
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island1Solved flag added"));
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: Island1Solved added"));
+	}
 }
 
 

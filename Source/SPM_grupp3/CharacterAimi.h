@@ -91,6 +91,16 @@ protected:
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
 	
+	/******* WARNING: DEBUG KEYS! REMOVE LATER!!!! ********/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Debug")
+	TObjectPtr<UInputAction> DebugSolveIsland1Action;
+	
+	UFUNCTION()
+	void DebugSolveIsland1();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
+	bool bEnableDebugKeys = true;
+	
 	/*
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objectives")
 	int32 CollectedItemCount = 0;
