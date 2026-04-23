@@ -78,7 +78,7 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		{
 			EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterAimi::Look);
 		}
-
+		
 		if (InteractAction)
 		{
 			EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterAimi::Interact);
@@ -128,6 +128,7 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 	AddControllerYawInput(LookAxisVector.X);
 	AddControllerPitchInput(LookAxisVector.Y);
 }
+
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
