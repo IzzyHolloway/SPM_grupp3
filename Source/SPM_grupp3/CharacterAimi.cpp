@@ -278,7 +278,7 @@ void ACharacterAimi::StopJump()
 	StopJumping();
 }
 
-
+/******* WARNING: DEBUG FUNCTIONS! REMOVE LATER!!!! ********/
 void ACharacterAimi::DebugSolveIsland1()
 {
 	if (!bEnableDebugKeys)
@@ -295,9 +295,9 @@ void ACharacterAimi::DebugSolveIsland1()
 		return;
 	}
 
-	ProgressionManager->AddFlag("Island1Solved");
+	ProgressionManager->AddFlag("Island1PuzzleSolved");
 
-	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island1Solved flag added"));
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island1PuzzleSolved flag added"));
 
 	if (GEngine)
 	{

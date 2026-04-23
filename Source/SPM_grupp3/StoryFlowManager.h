@@ -39,7 +39,34 @@ protected:
 	
 	//Returns true if all melody piece flags are currently collected.
 	bool AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const;
+	
+	// Returns true if any of the melody pieces are found
+	bool HasAnyMelodyPiece(AProgressionManager* ProgressionManager) const;
+	
+	//bool HasTalkedToListenerIntro(AProgressionManager* ProgressionManager) const;
+	
+	// Island1 default objective
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	FText InitialObjectiveText = FText::FromString("Explore Island 1");
+	
+	//Island1 default objective ID.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	FName InitialObjectiveID = "ExploreIsland1";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	FName TalkedToListenerIntroID = "TalkedToListenerIntro";
+	
+	//Starting objective for Island 1.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	FText StartPuzzle1Text = FText::FromString("Find the missing melody pieces.");
 
+	//Starting objective ID for Island 1.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
+	FName StartPuzzle1ID = "FindMelodyPieces";
+	
+	
+
+	/*
 	//Starting objective for Island 1.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	FText InitialObjectiveText = FText::FromString("Find the missing melody pieces.");
@@ -47,7 +74,7 @@ protected:
 	//Starting objective ID for Island 1.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	FName InitialObjectiveID = "FindMelodyPieces";
-
+*/
 	// Objective shown after all melody pieces are found.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives")
 	FText ReturnToListenerObjectiveText = FText::FromString("Return to The Listener.");
@@ -79,9 +106,15 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName AllMelodyPiecesFoundFlag = "AllMelodyPiecesFound";
 
-	// Flag that marks Island 1 as fully solved.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
-	FName Island1SolvedFlag = "Island1Solved";
+	FName Island1PuzzleSolvedFlag = "Island1PuzzleSolved";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName TalkedToListenerAfterPuzzleFlag = "TalkedToListenerAfterPuzzle";
+	
+	// FLag that marks that some of the meody pieces have been found, but not all
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName SomeMelodyPiecesFoundFlag = "SomeMelodyPiecesFound";
 	
 	
 	
