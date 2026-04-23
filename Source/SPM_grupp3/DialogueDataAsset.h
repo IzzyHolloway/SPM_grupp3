@@ -23,7 +23,7 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueEntry> DialogueEntries;
 	
-	// Rebuilds DialogueLines for every entry that has RawDialogueImportText filled in
+	// Button that Rebuilds DialogueLines for every entry that has RawDialogueImportText filled in
 	// Useful if you only changed one entry and do not want to rebuild everything
 	UFUNCTION(CallInEditor, Category = "Import")
 	void RebuildAllDialogueLinesFromRawText();
@@ -39,6 +39,8 @@ private:
 	 * 
 	 * Expected format per line:
 	 * SpeakerName|Line text
+	 * Need to separate the lines with new line (enter button)
+	 * 
 	 */
 	void ParseRawDialogueText(const FString& RawText, TArray<FDialogueLines>& Outlines) const;
 };
