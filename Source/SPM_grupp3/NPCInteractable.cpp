@@ -7,23 +7,41 @@
 
 bool ANPCInteractable::DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const
 {
-	switch (Entry.ConditionType)
+	// If progression checks are needed but the manager does not exist, fail safely.
+	if (!ProgressionManager && (!Entry.RequiredFlags.IsEmpty() || !Entry.BlockedFlags.IsEmpty()))
 	{
-	case EDialogueConditionType::None:
-		// No condition means this entry is always valid.
-		return true;
-
-	case EDialogueConditionType::RequiresFlag:
-		// Entry is valid only if the required flag exists.
-		return ProgressionManager && ProgressionManager->HasFlag(Entry.ConditionFlag);
-
-	case EDialogueConditionType::BlockedByFlag:
-		// Entry is valid only if the flag does NOT exist.
-		return !ProgressionManager || !ProgressionManager->HasFlag(Entry.ConditionFlag);
-
-	default:
 		return false;
 	}
+
+	// Every required flag must exist.
+	for (const FName& RequiredFlag : Entry.RequiredFlags)
+	{
+		if (RequiredFlag.IsNone())
+		{
+			continue;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlag))
+		{
+			return false;
+		}
+	}
+
+	// None of the blocked flags may exist.
+	for (const FName& BlockedFlag : Entry.BlockedFlags)
+	{
+		if (BlockedFlag.IsNone())
+		{
+			continue;
+		}
+
+		if (ProgressionManager->HasFlag(BlockedFlag))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void ANPCInteractable::Interact()
