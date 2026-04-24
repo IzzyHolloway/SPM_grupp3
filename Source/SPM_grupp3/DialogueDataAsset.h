@@ -22,4 +22,25 @@ class SPM_GRUPP3_API UDialogueDataAsset : public UDataAsset
 public:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TArray<FDialogueEntry> DialogueEntries;
+	
+	// Button that Rebuilds DialogueLines for every entry that has RawDialogueImportText filled in
+	// Useful if you only changed one entry and do not want to rebuild everything
+	UFUNCTION(CallInEditor, Category = "Import")
+	void RebuildAllDialogueLinesFromRawText();
+	
+	// Rebuilds Dialoguelines for a single entry by index
+	// Useful if you only changed one entry and do not want to rebuild everything
+	UFUNCTION(CallInEditor, Category = "Import")
+	void RebuildDialogueLinesFromRawTextByIndex(int32 EntryIndex);
+	
+private:
+	/*
+	 * Internal helper that parses one raw text block into dialogue lines
+	 * 
+	 * Expected format per line:
+	 * SpeakerName|Line text
+	 * Need to separate the lines with new line (enter button)
+	 * 
+	 */
+	void ParseRawDialogueText(const FString& RawText, TArray<FDialogueLines>& Outlines) const;
 };

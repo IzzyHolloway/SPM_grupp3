@@ -6,8 +6,11 @@
 #include "InteractableActor.h"
 #include "BoatInteractable.generated.h"
 
-/*
- * Prototype, checks whether the player has collected enough items
+/**
+ * Boat interaction that checks progression flags to decide
+ * whether the player is allowed to continue.
+ * 
+ * Reads progression state from ProgressionManager
  */
 
 UCLASS()
@@ -19,9 +22,15 @@ public:
 	virtual void Interact() override;
 
 protected:
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText BlockedMessage = FText::FromString("Hmm.. I feel like something is missing...");
+	// Flag required before the boat can be used.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName RequiredProgressFlag = "BoatReady";
 
+	// Message shown when player has not completed required progression yet.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FText BlockedMessage = FText::FromString("Hmm... I feel like something is missing...");
+
+	// Message shown when player is allowed to continue.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText SuccessMessage = FText::FromString("Let's move on!");
 };

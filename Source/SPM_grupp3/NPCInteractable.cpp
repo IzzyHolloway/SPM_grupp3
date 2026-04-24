@@ -7,20 +7,41 @@
 
 bool ANPCInteractable::DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const
 {
-	switch (Entry.ConditionType)
+	// If progression checks are needed but the manager does not exist, fail safely.
+	if (!ProgressionManager && (!Entry.RequiredFlags.IsEmpty() || !Entry.BlockedFlags.IsEmpty()))
 	{
-	case EDialogueConditionType::None:
-		return true;
-
-	case EDialogueConditionType::RequiresFlag:
-		return ProgressionManager && ProgressionManager->HasFlag(Entry.ConditionFlag);
-
-	case EDialogueConditionType::BlockedByFlag:
-		return !ProgressionManager || !ProgressionManager->HasFlag(Entry.ConditionFlag);
-
-	default:
 		return false;
 	}
+
+	// Every required flag must exist.
+	for (const FName& RequiredFlag : Entry.RequiredFlags)
+	{
+		if (RequiredFlag.IsNone())
+		{
+			continue;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlag))
+		{
+			return false;
+		}
+	}
+
+	// None of the blocked flags may exist.
+	for (const FName& BlockedFlag : Entry.BlockedFlags)
+	{
+		if (BlockedFlag.IsNone())
+		{
+			continue;
+		}
+
+		if (ProgressionManager->HasFlag(BlockedFlag))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }
 
 void ANPCInteractable::Interact()
@@ -38,23 +59,31 @@ void ANPCInteractable::Interact()
 		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
 	);
 
+	// Go through dialogue entries in order and use the first one that matches.
 	for (const FDialogueEntry& Entry : DialogueData->DialogueEntries)
 	{
-		if (DoesEntryMatch(ProgressionManager, Entry))
+		if (!DoesEntryMatch(ProgressionManager, Entry))
 		{
-			if (!Entry.DialogueLines.IsEmpty())
-			{
-				if (Entry.bSetFlagOnDialogueEnd && !Entry.FlagToSetOnDialogueEnd.IsNone())
-				{
-					DialogueManager->StartDialogueWithFlag(Entry.DialogueLines, Entry.FlagToSetOnDialogueEnd);
-				}
-				else
-				{
-					DialogueManager->StartDialogue(Entry.DialogueLines);
-				}
-
-				return;
-			}
+			continue;
 		}
+
+		if (Entry.DialogueLines.IsEmpty())
+		{
+			continue;
+		}
+
+		// If this entry should set a flag after the dialogue ends
+		// Example. You talked with GuideNPC. After you talk with the GuideNPC, the flag 'TalkedWithGuide' should be active
+
+		if (Entry.bSetFlagOnDialogueEnd && !Entry.FlagToSetOnDialogueEnd.IsNone())
+		{
+			DialogueManager->StartDialogueWithFlag(Entry.DialogueLines, Entry.FlagToSetOnDialogueEnd);
+		}
+		else
+		{
+			DialogueManager->StartDialogue(Entry.DialogueLines);
+		}
+
+		return;
 	}
 }

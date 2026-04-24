@@ -13,6 +13,9 @@
 #include "InputMappingContext.h"
 #include "Kismet/KismetSystemLibrary.h"
 
+/* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
+#include "ProgressionManager.h"
+
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -75,11 +78,29 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 		{
 			EnhancedInput->BindAction(LookAction, ETriggerEvent::Triggered, this, &ACharacterAimi::Look);
 		}
-
+		
 		if (InteractAction)
 		{
 			EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterAimi::Interact);
 		}
+		
+		if (JumpAction)
+		{
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacterAimi::StartJump);
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacterAimi::StopJump);
+		}
+		
+		if (DebugSolveIsland1Action)
+		{
+			EnhancedInput->BindAction(DebugSolveIsland1Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland1);
+		}
+		
+		/*
+		if (JumpAction)
+		{
+			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Triggered, this, &ACharacterAimi::Jump);
+		}
+		*/
 	}
 }
 
@@ -108,6 +129,7 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 	AddControllerPitchInput(LookAxisVector.Y);
 }
 
+
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
@@ -127,6 +149,7 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
 	}
 }
+
 
 
 void ACharacterAimi::UpdateInteractableCandidate()
@@ -246,6 +269,45 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	}
 }
 
+void ACharacterAimi::StartJump()
+{
+	Jump();
+}
+
+void ACharacterAimi::StopJump()
+{
+	StopJumping();
+}
+
+/******* WARNING: DEBUG FUNCTIONS! REMOVE LATER!!!! ********/
+void ACharacterAimi::DebugSolveIsland1()
+{
+	if (!bEnableDebugKeys)
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	ProgressionManager->AddFlag("Island1PuzzleSolved");
+
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island1PuzzleSolved flag added"));
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: Island1Solved added"));
+	}
+}
+
+
+/*
 void ACharacterAimi::AddCollectedItem(int32 Amount)
 {
 	CollectedItemCount += Amount;
@@ -268,3 +330,4 @@ bool ACharacterAimi::HasRequiredItems() const
 {
 	return CollectedItemCount >= RequiredItemCount;
 }
+*/
