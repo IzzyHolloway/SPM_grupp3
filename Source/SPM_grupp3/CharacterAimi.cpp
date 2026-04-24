@@ -36,7 +36,15 @@ ACharacterAimi::ACharacterAimi()
 	GetCharacterMovement()->bOrientRotationToMovement = true;
 	GetCharacterMovement()->bUseControllerDesiredRotation = false;
 
-	GetCharacterMovement()->RotationRate = FRotator(0.f, 360.f, 0.f);
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 300.f, 0.f);
+	
+	/* Movement Polishing. Can be changed later */
+	GetCharacterMovement()->MaxWalkSpeed = 320.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 900.f;
+	GetCharacterMovement()->GroundFriction = 6.f;
+	
+	GetCharacterMovement()->JumpZVelocity = 420.f;
+	GetCharacterMovement()->AirControl = 0.3f;
 }
 
 void ACharacterAimi::BeginPlay()
