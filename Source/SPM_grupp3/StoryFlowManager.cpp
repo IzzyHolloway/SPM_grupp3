@@ -21,16 +21,18 @@ void AStoryFlowManager::BeginPlay()
 		return;
 	}
 
-	// Set the starting objective only if the story has not already moved past it.
-	// Like if the player is progressing in level2, level1 objectives are not gonna start
-	if (!ProgressionManager->HasFlag(AllMelodyPiecesFoundFlag) &&
-		!ProgressionManager->HasFlag(Island1PuzzleSolvedFlag) &&
-		!ProgressionManager->HasFlag(TalkedToListenerAfterPuzzleFlag) &&
-		!ProgressionManager->HasFlag(SomeMelodyPiecesFoundFlag))
+	// Decide where the story should begin based on existing progression flags.
+	// For now, if ArrivedIsland1 exists, we start in Island 1 flow.
+	if (ProgressionManager->HasFlag(ArrivedIsland1Flag))
 	{
-		ProgressionManager->SetCurrentObjectiveText(InitialObjectiveText);
-		ProgressionManager->SetCurrentObjectiveID(InitialObjectiveID);
+		SetStoryState(EStoryState::Island1_Explore);
 	}
+	else
+	{
+		SetStoryState(EStoryState::Home_Explore);
+	}
+
+	UpdateStoryFlow();
 }
 
 void AStoryFlowManager::Tick(float DeltaTime)
@@ -39,7 +41,6 @@ void AStoryFlowManager::Tick(float DeltaTime)
 
 	UpdateStoryFlow();
 }
-
 
 void AStoryFlowManager::UpdateStoryFlow()
 {
@@ -52,25 +53,88 @@ void AStoryFlowManager::UpdateStoryFlow()
 		return;
 	}
 
-	// Final Island 1 state: the player has spoken to The Listener after solving the puzzle
-	// and should now return to the boat.
+	// If the player has reached Island 1, use Island 1 flow.
+	if (ProgressionManager->HasFlag(ArrivedIsland1Flag))
+	{
+		UpdateIsland1Flow(ProgressionManager);
+		return;
+	}
+
+	// Otherwise, use the home intro flow.
+	UpdateHomeFlow(ProgressionManager);
+}
+
+void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	const bool bHasBackpack = ProgressionManager->HasFlag(PickedUpBackpackFlag);
+	const bool bHasLantern = ProgressionManager->HasFlag(PickedUpLanternFlag);
+	const bool bHasMatches = ProgressionManager->HasFlag(PickedUpMatchesFlag);
+	const bool bHasLitLantern = ProgressionManager->HasFlag(LitLanternFlag);
+
+	// Final home state: the player has the lit lantern and can leave.
+	if (bHasLitLantern)
+	{
+		if (!ProgressionManager->HasFlag(HomeReadyForBoatFlag))
+		{
+			ProgressionManager->AddFlag(HomeReadyForBoatFlag);
+		}
+
+		SetStoryState(EStoryState::Home_ReadyForBoat);
+		SetObjective(ProgressionManager, HomeReadyForBoatObjectiveText, HomeReadyForBoatObjectiveID);
+		return;
+	}
+
+	// The player has both crafting ingredients but has not crafted the lit lantern yet.
+	if (bHasLantern && bHasMatches)
+	{
+		SetStoryState(EStoryState::Home_CraftLantern);
+		SetObjective(ProgressionManager, HomeCraftLanternObjectiveText, HomeCraftLanternObjectiveID);
+		return;
+	}
+
+	// The backpack unlocks item collecting / inventory, so now the player should find a light source.
+	if (bHasBackpack)
+	{
+		SetStoryState(EStoryState::Home_FindLight);
+		SetObjective(ProgressionManager, HomeFindLightObjectiveText, HomeFindLightObjectiveID);
+		return;
+	}
+
+	// Default intro state.
+	SetStoryState(EStoryState::Home_Explore);
+	SetObjective(ProgressionManager, HomeExploreObjectiveText, HomeExploreObjectiveID);
+}
+
+void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	// Final Island 1 state:
+	// The player has talked to The Listener after solving the puzzle.
 	if (ProgressionManager->HasFlag(TalkedToListenerAfterPuzzleFlag))
 	{
-		ProgressionManager->SetCurrentObjectiveText(Island1SolvedObjectiveText);
-		ProgressionManager->SetCurrentObjectiveID(Island1SolvedObjectiveID);
+		SetStoryState(EStoryState::Island1_ReadyToLeave);
+		SetObjective(ProgressionManager, ReturnToBoatObjectiveText, ReturnToBoatObjectiveID);
 		return;
 	}
 
-	// The puzzle itself is solved, but the player still needs to return to The Listener
-	// to receive the next story information.
+	// Puzzle solved, but the player still needs to return to The Listener.
 	if (ProgressionManager->HasFlag(Island1PuzzleSolvedFlag))
 	{
-		ProgressionManager->SetCurrentObjectiveText(ReturnToListenerObjectiveText);
-		ProgressionManager->SetCurrentObjectiveID(ReturnToListenerObjectiveID);
+		SetStoryState(EStoryState::Island1_PuzzleSolved);
+		SetObjective(ProgressionManager, ReturnToListenerObjectiveText, ReturnToListenerObjectiveID);
 		return;
 	}
 
-	// All melody pieces found: return to The Listener.
+	// All melody pieces found.
 	if (AreAllMelodyPiecesFound(ProgressionManager))
 	{
 		if (!ProgressionManager->HasFlag(AllMelodyPiecesFoundFlag))
@@ -83,12 +147,12 @@ void AStoryFlowManager::UpdateStoryFlow()
 			ProgressionManager->AddFlag(SomeMelodyPiecesFoundFlag);
 		}
 
-		ProgressionManager->SetCurrentObjectiveText(ReturnToListenerObjectiveText);
-		ProgressionManager->SetCurrentObjectiveID(ReturnToListenerObjectiveID);
+		SetStoryState(EStoryState::Island1_ReturnToListener);
+		SetObjective(ProgressionManager, ReturnToListenerObjectiveText, ReturnToListenerObjectiveID);
 		return;
 	}
 
-	// Some pieces found: still searching for melody pieces.
+	// Some melody pieces found.
 	if (HasAnyMelodyPiece(ProgressionManager))
 	{
 		if (!ProgressionManager->HasFlag(SomeMelodyPiecesFoundFlag))
@@ -96,23 +160,51 @@ void AStoryFlowManager::UpdateStoryFlow()
 			ProgressionManager->AddFlag(SomeMelodyPiecesFoundFlag);
 		}
 
-		ProgressionManager->SetCurrentObjectiveText(StartPuzzle1Text);
-		ProgressionManager->SetCurrentObjectiveID(StartPuzzle1ID);
+		SetStoryState(EStoryState::Island1_CollectMelodyPieces);
+		SetObjective(ProgressionManager, FindMelodyPiecesObjectiveText, FindMelodyPiecesObjectiveID);
 		return;
 	}
 
-	// After Listener intro has been completed, but before any notes are found,
-	// the player should begin searching for the melody pieces.
-	if (ProgressionManager->HasFlag(TalkedToListenerIntroID))
+	// The Listener intro is done, but no pieces have been found yet.
+	if (ProgressionManager->HasFlag(TalkedToListenerIntroFlag))
 	{
-		ProgressionManager->SetCurrentObjectiveText(StartPuzzle1Text);
-		ProgressionManager->SetCurrentObjectiveID(StartPuzzle1ID);
+		SetStoryState(EStoryState::Island1_CollectMelodyPieces);
+		SetObjective(ProgressionManager, FindMelodyPiecesObjectiveText, FindMelodyPiecesObjectiveID);
 		return;
 	}
 
-	// Default starting state before the player speaks to The Listener.
-	ProgressionManager->SetCurrentObjectiveText(InitialObjectiveText);
-	ProgressionManager->SetCurrentObjectiveID(InitialObjectiveID);
+	// Default Island 1 state before talking to The Listener.
+	SetStoryState(EStoryState::Island1_Explore);
+	SetObjective(ProgressionManager, Island1ExploreObjectiveText, Island1ExploreObjectiveID);
+}
+
+void AStoryFlowManager::SetStoryState(EStoryState NewState)
+{
+	if (CurrentStoryState == NewState)
+	{
+		return;
+	}
+
+	CurrentStoryState = NewState;
+
+	UE_LOG(LogTemp, Warning, TEXT("Story state changed to: %s"), *UEnum::GetValueAsString(CurrentStoryState));
+}
+
+void AStoryFlowManager::SetObjective(AProgressionManager* ProgressionManager, const FText& NewText, FName NewID) const
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	// Avoid repeatedly setting the same objective every tick.
+	if (ProgressionManager->GetCurrentObjectiveID() == NewID)
+	{
+		return;
+	}
+
+	ProgressionManager->SetCurrentObjectiveText(NewText);
+	ProgressionManager->SetCurrentObjectiveID(NewID);
 }
 
 bool AStoryFlowManager::AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const

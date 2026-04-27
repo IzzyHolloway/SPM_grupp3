@@ -33,4 +33,7 @@ protected:
 	// Message shown when player is allowed to continue.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText SuccessMessage = FText::FromString("Let's move on!");
+	
+	/**** HELPER ****/
+	bool CanUseBoat(class AProgressionManager* ProgressionManager) const;
 };
