@@ -34,6 +34,17 @@ ACharacterAimi::ACharacterAimi()
 	bUseControllerRotationRoll = false;
 
 	GetCharacterMovement()->bOrientRotationToMovement = true;
+	GetCharacterMovement()->bUseControllerDesiredRotation = false;
+
+	GetCharacterMovement()->RotationRate = FRotator(0.f, 300.f, 0.f);
+	
+	/* Movement Polishing. Can be changed later */
+	GetCharacterMovement()->MaxWalkSpeed = 320.f;
+	GetCharacterMovement()->BrakingDecelerationWalking = 900.f;
+	GetCharacterMovement()->GroundFriction = 6.f;
+	
+	GetCharacterMovement()->JumpZVelocity = 420.f;
+	GetCharacterMovement()->AirControl = 0.3f;
 }
 
 void ACharacterAimi::BeginPlay()
@@ -104,6 +115,7 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 	}
 }
 
+/*
 void ACharacterAimi::Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
@@ -119,6 +131,28 @@ void ACharacterAimi::Move(const FInputActionValue& Value)
 		AddMovementInput(ForwardDirection, MovementVector.Y);
 		AddMovementInput(RightDirection, MovementVector.X);
 	}
+}
+*/
+
+void ACharacterAimi::Move(const FInputActionValue& Value)
+{
+	const FVector2D MovementVector = Value.Get<FVector2D>();
+
+	if (MovementVector.IsNearlyZero() || !Controller)
+	{
+		return;
+	}
+
+	// Use camera/controller yaw to make movement relative to the current view.
+	// This makes W feel like "forward on screen" in a normal third-person test camera.
+	const FRotator Rotation = Controller->GetControlRotation();
+	const FRotator YawRotation(0.f, Rotation.Yaw, 0.f);
+
+	const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+	const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	AddMovementInput(ForwardDirection, MovementVector.Y);
+	AddMovementInput(RightDirection, MovementVector.X);
 }
 
 void ACharacterAimi::Look(const FInputActionValue& Value)
