@@ -106,6 +106,11 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			EnhancedInput->BindAction(DebugSolveIsland1Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland1);
 		}
 		
+		if (DebugCraftLanternAction)
+		{
+			EnhancedInput->BindAction(DebugCraftLanternAction, ETriggerEvent::Started, this, &ACharacterAimi::DebugCraftLantern);
+		}
+		
 		/*
 		if (JumpAction)
 		{
@@ -337,6 +342,35 @@ void ACharacterAimi::DebugSolveIsland1()
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: Island1Solved added"));
+	}
+	
+
+}
+
+void ACharacterAimi::DebugCraftLantern()
+{
+	
+	if (!bEnableDebugKeys)
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+	
+	ProgressionManager->AddFlag("LitLantern");
+	
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: LitLantern"));
+	
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: LitLantern added"));
 	}
 }
 
