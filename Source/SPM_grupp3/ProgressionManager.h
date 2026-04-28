@@ -29,21 +29,24 @@ public:
 	AProgressionManager();
 	
 	virtual void BeginPlay() override;
+	
+	
+	/******* FLAGS *******/
 
 	// Adding a Progression Flag
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Progression")
 	void AddFlag(FName FlagName);
 
 	// Removing a Progression Flag
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Progression")
 	void RemoveFlag(FName FlagName);
 
 	// Does the flag exist in the current progression state?
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Progression")
 	bool HasFlag(FName FlagName) const;
 
 	// clears all progression flags
-	UFUNCTION(BlueprintCallable)
+	UFUNCTION(BlueprintCallable, Category = "Progression|Debug")
 	void ClearAllFlags();
 	
 	// Set current objective text shown to player
