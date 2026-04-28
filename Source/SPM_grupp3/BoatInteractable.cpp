@@ -29,3 +29,17 @@ void ABoatInteractable::Interact()
 		DialogueManager->ShowMessage(BlockedMessage);
 	}
 }
+
+bool ABoatInteractable::CanUseBoat(AProgressionManager* ProgressionManager) const
+{
+	if (!ProgressionManager)
+	{
+		return false;
+	}
+	
+	if (RequiredProgressFlag.IsNone())
+	{
+		return true;
+	}
+	return ProgressionManager->HasFlag(RequiredProgressFlag);
+}

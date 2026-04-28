@@ -101,6 +101,12 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Debug")
 	bool bEnableDebugKeys = true;
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Debug")
+	TObjectPtr<UInputAction> DebugCraftLanternAction;
+	
+	UFUNCTION()
+	void DebugCraftLantern();
+	
 	/*
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objectives")
 	int32 CollectedItemCount = 0;
