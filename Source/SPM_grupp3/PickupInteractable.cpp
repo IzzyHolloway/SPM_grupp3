@@ -5,10 +5,15 @@
 #include "ProgressionManager.h"
 #include "Kismet/GameplayStatics.h"
 
+
 void APickupInteractable::Interact()
 {
 	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
 	if (!ProgressionManager)
@@ -16,21 +21,49 @@ void APickupInteractable::Interact()
 		return;
 	}
 
-	// Add this pickup's progression flag if one is configured.
+	if (!CanPickup(ProgressionManager))
+	{
+		if (DialogueManager && !BlockedPickupMessage.IsEmpty())
+		{
+			DialogueManager->ShowMessage(BlockedPickupMessage);
+		}
+
+		return;
+	}
+
 	if (!ProgressFlagToAdd.IsNone())
 	{
 		ProgressionManager->AddFlag(ProgressFlagToAdd);
 	}
-	
-	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-	);
 
-	// Show a short feedback message when the pickup is collected.
 	if (DialogueManager && !PickupMessage.IsEmpty())
 	{
 		DialogueManager->ShowMessage(PickupMessage);
 	}
 
 	Destroy();
+}
+
+
+bool APickupInteractable::CanPickup(AProgressionManager* ProgressionManager) const
+{
+	if (!ProgressionManager)
+	{
+		return false;
+	}
+
+	for (const FName& RequiredFlag : RequiredFlagsToPickup)
+	{
+		if (RequiredFlag.IsNone())
+		{
+			continue;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlag))
+		{
+			return false;
+		}
+	}
+
+	return true;
 }

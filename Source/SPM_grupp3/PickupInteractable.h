@@ -28,8 +28,19 @@ protected:
 	// Message shown when the pickup is collected. (debug, just to see if it picked up)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText PickupMessage = FText::FromString("I found something useful.");
+	
+	// Message shown if the player tries to pick this before requirements are met
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FText BlockedPickupMessage = FText::FromString("Hmm... I wanna pick it up, but I have nowhere to put it.");
 
-	// Progression flag added when this pickup is collected.
+	// Progression flag added when this pickup is collected
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName ProgressFlagToAdd;
+	
+	// Progression flag added when this pickup is collected.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	TArray<FName> RequiredFlagsToPickup;
+	
+	/****** HELPER ******/
+	bool CanPickup(class AProgressionManager* ProgressionManager) const;
 };
