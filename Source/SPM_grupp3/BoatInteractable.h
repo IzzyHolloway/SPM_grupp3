@@ -13,6 +13,11 @@
  * Reads progression state from ProgressionManager
  */
 
+class AProgressionManager;
+class ADialogueManager;
+class ACharacter;
+class USceneComponent;
+
 UCLASS()
 class SPM_GRUPP3_API ABoatInteractable : public AInteractableActor
 {
@@ -24,16 +29,22 @@ public:
 protected:
 	// Flag required before the boat can be used.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
-	FName RequiredProgressFlag = "BoatReady";
+	FName RequiredProgressFlag = "HomeReadyForBoat";
 
 	// Message shown when player has not completed required progression yet.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-	FText BlockedMessage = FText::FromString("Hmm... I feel like something is missing...");
+	FText BlockedMessage = FText::FromString("I probably should bring a light first.");
 
 	// Message shown when player is allowed to continue.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText SuccessMessage = FText::FromString("Let's move on!");
 	
+	UFUNCTION(BlueprintImplementableEvent, Category = "Boat")
+	void OnBoardingAllowed(ACharacter* PlayerCharacter);
+	
+private:
 	/**** HELPER ****/
-	bool CanUseBoat(class AProgressionManager* ProgressionManager) const;
+	bool CanBoard(AProgressionManager* ProgressionManager) const;
+	
+	ACharacter* GetPlayerCharacter() const;
 };
