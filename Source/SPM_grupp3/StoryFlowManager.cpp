@@ -71,7 +71,6 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 		return;
 	}
 
-	const bool bHasBackpack = ProgressionManager->HasFlag(PickedUpBackpackFlag);
 	const bool bHasLantern = ProgressionManager->HasFlag(PickedUpLanternFlag);
 	const bool bHasMatches = ProgressionManager->HasFlag(PickedUpMatchesFlag);
 	const bool bHasLitLantern = ProgressionManager->HasFlag(LitLanternFlag);
@@ -94,14 +93,6 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 	{
 		SetStoryState(EStoryState::Home_CraftLantern);
 		SetObjective(ProgressionManager, HomeCraftLanternObjectiveText, HomeCraftLanternObjectiveID);
-		return;
-	}
-
-	// The backpack unlocks item collecting / inventory, so now the player should find a light source.
-	if (bHasBackpack)
-	{
-		SetStoryState(EStoryState::Home_FindLight);
-		SetObjective(ProgressionManager, HomeFindLightObjectiveText, HomeFindLightObjectiveID);
 		return;
 	}
 
