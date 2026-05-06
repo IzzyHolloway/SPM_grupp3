@@ -193,7 +193,6 @@ void ACharacterPaula::Interact(const FInputActionValue& Value)
 	}
 	
 	// ////////////////////////////////////////// ADDED //////////////////////////////////////////
-	UE_LOG(LogTemp, Warning, TEXT("Interacting"));
 	
 	if (BoatInReach != nullptr)
 	{
@@ -423,8 +422,6 @@ void ACharacterPaula::EnterBoat()
 		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
 	}
-	
-	UE_LOG(LogTemp, Warning, TEXT("Entering the boat"));
 	
 	// Disable movement
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())

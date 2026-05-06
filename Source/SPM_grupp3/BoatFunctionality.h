@@ -17,6 +17,9 @@ class UInputMappingContext;
 class UInputAction;
 class UInputComponent;
 
+// Movement
+class UFloatingPawnMovement;
+
 // Enter & Exit
 class UBoxComponent;
 class ACharacterAimi;
@@ -38,6 +41,10 @@ public:
 	UFUNCTION()
 	void Look(const FInputActionValue& Value);
 	
+	// Handles Interaction Input
+	UFUNCTION()
+	void Interact(const FInputActionValue& Value);
+	
 	// -------------------------- ENTER & EXIT --------------------------
 	
 	// Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
@@ -50,13 +57,19 @@ public:
 	// Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 	UFUNCTION()
 	void EnableEnteringBoat(ACharacterPaula* PlayerCharacter);
-	//
+	// Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 	UFUNCTION()
 	void DisableEnteringBoat(ACharacterPaula* PlayerCharacter);
 	
 	// Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
 	UFUNCTION()
 	FVector GetCharacterPositionOffset() const;
+	
+	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
+	UFUNCTION(BlueprintCallable)
+	void SetPierInReach(AActor* Pier);
+	UFUNCTION(BlueprintCallable)
+	void RemovePierInReach();
 
 protected:
 	// Called when the game starts or when spawned
@@ -78,12 +91,24 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> LookAction;
 	
+	// Interact Input Actions (mouse)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	TObjectPtr<UInputAction> InteractAction;
+	
+	// --------------------------- MOVEMENT ---------------------------
+	
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
+	TObjectPtr<UFloatingPawnMovement> MovementComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float RotationSpeed = 50.f;
+	
 	// ---------------------------- CAMERA ----------------------------
 
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<UCineCameraComponent> Camera;
 	
 	// -------------------------- ENTER & EXIT --------------------------
@@ -96,6 +121,12 @@ protected:
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 110.0f);
 
 private:	
+	// If in reach of a pier, reference to the corresponding Pier, otherwise null
+	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
+	TObjectPtr<AActor> PierInReach;
+	
+	void ExitBoat();
+	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
