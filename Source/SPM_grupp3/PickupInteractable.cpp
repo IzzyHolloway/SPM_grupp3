@@ -40,6 +40,16 @@ void APickupInteractable::Interact()
 	{
 		DialogueManager->ShowMessage(PickupMessage);
 	}
+	
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			PickupSound,
+			GetActorLocation(),
+			PickupSoundVolume
+		);
+	}
 
 	Destroy();
 }

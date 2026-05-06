@@ -71,7 +71,6 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 		return;
 	}
 
-	const bool bHasBackpack = ProgressionManager->HasFlag(PickedUpBackpackFlag);
 	const bool bHasLantern = ProgressionManager->HasFlag(PickedUpLanternFlag);
 	const bool bHasMatches = ProgressionManager->HasFlag(PickedUpMatchesFlag);
 	const bool bHasLitLantern = ProgressionManager->HasFlag(LitLanternFlag);
@@ -97,14 +96,6 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 		return;
 	}
 
-	// The backpack unlocks item collecting / inventory, so now the player should find a light source.
-	if (bHasBackpack)
-	{
-		SetStoryState(EStoryState::Home_FindLight);
-		SetObjective(ProgressionManager, HomeFindLightObjectiveText, HomeFindLightObjectiveID);
-		return;
-	}
-
 	// Default intro state.
 	SetStoryState(EStoryState::Home_Explore);
 	SetObjective(ProgressionManager, HomeExploreObjectiveText, HomeExploreObjectiveID);
@@ -123,6 +114,17 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 	{
 		SetStoryState(EStoryState::Island1_ReadyToLeave);
 		SetObjective(ProgressionManager, ReturnToBoatObjectiveText, ReturnToBoatObjectiveID);
+		
+		if (!ProgressionManager->HasFlag(ShellReceivedFromIsland1Flag))
+		{
+			ProgressionManager->AddFlag(ShellReceivedFromIsland1Flag);
+		}
+
+		if (!ProgressionManager->HasFlag(Island2UnlockedFlag))
+		{
+			ProgressionManager->AddFlag(Island2UnlockedFlag);
+		}
+		
 		return;
 	}
 
