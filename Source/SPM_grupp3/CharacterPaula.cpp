@@ -193,7 +193,9 @@ void ACharacterPaula::Interact(const FInputActionValue& Value)
 	}
 	
 	// ////////////////////////////////////////// ADDED //////////////////////////////////////////
-	if (BoatInReach)
+	UE_LOG(LogTemp, Warning, TEXT("Interacting"));
+	
+	if (BoatInReach != nullptr)
 	{
 		EnterBoat();
 	}
@@ -415,10 +417,29 @@ bool ACharacterAimi::HasRequiredItems() const
 
 void ACharacterPaula::EnterBoat()
 {
-	if (BoatInReach)
+	// Double check that we're in reach of a boat
+	if (BoatInReach == nullptr)
 	{
-		
+		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening!"));
+		return;
 	}
+	
+	UE_LOG(LogTemp, Warning, TEXT("Entering the boat"));
+	
+	// Disable movement
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->DisableMovement();
+	}
+	
+	// Attach character to the boat so it moves with the boat
+	AttachToActor(BoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
+
+	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
+	AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
+	
+	// Possess the boat
+	GetController()->Possess(BoatInReach);
 }
 
 void ACharacterPaula::SetBoatInReach(ABoatFunctionality* Boat)
