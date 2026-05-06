@@ -3,11 +3,11 @@
 
 #include "BoatFunctionality.h"
 
-#include "Camera/CameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
 
 #include "CharacterAimi.h"
+#include "CharacterPaula.h"
 
 // Sets default values
 ABoatFunctionality::ABoatFunctionality()
@@ -25,7 +25,9 @@ ABoatFunctionality::ABoatFunctionality()
 	SpringArm->TargetArmLength = 310.f;
 	SpringArm->bUsePawnControlRotation = true;
 	
-	Camera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("FollowCamera"));
+	Camera->SetFilmbackPresetByName(TEXT("16:9 DSLR"));
+	Camera->SetCurrentFocalLength(18);
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 	
@@ -119,10 +121,10 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 // Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Oh, an overlap began! :D Other actor: %s"), *OtherActor->GetName());
+	// UE_LOG(LogTemp, Warning, TEXT("DEBUG: Oh, an overlap began! :D Other actor: %s"), *OtherActor->GetName());
 	
 	// Check if the overlapping object is the player character
-	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
+	if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(OtherActor))
 	{
 		// Enable entering the boat for the player
 		EnableEnteringBoat(PlayerCharacter);
@@ -130,24 +132,44 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 }
 
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
-void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
+void ABoatFunctionality::EnableEnteringBoat(ACharacterPaula* PlayerCharacter)
 {
-	// TODO: Communicate to the player character that it's possible to enter the boat now and hand over a reference to myself
+	GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("Press E to enter the boat!") // Message
+		);
+	
+	// Hand over a reference to myself to the player character to enable it to enter the boat
+	PlayerCharacter->SetBoatInReach(this);
 }
 
 void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
-	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Oh, an overlap ended! :D Other actor: %s"), *OtherActor->GetName());
-	
 	// Check if the overlapping object is the player character
-	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
+	if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(OtherActor))
 	{
 		// Disable entering the boat for the player
 		DisableEnteringBoat(PlayerCharacter);
 	}
 }
 
-void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
+// Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
+void ABoatFunctionality::DisableEnteringBoat(ACharacterPaula* PlayerCharacter)
+{	
+	GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("Boat is out of reach.") // Message
+		);
+	
+	PlayerCharacter->RemoveBoatInReach();
+}
+
+// Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
+FVector ABoatFunctionality::GetCharacterPositionOffset() const
 {
-	// TODO: Communicate to the player character that it isn't possible anymore to enter the boat and reset reference to boat to null
+	return CharacterPositionOffset;
 }
