@@ -147,6 +147,8 @@ void ACharacterAimi::Move(const FInputActionValue& Value)
 	{
 		return;
 	}
+	
+	ACameraDirector* Direcotr = Cast<ACameraDirector>(UGameplayStatics::GetActorOfClass(GetWorld(), ACameraDirector::StaticClass()));
 
 	// Use camera/controller yaw to make movement relative to the current view.
 	// This makes W feel like "forward on screen" in a normal third-person test camera.
