@@ -32,6 +32,14 @@ enum class EStoryState : uint8
 	Island1_PuzzleSolved UMETA(DisplayName = "Island1 - Puzzle Solved"),
 	Island1_ReadyToLeave UMETA(DisplayName = "Island1 - Ready to Leave"),
 	
+	// Island 2
+	Island2_Explore UMETA(DisplayName = "Island2 - Explore"),
+	Island2_FindGramophoneParts UMETA(DisplayName = "Island2 - Find Gramophone Parts"),
+	Island2_CraftGramophoneMechanism UMETA(DisplayName = "Island2 - Craft Gramophone Mechanism"),
+	Island2_RepairGramophone UMETA(DisplayName = "Island2 - Repair Gramophone"),
+	Island2_PlayGramophone UMETA(DisplayName = "Island2 - Play Gramophone"),
+	Island2_TalkToNPC UMETA(DisplayName = "Island2 - Talk to NPC"),
+	Island2_ReadyToLeave UMETA(DisplayName = "Island2 - Ready to Leave"),
 };
 
 /**
@@ -80,8 +88,8 @@ protected:
 	void UpdateHomeFlow(AProgressionManager* ProgressionManager);
 	
 	/** Intro/Home Flags **/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
-	FName PickedUpBackpackFlag = "PickedUpBackpack";
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
+	//FName PickedUpBackpackFlag = "PickedUpBackpack";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
 	FName PickedUpLanternFlag = "PickedUpLantern";
@@ -123,7 +131,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")
 	FName HomeReadyForBoatObjectiveID = "HomeReadyForBoat";
 	
-	/******************   LEVEL 1    ********************/
+	/******************   ISLAND 1    ********************/
 	
 	// Handles Island 1 flow
 	void UpdateIsland1Flow(AProgressionManager* ProgressionManager);
@@ -139,7 +147,7 @@ protected:
 	FName AllMelodyPiecesFoundFlag = "AllMelodyPiecesFound";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
-	FName Island1PuzzleSolvedFlag = "Island1Puzzle1Solved";
+	FName Island1PuzzleSolvedFlag = "Island1PuzzleSolved";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
 	FName TalkedToListenerAfterPuzzleFlag = "TalkedToListenerAfterPuzzle";
@@ -149,9 +157,14 @@ protected:
 		"NotePiece1",
 		"NotePiece2",
 		"NotePiece3",
-		"NotePiece4",
-		"NotePiece5"
+		"NotePiece4"
 	};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName ShellReceivedFromIsland1Flag = "ShellReceivedFromIsland1";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName Island2UnlockedFlag = "Island2Unlocked";
 	
 	/** Island 1 Objectives **/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")
@@ -185,6 +198,72 @@ protected:
 	//Returns true if at least one melody piece has been collected.
 	bool HasAnyMelodyPiece(AProgressionManager* ProgressionManager) const;
 
+	
+	
+	/******************   ISLAND 2    ********************/
+	
+	// Handles Island 2 flow
+	void UpdateIsland2Flow(AProgressionManager* ProgressionManager);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName ArrivedIsland2Flag = "ArrivedIsland2";
+	
+	/** Island 2 Flags **/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName TalkedToIsland2NPCIntroFlag = "TalkedToIsland2NPCIntro";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island2")
+	FName RustyCrankPickedUpFlag = "RustyCrankPickedUp";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName SmallGearPickedUpFlag = "SmallGearPickedUp";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName AllGramophonePartsFoundFlag = "AllGramophonePartsFound";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName ShellAttachedToGramophoneFlag = "ShellAttachedToGramophone";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName GramophoneMechanismCraftedFlag = "GramophoneMechanismCrafted";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName GramophoneReadyFlag = "GramophoneReady";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName Island2NPCExitedHouseFlag = "Island2NPCExitedHouse";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName TalkedToIsland2NPCAfterMusicFlag = "TalkedToIsland2NPCAfterMusic";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story FLow|Island 2")
+	FName PenReceivedFlag = "PenReceived";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story FLow|Island 2")
+	FName Island2PuzzleSolvedFlag = "Island2PuzzleSolved";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName Island3UnlockedFlag = "Island3Unlocked";
+	
+	/** Island 2 Objectives **/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
+	FText Island2ExploreObjectiveText = FText::FromString("Explore Island 2.");
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
+	FName Island2ExploreObjectiveID = "ExploreIsland2";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
+	FText Island2FindPartsObjectiveText = FText::FromString("Find parts to repair the gramophone.");
+	
+	
+	
+	
+	
+	
+	
+	
+	
+	/******************* UNCOMMENTED CODE! DELETE LATER!! *******************/
 	
 	/*
 	//Returns true if all melody piece flags are currently collected.

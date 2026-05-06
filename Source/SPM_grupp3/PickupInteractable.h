@@ -3,6 +3,7 @@
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
+#include "Sound/SoundBase.h"
 #include "PickupInteractable.generated.h"
 
 /**
@@ -43,4 +44,11 @@ protected:
 	
 	/****** HELPER ******/
 	bool CanPickup(class AProgressionManager* ProgressionManager) const;
+	
+	/****** SOUND *******/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
+	USoundBase* PickupSound = nullptr;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
+	float PickupSoundVolume = 1.0f;
 };
