@@ -43,3 +43,15 @@ public:
 		bIsOnWorkbench = false; // Som standard ligger inget på workbench
 	}
 };
+
+USTRUCT(BlueprintType)
+struct FCraftingRecipe : public FTableRowBase
+{
+	GENERATED_BODY()
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe")
+	TArray<FName> RequiredIngredients;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe")
+	FName ResultItemID;
+};
