@@ -222,6 +222,9 @@ protected:
 	FName AllGramophonePartsFoundFlag = "AllGramophonePartsFound";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName ShellAttachedToGramophoneFlag = "ShellAttachedToGramophone";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
 	FName GramophoneMechanismCraftedFlag = "GramophoneMechanismCrafted";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
@@ -236,16 +239,21 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story FLow|Island 2")
 	FName PenReceivedFlag = "PenReceived";
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story FLow|Island 2")
+	FName Island2PuzzleSolvedFlag = "Island2PuzzleSolved";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
 	FName Island3UnlockedFlag = "Island3Unlocked";
 	
 	/** Island 2 Objectives **/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
 	FText Island2ExploreObjectiveText = FText::FromString("Explore Island 2.");
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
 	FName Island2ExploreObjectiveID = "ExploreIsland2";
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2 Objectives")
+	FText Island2FindPartsObjectiveText = FText::FromString("Find parts to repair the gramophone.");
 	
 	
 	
