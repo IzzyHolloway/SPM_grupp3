@@ -80,8 +80,8 @@ protected:
 	void UpdateHomeFlow(AProgressionManager* ProgressionManager);
 	
 	/** Intro/Home Flags **/
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
-	FName PickedUpBackpackFlag = "PickedUpBackpack";
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
+	//FName PickedUpBackpackFlag = "PickedUpBackpack";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
 	FName PickedUpLanternFlag = "PickedUpLantern";
@@ -123,7 +123,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")
 	FName HomeReadyForBoatObjectiveID = "HomeReadyForBoat";
 	
-	/******************   LEVEL 1    ********************/
+	/******************   ISLAND 1    ********************/
 	
 	// Handles Island 1 flow
 	void UpdateIsland1Flow(AProgressionManager* ProgressionManager);
@@ -139,7 +139,7 @@ protected:
 	FName AllMelodyPiecesFoundFlag = "AllMelodyPiecesFound";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
-	FName Island1PuzzleSolvedFlag = "Island1Puzzle1Solved";
+	FName Island1PuzzleSolvedFlag = "Island1PuzzleSolved";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Flags")
 	FName TalkedToListenerAfterPuzzleFlag = "TalkedToListenerAfterPuzzle";
@@ -149,9 +149,14 @@ protected:
 		"NotePiece1",
 		"NotePiece2",
 		"NotePiece3",
-		"NotePiece4",
-		"NotePiece5"
+		"NotePiece4"
 	};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName ShellReceivedFromIsland1Flag = "ShellReceivedFromIsland1";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName Island2UnlockedFlag = "Island2Unlocked";
 	
 	/** Island 1 Objectives **/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Intro|Objectives")

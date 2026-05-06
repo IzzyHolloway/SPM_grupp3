@@ -114,6 +114,17 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 	{
 		SetStoryState(EStoryState::Island1_ReadyToLeave);
 		SetObjective(ProgressionManager, ReturnToBoatObjectiveText, ReturnToBoatObjectiveID);
+		
+		if (!ProgressionManager->HasFlag(ShellReceivedFromIsland1Flag))
+		{
+			ProgressionManager->AddFlag(ShellReceivedFromIsland1Flag);
+		}
+
+		if (!ProgressionManager->HasFlag(Island2UnlockedFlag))
+		{
+			ProgressionManager->AddFlag(Island2UnlockedFlag);
+		}
+		
 		return;
 	}
 
