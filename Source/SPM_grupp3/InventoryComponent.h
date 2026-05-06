@@ -2,34 +2,32 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "ItemDataTypes.h" 
 #include "InventoryComponent.generated.h"
 
-USTRUCT(BlueprintType)
-struct FCombineRecipe
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ItemA;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ItemB;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ResultItem;
-};
-
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
+class UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
+
 	UInventoryComponent();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	TArray<FCombineRecipe> AllRecipes;
+protected:
+	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Crafting")
-	FName CombineItems(FName InputA, FName InputB);
+public:	
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<FInventorySlot> InventorySlots;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory|Selection")
+	int32 SelectedSlotIndex;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
+	void MoveSelection(int32 Direction);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
+	void ToggleItemOnWorkbench();
 };

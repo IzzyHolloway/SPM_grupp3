@@ -7,7 +7,7 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h" 
 #include "InputActionValue.h"
-#include "Camera/CameraComponent.h"
+#include "CineCameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "BoatFunctionality.generated.h"
 
@@ -49,10 +49,14 @@ public:
 	
 	// Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 	UFUNCTION()
-	void EnableEnteringBoat(ACharacterAimi* PlayerCharacter);
+	void EnableEnteringBoat(ACharacterPaula* PlayerCharacter);
 	//
 	UFUNCTION()
-	void DisableEnteringBoat(ACharacterAimi* PlayerCharacter);
+	void DisableEnteringBoat(ACharacterPaula* PlayerCharacter);
+	
+	// Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
+	UFUNCTION()
+	FVector GetCharacterPositionOffset() const;
 
 protected:
 	// Called when the game starts or when spawned
@@ -79,15 +83,19 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
-	TObjectPtr<UCameraComponent> Camera;
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
+	TObjectPtr<UCineCameraComponent> Camera;
 	
 	// -------------------------- ENTER & EXIT --------------------------
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	TObjectPtr<UBoxComponent> EnterTrigger;
+	
+	// Offset the character should have to the boat's coordinate center when it gets placed in the boat
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
+	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 110.0f);
 
-public:	
+private:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
