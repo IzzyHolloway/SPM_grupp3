@@ -9,6 +9,10 @@
 #include "CharacterAimi.h"
 #include "CharacterPaula.h"
 
+#include "GameFramework/FloatingPawnMovement.h"
+#include "GameFramework/MovementComponent.h"
+#include "Kismet/GameplayStatics.h"
+
 // Sets default values
 ABoatFunctionality::ABoatFunctionality()
 {
@@ -19,10 +23,14 @@ ABoatFunctionality::ABoatFunctionality()
     
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
 	MeshComponent->SetupAttachment(RootComponent);
+	
+	// ----------------------------------- CAMERA -----------------------------------
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
-	SpringArm->TargetArmLength = 310.f;
+	SpringArm->SetRelativeLocation(FVector(-120, 0, 200));
+	SpringArm->SetRelativeRotation(FRotator(0, -5, 0));
+	SpringArm->TargetArmLength = 600.f;
 	SpringArm->bUsePawnControlRotation = true;
 	
 	Camera = CreateDefaultSubobject<UCineCameraComponent>(TEXT("FollowCamera"));
@@ -31,6 +39,10 @@ ABoatFunctionality::ABoatFunctionality()
 	Camera->SetupAttachment(SpringArm, USpringArmComponent::SocketName);
 	Camera->bUsePawnControlRotation = false;
 	
+	// ---------------------------------- MOVEMENT ----------------------------------
+	
+	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
+	MovementComponent->UpdatedComponent = RootComponent;
 	
 	// -------------------------------- ENTER & EXIT --------------------------------
 	
@@ -75,6 +87,8 @@ void ABoatFunctionality::Tick(float DeltaTime)
 
 }
 
+// ---------------------------------- INPUT ----------------------------------
+
 // Called to bind functionality to input
 void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
@@ -85,10 +99,13 @@ void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		
 		// Bind Look Actions
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::Look);
+		
+		// Bind Interact Actions
+		EnhancedInputComponent->BindAction(InteractAction, ETriggerEvent::Started, this, &ABoatFunctionality::Interact);
 	}
 }
 
-// ---------------------------------- INPUT ----------------------------------
+// -------------------------------- MOVEMENT --------------------------------
 
 void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 {
@@ -100,10 +117,10 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 	{
 		// Apply rotation input
 		const FVector RotationInput = GetActorRightVector();
+		AddActorWorldRotation(FRotator(0.f, MovementValue.X * RotationSpeed * GetWorld()->GetDeltaSeconds(), 0.f));
 		
 		// Apply forward and back movement
-		const FVector MovementInput = GetActorForwardVector();
-		AddMovementInput(MovementInput, MovementValue.Y);
+		AddMovementInput(GetActorForwardVector(), MovementValue.Y);
 	}
 }
 
@@ -114,6 +131,16 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 
 	AddControllerYawInput(LookValue.X);
 	AddControllerPitchInput(LookValue.Y);
+}
+
+// --------------------------------- INTERACTION ---------------------------------
+
+void ABoatFunctionality::Interact(const FInputActionValue& Value)
+{
+	if (PierInReach != nullptr)
+	{
+		ExitBoat();
+	}
 }
 
 // -------------------------------- ENTER & EXIT --------------------------------
@@ -172,4 +199,54 @@ void ABoatFunctionality::DisableEnteringBoat(ACharacterPaula* PlayerCharacter)
 FVector ABoatFunctionality::GetCharacterPositionOffset() const
 {
 	return CharacterPositionOffset;
+}
+
+void ABoatFunctionality::ExitBoat()
+{
+	// Double check that we're in reach of a pier
+	if (PierInReach == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
+		return;
+	}
+	
+	// Find the player character among the children
+	TArray<AActor*> AttachedActors;
+	GetAttachedActors(AttachedActors);
+	for (AActor* AttachedActor : AttachedActors)
+	{
+		if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(AttachedActor))
+		{
+			// Detach player character
+			PlayerCharacter->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, true));
+			
+			// Move player character on top of the pier
+			// WARNING: Add character spawn offset specific to the pier later
+			PlayerCharacter->SetActorLocation(PierInReach->GetActorLocation() + FVector(-252,-189,95));
+			
+			// Repossess player character
+			GetController()->Possess(PlayerCharacter);
+			
+			// Fix camera after repossessing player
+			// TODO: WARNING
+			
+			// Sound
+			// TODO: WARNING
+			
+			// Player character found, no need to go through the rest of the attached actors
+			return;
+		}
+	}
+}
+
+void ABoatFunctionality::SetPierInReach(AActor* Pier)
+{
+	PierInReach = Pier;
+	UE_LOG(LogTemp, Warning, TEXT("We have a pier! :D"));
+}
+
+void ABoatFunctionality::RemovePierInReach()
+{
+	PierInReach = nullptr;
+	UE_LOG(LogTemp, Warning, TEXT("No pier anymore :("));
 }
