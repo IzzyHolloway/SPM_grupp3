@@ -417,3 +417,55 @@ void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionM
 		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: Inventory rejected item."));
 	}
 }
+
+
+void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	// Do not add the shell twice.
+	if (ProgressionManager->HasFlag(PenItemAddedToInventoryFlag))
+	{
+		return;
+	}
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: No player character found."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: No InventoryComponent found."));
+		return;
+	}
+
+	const bool bAdded = InventoryComponent->AddItemToInventory(PenItemID, 1);
+
+	if (bAdded)
+	{
+		ProgressionManager->AddFlag(PenItemAddedToInventoryFlag);
+
+		UE_LOG(LogTemp, Warning, TEXT("Pen added to inventory."));
+		
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.f,
+				FColor::Green,
+				TEXT("Pen added to inventory")
+			);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: Inventory rejected item."));
+	}
+}
