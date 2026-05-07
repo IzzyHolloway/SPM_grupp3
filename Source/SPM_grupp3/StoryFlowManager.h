@@ -177,4 +177,15 @@ protected:
 
 	bool AreAllGramophonePartsFound(AProgressionManager* ProgressionManager) const;
 	bool HasAnyGramophonePart(AProgressionManager* ProgressionManager) const;
+	
+	
+	
+	/*** HARD CODED!!!! REMOVE LATER!!!! ***/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName ShellItemAddedToInventoryFlag = "ShellItemAddedToInventory";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
+	FName ShellItemID = "Shell";
+	
+	void TryAddShellToInventory(AProgressionManager* ProgressionManager);
 };

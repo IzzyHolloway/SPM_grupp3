@@ -1,6 +1,8 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "StoryFlowManager.h"
 #include "ProgressionManager.h"
+#include "InventoryComponent.h"
+#include "GameFramework/Character.h"
 #include "Kismet/GameplayStatics.h"
 
 AStoryFlowManager::AStoryFlowManager()
@@ -122,6 +124,8 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(ShellReceivedFromIsland1Flag);
 		}
 
+		TryAddShellToInventory(ProgressionManager);
+		
 		if (!ProgressionManager->HasFlag(Island2UnlockedFlag))
 		{
 			ProgressionManager->AddFlag(Island2UnlockedFlag);
@@ -362,4 +366,57 @@ bool AStoryFlowManager::HasAnyGramophonePart(AProgressionManager* ProgressionMan
 
 	return ProgressionManager->HasFlag(RustyCrankPickedUpFlag)
 		|| ProgressionManager->HasFlag(SmallGearPickedUpFlag);
+}
+
+
+
+void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	// Do not add the shell twice.
+	if (ProgressionManager->HasFlag(ShellItemAddedToInventoryFlag))
+	{
+		return;
+	}
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: No player character found."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: No InventoryComponent found."));
+		return;
+	}
+
+	const bool bAdded = InventoryComponent->AddItemToInventory(ShellItemID, 1);
+
+	if (bAdded)
+	{
+		ProgressionManager->AddFlag(ShellItemAddedToInventoryFlag);
+
+		UE_LOG(LogTemp, Warning, TEXT("Shell added to inventory."));
+		
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.f,
+				FColor::Green,
+				TEXT("Shell added to inventory")
+			);
+		}
+	}
+	else
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: Inventory rejected item."));
+	}
 }
