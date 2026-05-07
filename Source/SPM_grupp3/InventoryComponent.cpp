@@ -1,4 +1,6 @@
 #include "InventoryComponent.h"
+#include "ProgressionManager.h"
+#include "Kismet/GameplayStatics.h"
 #include "ItemDataTypes.h"
 
 UInventoryComponent::UInventoryComponent()
@@ -65,6 +67,8 @@ void UInventoryComponent::CraftItem()
 
     bool bCraftingSuccess = false;
     FName ResultingItem = NAME_None;
+   // ProgressionFlag adding
+   FName ProgressionFlagToAdd = NAME_None;
 
     for (FCraftingRecipe* Recipe : Recipes)
     {
@@ -92,6 +96,8 @@ void UInventoryComponent::CraftItem()
        {
           bCraftingSuccess = true;
           ResultingItem = Recipe->ResultItemID;
+          // ProgressionFlag
+          ProgressionFlagToAdd = Recipe->ProgressionFlagToAdd;
           break; 
        }
     }
@@ -103,6 +109,7 @@ void UInventoryComponent::CraftItem()
           if (Slot.bIsOnWorkbench)
           {
              Slot.ItemID = NAME_None;
+             Slot.ItemQuantity = 0;
              Slot.bIsOnWorkbench = false;
           }
        }
@@ -112,10 +119,26 @@ void UInventoryComponent::CraftItem()
           if (Slot.ItemID == NAME_None)
           {
              Slot.ItemID = ResultingItem;
+             Slot.ItemQuantity = 1;
              break; 
           }
        }
        OnInventoryUpdated.Broadcast();
+       
+       if (!ProgressionFlagToAdd.IsNone())
+       {
+          AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+             UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+          );
+
+          if (ProgressionManager)
+          {
+             ProgressionManager->AddFlag(ProgressionFlagToAdd);
+
+             UE_LOG(LogTemp, Warning, TEXT("Crafting added progression flag: %s"), *ProgressionFlagToAdd.ToString());
+          }
+       }
+       
     }
 }
 
