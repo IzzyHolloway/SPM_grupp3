@@ -8,6 +8,7 @@
 
 #include "CharacterAimi.h"
 #include "CharacterPaula.h"
+#include "Dock.h"
 
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/MovementComponent.h"
@@ -17,7 +18,7 @@
 ABoatFunctionality::ABoatFunctionality()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = true;
+	PrimaryActorTick.bCanEverTick = false;
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     
@@ -84,6 +85,8 @@ void ABoatFunctionality::BeginPlay()
 void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
+	
+	// Careful: Tick is turned off!
 
 }
 
@@ -137,9 +140,18 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 
 void ABoatFunctionality::Interact(const FInputActionValue& Value)
 {
-	if (PierInReach != nullptr)
+	if (DockInReach != nullptr)
 	{
 		ExitBoat();
+	}
+	else
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("There is no dock to tie up at!") // Message
+		);
 	}
 }
 
@@ -192,6 +204,7 @@ void ABoatFunctionality::DisableEnteringBoat(ACharacterPaula* PlayerCharacter)
 			TEXT("Boat is out of reach.") // Message
 		);
 	
+	// Remove the reference to myself in the player character to disable entering the boat
 	PlayerCharacter->RemoveBoatInReach();
 }
 
@@ -204,7 +217,7 @@ FVector ABoatFunctionality::GetCharacterPositionOffset() const
 void ABoatFunctionality::ExitBoat()
 {
 	// Double check that we're in reach of a pier
-	if (PierInReach == nullptr)
+	if (DockInReach == nullptr)
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
@@ -221,8 +234,7 @@ void ABoatFunctionality::ExitBoat()
 			PlayerCharacter->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, true));
 			
 			// Move player character on top of the pier
-			// WARNING: Add character spawn offset specific to the pier later
-			PlayerCharacter->SetActorLocation(PierInReach->GetActorLocation() + FVector(-252,-189,95));
+			PlayerCharacter->SetActorLocation(DockInReach->GetActorLocation() + DockInReach->GetCharacterPositionOffset());
 			
 			// Repossess player character
 			GetController()->Possess(PlayerCharacter);
@@ -239,14 +251,12 @@ void ABoatFunctionality::ExitBoat()
 	}
 }
 
-void ABoatFunctionality::SetPierInReach(AActor* Pier)
+void ABoatFunctionality::SetDockInReach(ADock* Dock)
 {
-	PierInReach = Pier;
-	UE_LOG(LogTemp, Warning, TEXT("We have a pier! :D"));
+	DockInReach = Dock;
 }
 
-void ABoatFunctionality::RemovePierInReach()
+void ABoatFunctionality::RemoveDockInReach()
 {
-	PierInReach = nullptr;
-	UE_LOG(LogTemp, Warning, TEXT("No pier anymore :("));
+	DockInReach = nullptr;
 }
