@@ -11,6 +11,7 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "BoatFunctionality.generated.h"
 
+class ADock;
 // Forward declares
 // Input
 class UInputMappingContext;
@@ -67,9 +68,9 @@ public:
 	
 	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
 	UFUNCTION(BlueprintCallable)
-	void SetPierInReach(AActor* Pier);
+	void SetDockInReach(ADock* Dock);
 	UFUNCTION(BlueprintCallable)
-	void RemovePierInReach();
+	void RemoveDockInReach();
 
 protected:
 	// Called when the game starts or when spawned
@@ -122,8 +123,7 @@ protected:
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
-	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
-	TObjectPtr<AActor> PierInReach;
+	TObjectPtr<ADock> DockInReach;
 	
 	void ExitBoat();
 	

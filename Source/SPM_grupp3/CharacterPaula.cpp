@@ -433,7 +433,8 @@ void ACharacterPaula::EnterBoat()
 	AttachToActor(BoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
 
 	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
-	AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
+	SetActorRelativeLocation(BoatInReach->GetCharacterPositionOffset());
+	// AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
 	
 	// Possess the boat
 	GetController()->Possess(BoatInReach);
