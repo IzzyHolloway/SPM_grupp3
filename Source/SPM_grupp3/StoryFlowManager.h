@@ -35,7 +35,7 @@ enum class EStoryState : uint8
 	Island2_FindGramophoneParts UMETA(DisplayName = "Island 2 - Find Gramophone Parts"),
 	Island2_CraftMechanism UMETA(DisplayName = "Island 2 - Craft Mechanism"),
 	Island2_InstallMechanism UMETA(DisplayName = "Island 2 - Install Mechanism"),
-	Island2_AttachShell UMETA(DisplayName = "Island 2 - Attach Shell"),
+	//Island2_AttachShell UMETA(DisplayName = "Island 2 - Attach Shell"),
 	Island2_PlayGramophone UMETA(DisplayName = "Island 2 - Play Gramophone"),
 	Island2_ReturnToNPC UMETA(DisplayName = "Island 2 - Return to NPC"),
 	Island2_ReadyToLeave UMETA(DisplayName = "Island 2 - Ready to Leave")
@@ -150,10 +150,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Flags")
 	FName GramophoneMechanismInstalledFlag = "GramophoneMechanismInstalled";
-
+/*
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Flags")
 	FName ShellAttachedToGramophoneFlag = "ShellAttachedToGramophone";
-
+*/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Flags")
 	FName GramophoneReadyFlag = "GramophoneReady";
 

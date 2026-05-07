@@ -199,11 +199,12 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 	const bool bTalkedToNPCIntro = ProgressionManager->HasFlag(Island2NPCIntroTalkedFlag);
 	const bool bHasCrank = ProgressionManager->HasFlag(RustyCrankPickedUpFlag);
 	const bool bHasGear = ProgressionManager->HasFlag(SmallGearPickedUpFlag);
-	const bool bAllPartsFound = bHasCrank && bHasGear;
+	const bool bHasShell = ProgressionManager->HasFlag(ShellReceivedFromIsland1Flag);
+
+	const bool bAllCraftIngredientsFound = bHasCrank && bHasGear && bHasShell;
+
 	const bool bMechanismCrafted = ProgressionManager->HasFlag(GramophoneMechanismCraftedFlag);
 	const bool bMechanismInstalled = ProgressionManager->HasFlag(GramophoneMechanismInstalledFlag);
-	const bool bShellAttached = ProgressionManager->HasFlag(ShellAttachedToGramophoneFlag);
-	const bool bGramophoneReady = ProgressionManager->HasFlag(GramophoneReadyFlag);
 	const bool bGramophonePlayed = ProgressionManager->HasFlag(GramophonePlayedFlag);
 	const bool bTalkedAfterMusic = ProgressionManager->HasFlag(TalkedToIsland2NPCAfterMusicFlag);
 	const bool bIsland2Solved = ProgressionManager->HasFlag(Island2PuzzleSolvedFlag);
@@ -251,26 +252,9 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	if (bGramophoneReady)
-	{
-		SetStoryState(EStoryState::Island2_PlayGramophone);
-		return;
-	}
-
-	if (bShellAttached)
-	{
-		if (!ProgressionManager->HasFlag(GramophoneReadyFlag))
-		{
-			ProgressionManager->AddFlag(GramophoneReadyFlag);
-		}
-
-		SetStoryState(EStoryState::Island2_PlayGramophone);
-		return;
-	}
-
 	if (bMechanismInstalled)
 	{
-		SetStoryState(EStoryState::Island2_AttachShell);
+		SetStoryState(EStoryState::Island2_PlayGramophone);
 		return;
 	}
 
@@ -280,7 +264,7 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	if (bAllPartsFound)
+	if (bAllCraftIngredientsFound)
 	{
 		if (!ProgressionManager->HasFlag(AllGramophonePartsFoundFlag))
 		{
@@ -366,7 +350,8 @@ bool AStoryFlowManager::AreAllGramophonePartsFound(AProgressionManager* Progress
 	}
 
 	return ProgressionManager->HasFlag(RustyCrankPickedUpFlag)
-		&& ProgressionManager->HasFlag(SmallGearPickedUpFlag);
+		&& ProgressionManager->HasFlag(SmallGearPickedUpFlag)
+		&& ProgressionManager->HasFlag(ShellReceivedFromIsland1Flag);
 }
 
 bool AStoryFlowManager::HasAnyGramophonePart(AProgressionManager* ProgressionManager) const
