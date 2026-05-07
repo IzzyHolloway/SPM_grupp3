@@ -30,4 +30,13 @@ public:
 	
 	UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
 	void ToggleItemOnWorkbench();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
+	class UDataTable* RecipeDataTable;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void CraftItem();
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
 };
