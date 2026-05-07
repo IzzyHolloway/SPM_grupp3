@@ -187,5 +187,13 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
 	FName ShellItemID = "Shell";
 	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName PenItemAddedToInventoryFlag = "PenItemAddedToInventory";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
+	FName PenItemID = "Pen";
+	
 	void TryAddShellToInventory(AProgressionManager* ProgressionManager);
+	
+	void TryAddPenToInventory(AProgressionManager* ProgressionManager);
 };
