@@ -1,7 +1,7 @@
 #include "GramophoneInteractable.h"
 #include "ProgressionManager.h"
-#include "DialogueManager.h"
 #include "Kismet/GameplayStatics.h"
+#include "DialogueManager.h"
 
 AGramophoneInteractable::AGramophoneInteractable()
 {
@@ -25,7 +25,6 @@ void AGramophoneInteractable::Interact()
 		return;
 	}
 
-	// Already solved / already playing.
 	if (ProgressionManager->HasFlag(GramophonePlayedFlag))
 	{
 		if (DialogueManager)
@@ -35,14 +34,13 @@ void AGramophoneInteractable::Interact()
 		return;
 	}
 
-	// Step 1: Install mechanism.
 	if (!ProgressionManager->HasFlag(MechanismInstalledFlag))
 	{
 		if (!ProgressionManager->HasFlag(RequiredMechanismFlag))
 		{
 			if (DialogueManager)
 			{
-				DialogueManager->ShowMessage(FText::FromString("It needs some kind of mechanism."));
+				DialogueManager->ShowMessage(FText::FromString("It is missing its mechanism."));
 			}
 			return;
 		}
@@ -51,48 +49,16 @@ void AGramophoneInteractable::Interact()
 
 		if (DialogueManager)
 		{
-			DialogueManager->ShowMessage(FText::FromString("I installed the mechanism."));
+			DialogueManager->ShowMessage(FText::FromString("I installed the gramophone mechanism."));
 		}
-
 		return;
 	}
 
-	// Step 2: Attach shell from Island 1.
-	if (!ProgressionManager->HasFlag(ShellAttachedFlag))
+	ProgressionManager->AddFlag(GramophonePlayedFlag);
+	ProgressionManager->AddFlag(Island2NPCExitedHouseFlag);
+
+	if (DialogueManager)
 	{
-		if (!ProgressionManager->HasFlag(RequiredShellFlag))
-		{
-			if (DialogueManager)
-			{
-				DialogueManager->ShowMessage(FText::FromString("The sound needs something to carry it."));
-			}
-			return;
-		}
-
-		ProgressionManager->AddFlag(ShellAttachedFlag);
-		ProgressionManager->AddFlag(GramophoneReadyFlag);
-
-		if (DialogueManager)
-		{
-			DialogueManager->ShowMessage(FText::FromString("The shell fits perfectly."));
-		}
-
-		return;
-	}
-
-	// Step 3: Play gramophone.
-	if (ProgressionManager->HasFlag(GramophoneReadyFlag))
-	{
-		ProgressionManager->AddFlag(GramophonePlayedFlag);
-
-		// Optional: keep this here if StoryFlowManager does not add it.
-		ProgressionManager->AddFlag(Island2NPCExitedHouseFlag);
-
-		if (DialogueManager)
-		{
-			DialogueManager->ShowMessage(FText::FromString("The melody begins to play."));
-		}
-
-		return;
+		DialogueManager->ShowMessage(FText::FromString("The melody begins to play."));
 	}
 }
