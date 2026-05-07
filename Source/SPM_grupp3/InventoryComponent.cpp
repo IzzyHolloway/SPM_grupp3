@@ -1,6 +1,6 @@
+#include "InventoryComponent.h"
 #include "ProgressionManager.h"
 #include "Kismet/GameplayStatics.h"
-#include "InventoryComponent.h"
 #include "ItemDataTypes.h"
 
 UInventoryComponent::UInventoryComponent()
