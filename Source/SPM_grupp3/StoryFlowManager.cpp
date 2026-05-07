@@ -57,6 +57,18 @@ void AStoryFlowManager::UpdateStoryFlow()
 		return;
 	}
 
+	// Global reward check.
+	// This must happen before choosing island flow.
+	if (ProgressionManager->HasFlag(TalkedToListenerAfterPuzzleFlag))
+	{
+		if (!ProgressionManager->HasFlag(ShellReceivedFromIsland1Flag))
+		{
+			ProgressionManager->AddFlag(ShellReceivedFromIsland1Flag);
+		}
+
+		TryAddShellToInventory(ProgressionManager);
+	}
+
 	// Check Island 2 first, because the player may still have ArrivedIsland1 from earlier.
 	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
 	{
