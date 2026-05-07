@@ -26,6 +26,7 @@ void UInventoryComponent::MoveSelection(int32 Direction)
     {
        SelectedSlotIndex = 5;
     }
+   OnInventoryUpdated.Broadcast();
 }
 
 void UInventoryComponent::ToggleItemOnWorkbench()
@@ -37,6 +38,7 @@ void UInventoryComponent::ToggleItemOnWorkbench()
           InventorySlots[SelectedSlotIndex].bIsOnWorkbench = !InventorySlots[SelectedSlotIndex].bIsOnWorkbench;
        }
     }
+   OnInventoryUpdated.Broadcast();
 }
 
 void UInventoryComponent::CraftItem()
@@ -113,6 +115,7 @@ void UInventoryComponent::CraftItem()
              break; 
           }
        }
+       OnInventoryUpdated.Broadcast();
     }
 }
 
@@ -124,6 +127,8 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
       {
          InventorySlots[i].ItemID = ItemToAdd;
          InventorySlots[i].ItemQuantity = Quantity;
+         OnInventoryUpdated.Broadcast();
+
          return true;
       }
    }
