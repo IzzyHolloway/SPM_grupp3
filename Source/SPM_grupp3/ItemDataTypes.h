@@ -54,4 +54,8 @@ struct FCraftingRecipe : public FTableRowBase
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe")
 	FName ResultItemID;
+	
+	// Optional progression flag added when this recipe is crafted successfully.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe|Progression")
+	FName ProgressionFlagToAdd = NAME_None;
 };

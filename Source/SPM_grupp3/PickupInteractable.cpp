@@ -36,34 +36,27 @@ void APickupInteractable::Interact()
 		return;
 	}
 
+	// Add to inventory first.
+	// If inventory is required and adding fails, do NOT collect the pickup.
+	if (bAddToInventory)
+	{
+		const bool bAddedToInventory = TryAddToInventory();
+
+		if (!bAddedToInventory && bRequireInventoryAddSuccess)
+		{
+			if (DialogueManager && !InventoryFailedMessage.IsEmpty())
+			{
+				DialogueManager->ShowMessage(InventoryFailedMessage);
+			}
+
+			return;
+		}
+	}
+
+	// Only set progression flag after successful pickup.
 	if (!ProgressFlagToAdd.IsNone())
 	{
 		ProgressionManager->AddFlag(ProgressFlagToAdd);
-	}
-
-	if (!ItemID.IsNone())
-	{
-		ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-
-		if (PlayerCharacter)
-		{
-			UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
-
-			if (InventoryComponent)
-			{
-				const bool bAddedToInventory = InventoryComponent->AddItemToInventory(ItemID, ItemQuantity);
-
-				if (!bAddedToInventory)
-				{
-					if (DialogueManager)
-					{
-						DialogueManager->ShowMessage(FText::FromString("I can't carry that right now."));
-					}
-
-					return;
-				}
-			}
-		}
 	}
 
 	if (DialogueManager && !PickupMessage.IsEmpty())
