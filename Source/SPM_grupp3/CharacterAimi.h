@@ -30,6 +30,10 @@ public:
 	// Prototype item counter
 	//void AddCollectedItem(int32 Amount = 1);
 	//bool HasRequiredItems() const;
+	
+	//Function for locking or unlocking the charcter movements. Made to be callable in blueprints or other cpp files
+	UFUNCTION(BlueprintCallable)
+	void SetMovementLocked(bool bLock);
 
 protected:
 	virtual void BeginPlay() override;
