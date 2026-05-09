@@ -374,6 +374,24 @@ void ACharacterAimi::DebugCraftLantern()
 	}
 }
 
+//Lock or unlock the movement of the charaacter. Do nothing if we do not have CharcterMovement. 
+void ACharacterAimi::SetMovementLocked(bool bLock)
+{
+	if (!GetCharacterMovement())
+	{
+		return;
+	}
+
+	if (bLock)
+	{
+		GetCharacterMovement()->DisableMovement();
+	}
+	else
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+	}
+}
+
 
 /*
 void ACharacterAimi::AddCollectedItem(int32 Amount)
