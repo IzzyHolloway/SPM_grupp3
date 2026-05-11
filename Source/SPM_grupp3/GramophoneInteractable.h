@@ -6,6 +6,12 @@
 
 class AProgressionManager;
 
+//Zoey Start
+class UAudioComponent;
+class USoundBase;
+class USoundAttenuation;
+//Zoey End
+
 UCLASS()
 class SPM_GRUPP3_API AGramophoneInteractable : public AInteractableActor
 {
@@ -17,6 +23,20 @@ public:
 	virtual void Interact() override;
 
 protected:
+	
+	//Zoey Start
+	virtual void BeginPlay() override;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	UAudioComponent* AudioComponent;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundBase* GramophoneSound;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Audio")
+	USoundAttenuation* AttenuationSettings;
+	//Zoey End
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName RequiredMechanismFlag = "GramophoneMechanismCrafted";
 

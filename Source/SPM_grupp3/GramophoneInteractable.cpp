@@ -3,13 +3,40 @@
 #include "Kismet/GameplayStatics.h"
 #include "DialogueManager.h"
 
+//Zoey Start
+#include "Components/AudioComponent.h"
+#include "Sound/SoundBase.h"
+#include "Sound/SoundAttenuation.h"
+//Zoey End
+
+
 AGramophoneInteractable::AGramophoneInteractable()
 {
 	PrimaryActorTick.bCanEverTick = false;
+	
+	//Zoey Start
+	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+
+	AudioComponent->bAutoActivate = false;
+	AudioComponent->bIsUISound = false;
+	//Zoey End
 }
 
-void AGramophoneInteractable::Interact()
+//Zoey Start
+void AGramophoneInteractable::BeginPlay()
 {
+	Super::BeginPlay();
+
+	if (AudioComponent)
+	{
+		AudioComponent->SetSound(GramophoneSound);
+		AudioComponent->AttenuationSettings = AttenuationSettings;
+	}
+}
+//Zoey End
+
+void AGramophoneInteractable::Interact()
+{	
 	Super::Interact();
 
 	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
@@ -56,6 +83,13 @@ void AGramophoneInteractable::Interact()
 
 	ProgressionManager->AddFlag(GramophonePlayedFlag);
 	ProgressionManager->AddFlag(Island2NPCExitedHouseFlag);
+	
+	//Zoey Start
+	if (AudioComponent && !AudioComponent->IsPlaying())
+	{
+		AudioComponent->Play();
+	}
+	//Zoey End
 
 	if (DialogueManager)
 	{
