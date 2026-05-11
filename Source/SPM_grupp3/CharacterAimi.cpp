@@ -16,6 +16,8 @@
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "ProgressionManager.h"
 
+#include "BoatFunctionality.h"
+
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -186,6 +188,12 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		CurrentInteractable->Interact();
 
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
+	}
+
+	// Enter the boat if close enough
+	if (BoatInReach != nullptr)
+	{
+		EnterBoat();
 	}
 }
 
@@ -417,3 +425,53 @@ bool ACharacterAimi::HasRequiredItems() const
 	return CollectedItemCount >= RequiredItemCount;
 }
 */
+
+void ACharacterAimi::EnterBoat()
+{
+	// Double check that we're in reach of a boat
+	if (BoatInReach == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening! (1)"));
+		return;
+	}
+	
+	// Disable movement
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->DisableMovement();
+	}
+
+	// Double check that we're in reach of a boat
+	if (BoatInReach == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening! (2)"));
+		return;
+	}
+	
+	// Attach character to the boat so it moves with the boat
+	AttachToActor(BoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
+
+	// Double check that we're in reach of a boat
+	if (BoatInReach == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening! (3)"));
+		return;
+	}
+	
+	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
+	SetActorRelativeLocation(BoatInReach->GetCharacterPositionOffset());
+	// AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
+	
+	// Possess the boat
+	GetController()->Possess(BoatInReach);
+}
+
+void ACharacterAimi::SetBoatInReach(ABoatFunctionality* Boat)
+{
+	BoatInReach = Boat;
+}
+
+void ACharacterAimi::RemoveBoatInReach()
+{
+	BoatInReach = nullptr;
+}

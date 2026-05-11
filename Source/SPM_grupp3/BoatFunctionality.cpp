@@ -163,7 +163,7 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 	// UE_LOG(LogTemp, Warning, TEXT("DEBUG: Oh, an overlap began! :D Other actor: %s"), *OtherActor->GetName());
 	
 	// Check if the overlapping object is the player character
-	if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(OtherActor))
+	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
 	{
 		// Enable entering the boat for the player
 		EnableEnteringBoat(PlayerCharacter);
@@ -171,7 +171,7 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 }
 
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
-void ABoatFunctionality::EnableEnteringBoat(ACharacterPaula* PlayerCharacter)
+void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
@@ -187,7 +187,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterPaula* PlayerCharacter)
 void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Check if the overlapping object is the player character
-	if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(OtherActor))
+	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
 	{
 		// Disable entering the boat for the player
 		DisableEnteringBoat(PlayerCharacter);
@@ -195,7 +195,7 @@ void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* Overlappe
 }
 
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
-void ABoatFunctionality::DisableEnteringBoat(ACharacterPaula* PlayerCharacter)
+void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {	
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
@@ -228,10 +228,10 @@ void ABoatFunctionality::ExitBoat()
 	GetAttachedActors(AttachedActors);
 	for (AActor* AttachedActor : AttachedActors)
 	{
-		if (ACharacterPaula* PlayerCharacter = Cast<ACharacterPaula>(AttachedActor))
+		if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(AttachedActor))
 		{
 			// Detach player character
-			PlayerCharacter->DetachFromActor(FDetachmentTransformRules(EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, EDetachmentRule::KeepRelative, true));
+			PlayerCharacter->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			
 			// Move player character on top of the pier
 			PlayerCharacter->SetActorLocation(DockInReach->GetActorLocation() + DockInReach->GetCharacterPositionOffset());
