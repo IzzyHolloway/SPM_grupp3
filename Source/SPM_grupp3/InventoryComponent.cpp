@@ -23,13 +23,11 @@ bool UInventoryComponent::IsSlotOccupied(int32 SlotIndex) const
 
 void UInventoryComponent::MoveSelection(int32 Direction)
 {
-    // Kept for back-compat. Forward to grid-aware version.
     MoveSelectionGrid(Direction, 0);
 }
 
 void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
-    // Collect occupied slots in index order.
     TArray<int32> Occupied;
     for (int32 i = 0; i < InventorySlots.Num(); ++i)
     {
@@ -37,14 +35,13 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
     }
     if (Occupied.Num() == 0) return;
 
-    // If the current selection is on an empty slot, snap to the first occupied one.
     if (!Occupied.Contains(SelectedSlotIndex))
     {
         SelectedSlotIndex = Occupied[0];
         OnInventoryUpdated.Broadcast();
         return;
     }
-    if (Occupied.Num() == 1) return; // nothing else to move to
+    if (Occupied.Num() == 1) return; 
 
     const int32 Cols = FMath::Max(1, GridColumns);
     const int32 Rows = FMath::DivideAndRoundUp(InventorySlots.Num(), Cols);
@@ -55,26 +52,22 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 
     if (DeltaX != 0 && DeltaY == 0)
     {
-        // Horizontal: cycle through occupied slots in order, wrapping.
         const int32 N = Occupied.Num();
         const int32 Idx = Occupied.IndexOfByKey(SelectedSlotIndex);
         Best = Occupied[(Idx + DeltaX + N) % N];
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        // Vertical: scan rows in the requested direction, prefer the same column.
         for (int32 Step = 1; Step <= Rows; ++Step)
         {
             const int32 TargetRow = (CurRow + DeltaY * Step + Rows) % Rows;
 
-            // 1) Same column in target row.
             const int32 SameCol = TargetRow * Cols + CurCol;
             if (SameCol < InventorySlots.Num() && InventorySlots[SameCol].ItemID != NAME_None)
             {
                 Best = SameCol; break;
             }
 
-            // 2) Any occupied slot in that row.
             bool bFound = false;
             for (int32 Col = 0; Col < Cols; ++Col)
             {
@@ -99,7 +92,7 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 
 void UInventoryComponent::SetSelectedSlot(int32 NewIndex)
 {
-    if (!IsSlotOccupied(NewIndex)) return; // empty slots aren't selectable
+    if (!IsSlotOccupied(NewIndex)) return; 
     SelectedSlotIndex = NewIndex;
     OnInventoryUpdated.Broadcast();
 }
@@ -185,7 +178,6 @@ void UInventoryComponent::CraftItem()
 
     if (!bSuccess) return;
 
-    // Consume ingredients.
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.bIsOnWorkbench)
@@ -196,19 +188,17 @@ void UInventoryComponent::CraftItem()
         }
     }
 
-    // Place result in first empty slot — explicitly NOT on workbench.
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.ItemID == NAME_None)
         {
             Slot.ItemID = ResultingItem;
             Slot.ItemQuantity = 1;
-            Slot.bIsOnWorkbench = false; // belt-and-braces
+            Slot.bIsOnWorkbench = false; 
             break;
         }
     }
 
-    // Reselect — old index might now be empty.
     SelectFirstAvailableSlot();
     OnInventoryUpdated.Broadcast();
 
