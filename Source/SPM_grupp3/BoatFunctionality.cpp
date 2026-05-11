@@ -18,7 +18,7 @@
 ABoatFunctionality::ABoatFunctionality()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     
@@ -83,7 +83,8 @@ void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 	
-	// Careful: Tick is turned off!
+	// boatSound - start
+	// TODO: Sound stuff
 
 }
 
@@ -170,6 +171,9 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
+	// Adding progression flags, checking if the player is ready to board
+	// TODO: Progression stuff
+	
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
@@ -219,6 +223,8 @@ void ABoatFunctionality::ExitBoat()
 		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
 	}
+
+	// TODO: Camera stuff
 	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
@@ -237,10 +243,10 @@ void ABoatFunctionality::ExitBoat()
 			GetController()->Possess(PlayerCharacter);
 			
 			// Fix camera after repossessing player
-			// TODO: WARNING
+			// TODO: Camera stuff
 			
-			// Sound
-			// TODO: WARNING
+			// BoatSound-stop
+			// TODO: Sound stuff
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;
