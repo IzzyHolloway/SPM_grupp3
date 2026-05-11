@@ -512,7 +512,7 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 		return;
 	}
 
-	// Do not add the shell twice.
+	// Do not add the pen twice.
 	if (ProgressionManager->HasFlag(PenItemAddedToInventoryFlag))
 	{
 		return;
