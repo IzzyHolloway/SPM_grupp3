@@ -414,6 +414,8 @@ bool AStoryFlowManager::HasAnyMelodyPiece(AProgressionManager* ProgressionManage
 
 	for (const FName& Flag : MelodyPieceFlags)
 	{
+		UE_LOG(LogTemp, Warning, TEXT("Checking melody flag: %s"), *Flag.ToString());
+
 		if (Flag.IsNone())
 		{
 			continue;
@@ -421,10 +423,12 @@ bool AStoryFlowManager::HasAnyMelodyPiece(AProgressionManager* ProgressionManage
 
 		if (ProgressionManager->HasFlag(Flag))
 		{
+			UE_LOG(LogTemp, Warning, TEXT("Found melody piece flag: %s"), *Flag.ToString());
 			return true;
 		}
 	}
 
+	UE_LOG(LogTemp, Warning, TEXT("No melody piece flags found."));
 	return false;
 }
 
