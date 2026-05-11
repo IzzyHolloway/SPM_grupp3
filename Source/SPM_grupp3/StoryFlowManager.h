@@ -38,7 +38,17 @@ enum class EStoryState : uint8
 	//Island2_AttachShell UMETA(DisplayName = "Island 2 - Attach Shell"),
 	Island2_PlayGramophone UMETA(DisplayName = "Island 2 - Play Gramophone"),
 	Island2_ReturnToNPC UMETA(DisplayName = "Island 2 - Return to NPC"),
-	Island2_ReadyToLeave UMETA(DisplayName = "Island 2 - Ready to Leave")
+	Island2_ReadyToLeave UMETA(DisplayName = "Island 2 - Ready to Leave"),
+	
+	// Island 3
+	Island3_TalkToNPC UMETA(DisplayName = "Island 3 - Talk to NPC "),
+	Island3_FindPaper UMETA(DisplayName = "Island 3 - Find Paper"),
+	Island3_CraftNote UMETA(DisplayName = "Island 3 - Craft Drawing"),
+	Island3_GiveNoteToNPC UMETA(DisplayName = "Island 3 - Give the drawing to NPC"),
+	Island3_EnterHouse UMETA(DisplayName = "Island 3 - Enter the house"),
+	Island3_OpenPadlock UMETA(DisplayName = "Island 3 - Open the Padlock"),
+	Island3_OpenGate UMETA(DisplayName = "Island 3 - Open the gate to Level2"),
+	Island3_ReadyToLeave UMETA(DisplayName = "Island 3 - Leave Level1"),
 };
 
 /**
@@ -178,6 +188,36 @@ protected:
 	bool AreAllGramophonePartsFound(AProgressionManager* ProgressionManager) const;
 	bool HasAnyGramophonePart(AProgressionManager* ProgressionManager) const;
 	
+	/****************** ISLAND 3 ********************/
+	
+	void UpdateIsland3Flow(AProgressionManager* ProgressionManager);
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName ArrivedIsland3Flag = "ArrivedIsland3";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3NPCIntroTalkedFlag = "Island3NPCIntroTalked";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3PaperPickedUpFlag = "Island3PaperPickedUp";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3NoteCraftedFlag = "Island3NoteCrafted";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3NoteGivenToNPCFlag = "Island3NoteGivenToNPC";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3HouseAccessAllowedFlag = "Island3HouseAccessAllowed";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3PadlockSolvedFlag = "Island3PadlockSolved";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3GateOpenedFlag = "Island3GateOpened";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3PuzzleSolvedFlag = "Island3PuzzleSolved";
 	
 	
 	/*** HARD CODED!!!! REMOVE LATER!!!! ***/
