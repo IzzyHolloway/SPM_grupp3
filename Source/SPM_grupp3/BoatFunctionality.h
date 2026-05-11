@@ -78,6 +78,9 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void FixCameraAfterRepossessingPlayer();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void BoatSoundStop();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;

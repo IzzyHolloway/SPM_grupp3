@@ -84,9 +84,6 @@ void ABoatFunctionality::BeginPlay()
 void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	// boatSound - start
-	// TODO: Sound stuff
 
 }
 
@@ -256,10 +253,6 @@ void ABoatFunctionality::ExitBoat()
 	}
 
 	// Set camera position
-	if (!Camera)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Camera is actually null"));
-	}
 	SetCameraPositionWhenExiting(Camera);
 	
 	// Find the player character among the children
@@ -286,7 +279,7 @@ void ABoatFunctionality::ExitBoat()
 			FixCameraAfterRepossessingPlayer();
 			
 			// BoatSound-stop
-			// TODO: Sound stuff
+			BoatSoundStop();
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;
