@@ -2,34 +2,45 @@
 
 #include "CoreMinimal.h"
 #include "Components/ActorComponent.h"
+#include "ItemDataTypes.h" 
 #include "InventoryComponent.generated.h"
-
-USTRUCT(BlueprintType)
-struct FCombineRecipe
-{
-	GENERATED_BODY()
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ItemA;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ItemB;
-
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	FName ResultItem;
-};
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 
 UCLASS( ClassGroup=(Custom), meta=(BlueprintSpawnableComponent) )
-class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
+class UInventoryComponent : public UActorComponent
 {
 	GENERATED_BODY()
 
 public:	
+
 	UInventoryComponent();
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
-	TArray<FCombineRecipe> AllRecipes;
+protected:
+	virtual void BeginPlay() override;
 
-	UFUNCTION(BlueprintCallable, Category = "Crafting")
-	FName CombineItems(FName InputA, FName InputB);
+public:	
+public:
+	UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+	FOnInventoryUpdated OnInventoryUpdated;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
+	TArray<FInventorySlot> InventorySlots;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Inventory|Selection")
+	int32 SelectedSlotIndex;
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
+	void MoveSelection(int32 Direction);
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
+	void ToggleItemOnWorkbench();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
+	class UDataTable* RecipeDataTable;
+
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	void CraftItem();
+	
+	UFUNCTION(BlueprintCallable, Category = "Inventory")
+	bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
 };

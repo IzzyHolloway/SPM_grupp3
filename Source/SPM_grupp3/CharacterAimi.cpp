@@ -147,7 +147,7 @@ void ACharacterAimi::Move(const FInputActionValue& Value)
 	{
 		return;
 	}
-
+	
 	// Use camera/controller yaw to make movement relative to the current view.
 	// This makes W feel like "forward on screen" in a normal third-person test camera.
 	const FRotator Rotation = Controller->GetControlRotation();
@@ -371,6 +371,24 @@ void ACharacterAimi::DebugCraftLantern()
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: LitLantern added"));
+	}
+}
+
+//Lock or unlock the movement of the charaacter. Do nothing if we do not have CharcterMovement. 
+void ACharacterAimi::SetMovementLocked(bool bLock)
+{
+	if (!GetCharacterMovement())
+	{
+		return;
+	}
+
+	if (bLock)
+	{
+		GetCharacterMovement()->DisableMovement();
+	}
+	else
+	{
+		GetCharacterMovement()->SetMovementMode(MOVE_Walking);
 	}
 }
 

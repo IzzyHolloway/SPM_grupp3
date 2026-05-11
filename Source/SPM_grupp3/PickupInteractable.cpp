@@ -1,10 +1,15 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 
 #include "PickupInteractable.h"
-#include "DialogueManager.h"
-#include "ProgressionManager.h"
-#include "Kismet/GameplayStatics.h"
 
+#include "DialogueManager.h"
+#include "InventoryComponent.h"
+#include "ProgressionManager.h"
+
+#include "Engine/Engine.h"
+
+#include "GameFramework/Character.h"
+#include "Kismet/GameplayStatics.h"
 
 void APickupInteractable::Interact()
 {
@@ -31,6 +36,24 @@ void APickupInteractable::Interact()
 		return;
 	}
 
+	// Add to inventory first.
+	// If inventory is required and adding fails, do NOT collect the pickup.
+	if (bAddToInventory)
+	{
+		const bool bAddedToInventory = TryAddToInventory();
+
+		if (!bAddedToInventory && bRequireInventoryAddSuccess)
+		{
+			if (DialogueManager && !InventoryFailedMessage.IsEmpty())
+			{
+				DialogueManager->ShowMessage(InventoryFailedMessage);
+			}
+
+			return;
+		}
+	}
+
+	// Only set progression flag after successful pickup.
 	if (!ProgressFlagToAdd.IsNone())
 	{
 		ProgressionManager->AddFlag(ProgressFlagToAdd);
@@ -40,10 +63,19 @@ void APickupInteractable::Interact()
 	{
 		DialogueManager->ShowMessage(PickupMessage);
 	}
+	
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(
+			this,
+			PickupSound,
+			GetActorLocation(),
+			PickupSoundVolume
+		);
+	}
 
 	Destroy();
 }
-
 
 bool APickupInteractable::CanPickup(AProgressionManager* ProgressionManager) const
 {
@@ -66,4 +98,52 @@ bool APickupInteractable::CanPickup(AProgressionManager* ProgressionManager) con
 	}
 
 	return true;
+}
+
+
+
+bool APickupInteractable::TryAddToInventory() const
+{
+	if (ItemID.IsNone() || ItemID == "None" || ItemQuantity <= 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory add failed: Invalid ItemID or quantity."));
+		return false;
+	}
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory add failed: No player character found."));
+		return false;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Inventory add failed: No InventoryComponent found on player."));
+		return false;
+	}
+
+	const bool bSuccess = InventoryComponent->AddItemToInventory(ItemID, ItemQuantity);
+
+	UE_LOG(LogTemp, Warning, TEXT("Tried to add item to inventory: %s x%d. Success: %s"),
+		*ItemID.ToString(),
+		ItemQuantity,
+		bSuccess ? TEXT("true") : TEXT("false")
+	);
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			3.f,
+			FColor::Green,
+			FString::Printf(TEXT("Inventory add: %s x%d = %s"),
+				*ItemID.ToString(),
+				ItemQuantity,
+				bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"))
+		);
+	}
+
+	return bSuccess;
 }
