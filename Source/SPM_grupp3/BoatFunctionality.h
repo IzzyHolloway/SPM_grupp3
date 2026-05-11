@@ -118,8 +118,8 @@ protected:
 	TObjectPtr<UBoxComponent> EnterTrigger;
 	
 	// Offset the character should have to the boat's coordinate center when it gets placed in the boat
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 110.0f);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enter & Exit")
+	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
