@@ -84,9 +84,6 @@ void ABoatFunctionality::BeginPlay()
 void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	// boatSound - start
-	// TODO: Sound stuff
 
 }
 
@@ -173,9 +170,6 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
-	// Adding progression flags, checking if the player is ready to board
-	// TODO: Progression stuff
-	
 	if (!PlayerCharacter)
 	{
 		return;
@@ -258,7 +252,8 @@ void ABoatFunctionality::ExitBoat()
 		return;
 	}
 
-	// TODO: Camera stuff
+	// Set camera position
+	SetCameraPositionWhenExiting(Camera);
 	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
@@ -277,13 +272,14 @@ void ABoatFunctionality::ExitBoat()
 			DockInReach->ApplyDockingProgressionFlag();
 			
 			// Repossess player character
-			GetController()->Possess(PlayerCharacter);
+			AController* PlayerController = GetController();
+			PlayerController->Possess(PlayerCharacter);
 			
 			// Fix camera after repossessing player
-			// TODO: Camera stuff
+			FixCameraAfterRepossessingPlayer();
 			
 			// BoatSound-stop
-			// TODO: Sound stuff
+			BoatSoundStop();
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;

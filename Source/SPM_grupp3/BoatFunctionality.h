@@ -72,6 +72,15 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveDockInReach();
 
+	UFUNCTION(BlueprintImplementableEvent)
+	void SetCameraPositionWhenExiting(UCineCameraComponent* CameraComponent);
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void FixCameraAfterRepossessingPlayer();
+
+	UFUNCTION(BlueprintImplementableEvent)
+	void BoatSoundStop();
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -109,7 +118,7 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
 	TObjectPtr<USpringArmComponent> SpringArm;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Camera")
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Camera")
 	TObjectPtr<UCineCameraComponent> Camera;
 	
 	// -------------------------- ENTER & EXIT --------------------------
