@@ -12,20 +12,28 @@ ANoteInteractable::ANoteInteractable()
 
 void ANoteInteractable::Interact()
 {
-	if (NoteWidget) return;
+	if (NoteWidget && NoteWidget->IsInViewport()) 
+	{
+		return;
+	}
+
 	if (!NoteWidgetClass) return;
-	
-	UNoteWidgetBase* Widget = CreateWidget<UNoteWidgetBase>(GetWorld()->GetFirstPlayerController(), NoteWidgetClass);
-	
+    
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC) return;
+
+	UNoteWidgetBase* Widget = CreateWidget<UNoteWidgetBase>(PC, NoteWidgetClass);
+    
 	if (!Widget) return;
-	
+    
 	Widget->SetNoteContent(NoteTitle, NoteText);
 	Widget->AddToViewport();
+    
 	NoteWidget = Widget;
-	
+    
 	LockPlayerControls(NoteWidget);
+    
 	Widget->OnNoteClosed.AddDynamic(this, &ANoteInteractable::OnWidgetClosed);
-	
 }
 
 void ANoteInteractable::LockPlayerControls(UNoteWidgetBase* Widget)

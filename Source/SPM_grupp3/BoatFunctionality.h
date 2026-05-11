@@ -57,10 +57,10 @@ public:
 	
 	// Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 	UFUNCTION()
-	void EnableEnteringBoat(ACharacterPaula* PlayerCharacter);
+	void EnableEnteringBoat(ACharacterAimi* PlayerCharacter);
 	// Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 	UFUNCTION()
-	void DisableEnteringBoat(ACharacterPaula* PlayerCharacter);
+	void DisableEnteringBoat(ACharacterAimi* PlayerCharacter);
 	
 	// Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
 	UFUNCTION()
@@ -118,8 +118,8 @@ protected:
 	TObjectPtr<UBoxComponent> EnterTrigger;
 	
 	// Offset the character should have to the boat's coordinate center when it gets placed in the boat
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 110.0f);
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enter & Exit")
+	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
