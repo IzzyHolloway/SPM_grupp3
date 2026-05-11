@@ -23,7 +23,11 @@ void AStoryFlowManager::BeginPlay()
 		return;
 	}
 
-	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
+	if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
+	{
+		SetStoryState(EStoryState::Island3_TalkToNPC);
+	}
+	else if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
 	{
 		SetStoryState(EStoryState::Island2_TalkToNPCInside);
 	}
@@ -68,7 +72,14 @@ void AStoryFlowManager::UpdateStoryFlow()
 
 		TryAddShellToInventory(ProgressionManager);
 	}
-
+	
+	// Check Island 3 first, because earlier island flags may still exist.
+	if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
+	{
+		UpdateIsland3Flow(ProgressionManager);
+		return;
+	}
+	
 	// Check Island 2 first, because the player may still have ArrivedIsland1 from earlier.
 	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
 	{
@@ -227,6 +238,8 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(PenReceivedFromIsland2NPCFlag);
 		}
 
+		TryAddPenToInventory(ProgressionManager);
+
 		if (!ProgressionManager->HasFlag(Island2PuzzleSolvedFlag))
 		{
 			ProgressionManager->AddFlag(Island2PuzzleSolvedFlag);
@@ -282,6 +295,79 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 	}
 
 	SetStoryState(EStoryState::Island2_TalkToNPCInside);
+}
+
+void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	const bool bTalkedToNPC = ProgressionManager->HasFlag(Island3NPCIntroTalkedFlag);
+	const bool bHasPaper = ProgressionManager->HasFlag(Island3PaperPickedUpFlag);
+	const bool bHasPen = ProgressionManager->HasFlag(PenItemAddedToInventoryFlag);
+	const bool bNoteCrafted = ProgressionManager->HasFlag(Island3NoteCraftedFlag);
+	//const bool bNoteGivenToNPC = ProgressionManager->HasFlag(Island3NoteGivenToNPCFlag);
+	const bool bHouseAccessAllowed = ProgressionManager->HasFlag(Island3HouseAccessAllowedFlag);
+	const bool bPadlockSolved = ProgressionManager->HasFlag(Island3PadlockSolvedFlag);
+	const bool bGateOpened = ProgressionManager->HasFlag(Island3GateOpenedFlag);
+
+	if (bGateOpened)
+	{
+		if (!ProgressionManager->HasFlag(Island3PuzzleSolvedFlag))
+		{
+			ProgressionManager->AddFlag(Island3PuzzleSolvedFlag);
+		}
+
+		SetStoryState(EStoryState::Island3_ReadyToLeave);
+		return;
+	}
+
+	if (bPadlockSolved)
+	{
+		SetStoryState(EStoryState::Island3_OpenGate);
+		return;
+	}
+
+	if (bHouseAccessAllowed)
+	{
+		SetStoryState(EStoryState::Island3_OpenPadlock);
+		return;
+	}
+
+	/*
+	if (bNoteGivenToNPC)
+	{
+		if (!ProgressionManager->HasFlag(Island3HouseAccessAllowedFlag))
+		{
+			ProgressionManager->AddFlag(Island3HouseAccessAllowedFlag);
+		}
+
+		SetStoryState(EStoryState::Island3_EnterHouse);
+		return;
+	}
+	*/
+
+	if (bNoteCrafted)
+	{
+		SetStoryState(EStoryState::Island3_GiveNoteToNPC);
+		return;
+	}
+
+	if (bTalkedToNPC && bHasPaper && bHasPen)
+	{
+		SetStoryState(EStoryState::Island3_CraftNote);
+		return;
+	}
+
+	if (bTalkedToNPC)
+	{
+		SetStoryState(EStoryState::Island3_FindPaper);
+		return;
+	}
+
+	SetStoryState(EStoryState::Island3_TalkToNPC);
 }
 
 void AStoryFlowManager::SetStoryState(EStoryState NewState)
@@ -426,7 +512,7 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 		return;
 	}
 
-	// Do not add the shell twice.
+	// Do not add the pen twice.
 	if (ProgressionManager->HasFlag(PenItemAddedToInventoryFlag))
 	{
 		return;

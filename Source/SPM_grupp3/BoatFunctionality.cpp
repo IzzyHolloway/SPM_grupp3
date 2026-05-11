@@ -6,6 +6,8 @@
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
 
+#include "ProgressionManager.h"
+
 #include "CharacterAimi.h"
 #include "CharacterPaula.h"
 #include "Dock.h"
@@ -18,7 +20,7 @@
 ABoatFunctionality::ABoatFunctionality()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
-	PrimaryActorTick.bCanEverTick = false;
+	PrimaryActorTick.bCanEverTick = true;
 	
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     
@@ -82,8 +84,6 @@ void ABoatFunctionality::BeginPlay()
 void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
-	
-	// Careful: Tick is turned off!
 
 }
 
@@ -170,6 +170,38 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
+	if (!PlayerCharacter)
+	{
+		return;
+	} 
+	
+	// Find ProgressionManager in level
+	// TO be able to board the boat, it is enough to see if the player has lit the lantern
+	
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass()));
+
+	if (!ProgressionManager)
+	{
+		// Boat coult not find ProgressionManager
+		
+		UE_LOG(LogTemp, Warning, TEXT("Boat couldn't find ProgressionManager"));
+		
+		PlayerCharacter->RemoveBoatInReach();
+		return;
+	}
+	
+	// Player only allowed to use boat after lantern is lit
+	if (!ProgressionManager->HasFlag(TEXT("LitLantern")))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("LitLantern is not active. Player needs to craft a lit lantern"));
+		
+		PlayerCharacter->RemoveBoatInReach();
+		return;
+	}
+	
+	// If the LitLantern flag is true, the player is allowed to enter the boat
+	PlayerCharacter->SetBoatInReach(this);
+	
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
@@ -219,6 +251,9 @@ void ABoatFunctionality::ExitBoat()
 		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
 	}
+
+	// Set camera position
+	SetCameraPositionWhenExiting(Camera);
 	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
@@ -233,14 +268,18 @@ void ABoatFunctionality::ExitBoat()
 			// Move player character on top of the pier
 			PlayerCharacter->SetActorLocation(DockInReach->GetActorLocation() + DockInReach->GetCharacterPositionOffset());
 			
+			// Add the dock's arrival/progression flag, for example ArrivedIsland1, ArrivedIsland2, etc.
+			DockInReach->ApplyDockingProgressionFlag();
+			
 			// Repossess player character
-			GetController()->Possess(PlayerCharacter);
+			AController* PlayerController = GetController();
+			PlayerController->Possess(PlayerCharacter);
 			
 			// Fix camera after repossessing player
-			// TODO: WARNING
+			FixCameraAfterRepossessingPlayer();
 			
-			// Sound
-			// TODO: WARNING
+			// BoatSound-stop
+			BoatSoundStop();
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;
