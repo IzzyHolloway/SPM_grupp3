@@ -204,8 +204,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3NoteCraftedFlag = "Island3NoteCrafted";
 
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
-	FName Island3NoteGivenToNPCFlag = "Island3NoteGivenToNPC";
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	//FName Island3NoteGivenToNPCFlag = "Island3NoteGivenToNPC";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3HouseAccessAllowedFlag = "Island3HouseAccessAllowed";

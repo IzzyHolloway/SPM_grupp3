@@ -80,12 +80,6 @@ void AStoryFlowManager::UpdateStoryFlow()
 		return;
 	}
 	
-	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
-	{
-		UpdateIsland2Flow(ProgressionManager);
-		return;
-	}
-
 	// Check Island 2 first, because the player may still have ArrivedIsland1 from earlier.
 	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
 	{
@@ -314,7 +308,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 	const bool bHasPaper = ProgressionManager->HasFlag(Island3PaperPickedUpFlag);
 	const bool bHasPen = ProgressionManager->HasFlag(PenItemAddedToInventoryFlag);
 	const bool bNoteCrafted = ProgressionManager->HasFlag(Island3NoteCraftedFlag);
-	const bool bNoteGivenToNPC = ProgressionManager->HasFlag(Island3NoteGivenToNPCFlag);
+	//const bool bNoteGivenToNPC = ProgressionManager->HasFlag(Island3NoteGivenToNPCFlag);
 	const bool bHouseAccessAllowed = ProgressionManager->HasFlag(Island3HouseAccessAllowedFlag);
 	const bool bPadlockSolved = ProgressionManager->HasFlag(Island3PadlockSolvedFlag);
 	const bool bGateOpened = ProgressionManager->HasFlag(Island3GateOpenedFlag);
@@ -342,6 +336,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
+	/*
 	if (bNoteGivenToNPC)
 	{
 		if (!ProgressionManager->HasFlag(Island3HouseAccessAllowedFlag))
@@ -352,6 +347,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 		SetStoryState(EStoryState::Island3_EnterHouse);
 		return;
 	}
+	*/
 
 	if (bNoteCrafted)
 	{
