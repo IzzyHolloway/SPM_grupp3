@@ -76,9 +76,6 @@ void ABoatFunctionality::BeginPlay()
 		}
 	}
 	
-	// Display a debug message for five seconds. 
-	GEngine->AddOnScreenDebugMessage(-1, 5.0f, FColor::Red, TEXT("DEBUG: We are using BoatFunctionality."));
-	
 }
 
 // Called every frame
