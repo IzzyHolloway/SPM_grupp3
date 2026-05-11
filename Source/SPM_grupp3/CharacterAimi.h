@@ -10,6 +10,7 @@ class UInputAction;
 class UCameraComponent;
 class USpringArmComponent;
 class AInteractableActor;
+class ABoatFunctionality;
 
 /*
  * Main player character used for movement, interaction
@@ -25,7 +26,12 @@ class SPM_GRUPP3_API ACharacterAimi : public ACharacter
 
 public:
 	ACharacterAimi();
+
+	UFUNCTION()
+	void SetBoatInReach(ABoatFunctionality* Boat);
 	
+	UFUNCTION()
+	void RemoveBoatInReach();
 
 	// Prototype item counter
 	//void AddCollectedItem(int32 Amount = 1);
@@ -119,4 +125,10 @@ protected:
 	int32 RequiredItemCount = 2;
 	
 	*/
+
+	private:
+		// If in reach of boat, reference to the corresponding BoatFunctionality, otherwise null
+		TObjectPtr<ABoatFunctionality> BoatInReach;
+		
+		void EnterBoat();
 };
