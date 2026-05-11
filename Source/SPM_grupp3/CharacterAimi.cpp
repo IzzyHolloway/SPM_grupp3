@@ -16,6 +16,8 @@
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "ProgressionManager.h"
 
+#include "BoatFunctionality.h"
+
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
@@ -186,6 +188,12 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		CurrentInteractable->Interact();
 
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
+	}
+
+	// Enter the boat if close enough
+	if (BoatInReach != nullptr)
+	{
+		EnterBoat();
 	}
 }
 
@@ -417,3 +425,42 @@ bool ACharacterAimi::HasRequiredItems() const
 	return CollectedItemCount >= RequiredItemCount;
 }
 */
+
+void ACharacterAimi::EnterBoat()
+{
+	// Double check that we're in reach of a boat
+	if (BoatInReach == nullptr)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("EnterBoat() was called without a boat in reach. This shouldn't be happening!"));
+		return;
+	}
+
+	// Save the boat in reach in case the character leaves its trigger zone while being moved on the boat
+	ABoatFunctionality* CurrentBoatInReach = BoatInReach;
+	
+	// Disable movement
+	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
+	{
+		MovementComponent->DisableMovement();
+	}
+	
+	// Attach character to the boat so it moves with the boat
+	AttachToActor(CurrentBoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
+	
+	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
+	SetActorRelativeLocation(CurrentBoatInReach->GetCharacterPositionOffset());
+	// AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
+	
+	// Possess the boat
+	GetController()->Possess(CurrentBoatInReach);
+}
+
+void ACharacterAimi::SetBoatInReach(ABoatFunctionality* Boat)
+{
+	BoatInReach = Boat;
+}
+
+void ACharacterAimi::RemoveBoatInReach()
+{
+	BoatInReach = nullptr;
+}

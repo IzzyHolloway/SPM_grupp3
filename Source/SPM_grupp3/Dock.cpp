@@ -94,6 +94,9 @@ FVector ADock::GetCharacterPositionOffset() const
 
 void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 {
+	// Progression Flag added after solving Intro Puzzle and jumping off at Island1
+	// TODO: Progression stuff
+	
 	// Hand over a reference to myself to the boat to enable exiting it
 	Boat->SetDockInReach(this);
 }
