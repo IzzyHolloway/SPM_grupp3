@@ -68,12 +68,15 @@ void ADock::OnExitBoatTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
 	{
+		/*
+		 * Only for debugging:
 		GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
 			FColor::White,     // Text color
 			TEXT("Press E to exit the boat!") // Message
 		);
+		*/
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -145,12 +148,15 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 	// The dock is unlocked, so the boat is allowed to exit here.
 	if (GEngine)
 	{
+		/*
+		 * Only for debugging:
 		GEngine->AddOnScreenDebugMessage(
 			-1,
 			5.0f,
 			FColor::White,
 			TEXT("Press E to exit the boat!")
 		);
+		*/
 	}
 
 	// Hand over a reference to myself to the boat to enable exiting it.
@@ -195,11 +201,14 @@ void ADock::ApplyDockingProgressionFlag()
 
 	if (GEngine)
 	{
+		/*
+		 * Only for debugging:
 		GEngine->AddOnScreenDebugMessage(
 			-1,
 			3.0f,
 			FColor::Green,
 			FString::Printf(TEXT("Added flag: %s"), *FlagToAddWhenDocking.ToString())
 		);
+		*/
 	}
 }
