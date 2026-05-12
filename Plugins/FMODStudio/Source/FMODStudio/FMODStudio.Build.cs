@@ -37,7 +37,8 @@ namespace UnrealBuildTool.Rules
                     "CoreUObject",
                     "Engine",
                     "Media",
-                    "Projects"
+                    "Projects",
+                    "CinematicCamera"
                 }
                 );
 

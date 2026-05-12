@@ -23,5 +23,17 @@ public:
 	
 	virtual void Interact() override;
 	
+protected:
+	// If true, this door requires a progression flag before it can be used.
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Progression")
+	bool bRequiresProgressionFlag = false;
+
+	// Example: Island3HouseAccessAllowed
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Progression", meta = (EditCondition = "bRequiresProgressionFlag"))
+	FName RequiredProgressionFlag;
+
+	// Optional event for locked feedback in Blueprint.
+	UFUNCTION(BlueprintImplementableEvent)
+	void OnDoorLocked();
 	
 };
