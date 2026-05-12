@@ -161,12 +161,27 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 
 	// Hand over a reference to myself to the boat to enable exiting it.
 	Boat->SetDockInReach(this);
+
+	// Only show the dock prompt while the player is actually controlling the boat.
+	if (Boat->IsPlayerControlled())
+	{
+		ShowEnterDockPrompt();
+	}
+	else
+	{
+		HideEnterDockPrompt();
+	}
 }
 
 void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
 {
 	// Remove the reference to myself in the boat to disable exiting it
-	Boat->RemoveDockInReach();
+	if (Boat)
+	{
+		Boat->RemoveDockInReach();
+	}
+	
+	HideEnterDockPrompt();
 }
 
 
@@ -210,5 +225,36 @@ void ADock::ApplyDockingProgressionFlag()
 			FString::Printf(TEXT("Added flag: %s"), *FlagToAddWhenDocking.ToString())
 		);
 		*/
+	}
+}
+
+
+void ADock::ShowEnterDockPrompt()
+{
+	if (EnterDockPromptWidget || !EnterDockPromptWidgetClass)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	EnterDockPromptWidget = CreateWidget<UUserWidget>(PlayerController, EnterDockPromptWidgetClass);
+
+	if (EnterDockPromptWidget)
+	{
+		EnterDockPromptWidget->AddToViewport();
+	}
+}
+
+void ADock::HideEnterDockPrompt()
+{
+	if (EnterDockPromptWidget)
+	{
+		EnterDockPromptWidget->RemoveFromParent();
+		EnterDockPromptWidget = nullptr;
 	}
 }

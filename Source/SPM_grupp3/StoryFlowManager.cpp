@@ -492,6 +492,7 @@ void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionM
 
 		UE_LOG(LogTemp, Warning, TEXT("Shell added to inventory."));
 		
+		/*
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -501,6 +502,7 @@ void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionM
 				TEXT("Shell added to inventory")
 			);
 		}
+		*/
 	}
 	else
 	{
@@ -544,6 +546,7 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 
 		UE_LOG(LogTemp, Warning, TEXT("Pen added to inventory."));
 		
+		/*
 		if (GEngine)
 		{
 			GEngine->AddOnScreenDebugMessage(
@@ -553,6 +556,7 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 				TEXT("Pen added to inventory")
 			);
 		}
+		*/
 	}
 	else
 	{

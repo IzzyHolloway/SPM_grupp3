@@ -63,10 +63,24 @@ protected:
 	// Leave as None if this dock should not add any flag.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName FlagToAddWhenDocking = NAME_None;
+	
+	
+	/************** WIDGETS TEMPORARY *************/
+	// Widget class for "Press X / Press E to enter boat"
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
+	TSubclassOf<UUserWidget> EnterDockPromptWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* EnterDockPromptWidget;
+
+
 
 public:	
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
+	
+	void ShowEnterDockPrompt();
+	void HideEnterDockPrompt();
 	
 private:
 	void EnableExitingBoat(ABoatFunctionality* Boat);
