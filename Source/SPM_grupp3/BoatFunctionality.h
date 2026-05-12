@@ -9,6 +9,8 @@
 #include "InputActionValue.h"
 #include "CineCameraComponent.h"
 #include "GameFramework/SpringArmComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "Components/WidgetComponent.h"
 #include "BoatFunctionality.generated.h"
 
 class ADock;
@@ -129,6 +131,20 @@ protected:
 	// Offset the character should have to the boat's coordinate center when it gets placed in the boat
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enter & Exit")
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
+	
+	
+	/************** WIDGETS TEMPORARY *************/
+	// Widget class for "Press X / Press E to enter boat"
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
+	TSubclassOf<UUserWidget> EnterBoatPromptWidgetClass;
+
+	UPROPERTY()
+	UUserWidget* EnterBoatPromptWidget;
+	
+	virtual void PossessedBy(AController* NewController) override;
+
+	void ShowEnterBoatPrompt();
+	void HideEnterBoatPrompt();
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
