@@ -4,6 +4,8 @@
 #include "Dock.h"
 #include "BoatFunctionality.h"
 #include "DelayAction.h"
+#include "ProgressionManager.h"
+#include "Kismet/GameplayStatics.h"
 #include "Components/BoxComponent.h"
 
 // Sets default values
@@ -97,7 +99,61 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 	// Progression Flag added after solving Intro Puzzle and jumping off at Island1
 	// TODO: Progression stuff
 	
-	// Hand over a reference to myself to the boat to enable exiting it
+	if (!Boat)
+	{
+		return;
+	}
+
+	// If this dock has a required progression flag,
+	// check that the player has unlocked it before allowing docking.
+	if (!RequiredFlagToDock.IsNone())
+	{
+		AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+		);
+
+		if (!ProgressionManager)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Dock could not find ProgressionManager."));
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					5.0f,
+					FColor::Red,
+					TEXT("Dock error: ProgressionManager not found.")
+				);
+			}
+
+			// Do not allow docking if progression cannot be checked.
+			Boat->RemoveDockInReach();
+			return;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlagToDock))
+		{
+			
+			UE_LOG(LogTemp, Warning, TEXT("The flag required is FALSE"));
+
+			// Do not give the boat a dock reference.
+			// This prevents the player from exiting here.
+			Boat->RemoveDockInReach();
+			return;
+		}
+	}
+
+	// The dock is unlocked, so the boat is allowed to exit here.
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			5.0f,
+			FColor::White,
+			TEXT("Press E to exit the boat!")
+		);
+	}
+
+	// Hand over a reference to myself to the boat to enable exiting it.
 	Boat->SetDockInReach(this);
 }
 
@@ -105,4 +161,45 @@ void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
 {
 	// Remove the reference to myself in the boat to disable exiting it
 	Boat->RemoveDockInReach();
+}
+
+
+// Progression
+void ADock::ApplyDockingProgressionFlag()
+{
+	// If this dock has no arrival flag, do nothing.
+	if (FlagToAddWhenDocking.IsNone())
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Dock could not add docking flag: ProgressionManager not found."));
+		return;
+	}
+
+	// Do not add the same flag again.
+	if (ProgressionManager->HasFlag(FlagToAddWhenDocking))
+	{
+		return;
+	}
+
+	ProgressionManager->AddFlag(FlagToAddWhenDocking);
+
+	UE_LOG(LogTemp, Warning, TEXT("Dock added progression flag: %s"), *FlagToAddWhenDocking.ToString());
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			3.0f,
+			FColor::Green,
+			FString::Printf(TEXT("Added flag: %s"), *FlagToAddWhenDocking.ToString())
+		);
+	}
 }

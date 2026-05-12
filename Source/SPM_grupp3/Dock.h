@@ -28,6 +28,10 @@ public:
 	// Returns offset the character should have to the dock's coordinate center when it gets placed on the dock
 	UFUNCTION()
 	FVector GetCharacterPositionOffset() const;
+	
+	// Adding Flag when docking. Like ArriveIsland1 and so on...
+	UFUNCTION()
+	void ApplyDockingProgressionFlag();
 
 protected:
 	// Called when the game starts or when spawned
@@ -42,6 +46,23 @@ protected:
 	// Offset the character should have to the dock's coordinate center when it gets placed on the dock
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
+	
+	
+	/******** PROGRESSION ********/
+	
+	// Progression flag required before the boat can dock here.
+	// Leave as None if this dock should always be usable.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName RequiredFlagToDock = NAME_None;
+
+	// Message shown if the player tries to dock here before completing quest.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FString LockedDockMessage = TEXT("I cannot dock here yet.");
+	
+	// Progression flag added when the player successfully docks/exits here.
+	// Leave as None if this dock should not add any flag.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName FlagToAddWhenDocking = NAME_None;
 
 public:	
 	// Called every frame
