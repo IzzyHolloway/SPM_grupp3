@@ -132,6 +132,7 @@ bool APickupInteractable::TryAddToInventory() const
 		bSuccess ? TEXT("true") : TEXT("false")
 	);
 
+	/*
 	if (GEngine)
 	{
 		GEngine->AddOnScreenDebugMessage(
@@ -144,6 +145,7 @@ bool APickupInteractable::TryAddToInventory() const
 				bSuccess ? TEXT("SUCCESS") : TEXT("FAILED"))
 		);
 	}
+	*/
 
 	return bSuccess;
 }
