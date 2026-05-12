@@ -141,6 +141,8 @@ void ABoatFunctionality::Interact(const FInputActionValue& Value)
 	{
 		ExitBoat();
 	}
+	/*
+	* Only for debugging:
 	else
 	{
 		GEngine->AddOnScreenDebugMessage(
@@ -150,6 +152,7 @@ void ABoatFunctionality::Interact(const FInputActionValue& Value)
 			TEXT("There is no dock to tie up at!") // Message
 		);
 	}
+	*/
 }
 
 // -------------------------------- ENTER & EXIT --------------------------------
@@ -202,12 +205,15 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	// If the LitLantern flag is true, the player is allowed to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
 	
+	/*
+	* Only for debugging:
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
 			FColor::White,     // Text color
 			TEXT("Press E to enter the boat!") // Message
 		);
+	 */
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
@@ -226,12 +232,15 @@ void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* Overlappe
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {	
+	/*
+	* Only for debugging:
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
 			FColor::White,     // Text color
 			TEXT("Boat is out of reach.") // Message
 		);
+	 */
 	
 	// Remove the reference to myself in the player character to disable entering the boat
 	PlayerCharacter->RemoveBoatInReach();
