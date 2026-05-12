@@ -16,6 +16,8 @@ AGramophoneInteractable::AGramophoneInteractable()
 	
 	//Zoey Start
 	AudioComponent = CreateDefaultSubobject<UAudioComponent>(TEXT("AudioComponent"));
+	
+	AudioComponent->SetupAttachment(RootComponent);
 
 	AudioComponent->bAutoActivate = false;
 	AudioComponent->bIsUISound = false;
