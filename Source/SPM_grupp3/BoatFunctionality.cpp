@@ -22,10 +22,17 @@ ABoatFunctionality::ABoatFunctionality()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
+	// ---
 	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
     
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
 	MeshComponent->SetupAttachment(RootComponent);
+	// ---
+	
+	/*
+	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
+	RootComponent = MeshComponent;
+	 */
 	
 	// ----------------------------------- CAMERA -----------------------------------
 
@@ -137,8 +144,15 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 
 void ABoatFunctionality::Interact(const FInputActionValue& Value)
 {
+	HideEnterBoatPrompt();
+
 	if (DockInReach != nullptr)
 	{
+		if (DockInReach)
+		{
+			DockInReach->HideEnterDockPrompt();
+		}
+
 		ExitBoat();
 	}
 	/*
@@ -203,7 +217,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	}
 	
 	// If the LitLantern flag is true, the player is allowed to enter the boat
-	PlayerCharacter->SetBoatInReach(this);
+	//PlayerCharacter->SetBoatInReach(this);
 	
 	/*
 	* Only for debugging:
@@ -217,6 +231,14 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
+	
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
+	
+	// Show "Press X/E" UI
+	ShowEnterBoatPrompt();
 }
 
 void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
@@ -244,6 +266,8 @@ void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	
 	// Remove the reference to myself in the player character to disable entering the boat
 	PlayerCharacter->RemoveBoatInReach();
+	
+	HideEnterBoatPrompt();
 }
 
 // Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
@@ -254,6 +278,13 @@ FVector ABoatFunctionality::GetCharacterPositionOffset() const
 
 void ABoatFunctionality::ExitBoat()
 {
+	HideEnterBoatPrompt();
+
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
+	
 	// Double check that we're in reach of a pier
 	if (DockInReach == nullptr)
 	{
@@ -276,6 +307,9 @@ void ABoatFunctionality::ExitBoat()
 			
 			// Move player character on top of the pier
 			PlayerCharacter->SetActorLocation(DockInReach->GetActorLocation() + DockInReach->GetCharacterPositionOffset());
+			
+			// Hide dock prompt because we are exiting the boat now
+			DockInReach->HideEnterDockPrompt();
 			
 			// Add the dock's arrival/progression flag, for example ArrivedIsland1, ArrivedIsland2, etc.
 			DockInReach->ApplyDockingProgressionFlag();
@@ -303,5 +337,54 @@ void ABoatFunctionality::SetDockInReach(ADock* Dock)
 
 void ABoatFunctionality::RemoveDockInReach()
 {
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
+
 	DockInReach = nullptr;
+}
+
+void ABoatFunctionality::ShowEnterBoatPrompt()
+{
+	if (EnterBoatPromptWidget || !EnterBoatPromptWidgetClass)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	EnterBoatPromptWidget = CreateWidget<UUserWidget>(PlayerController, EnterBoatPromptWidgetClass);
+
+	if (EnterBoatPromptWidget)
+	{
+		EnterBoatPromptWidget->AddToViewport();
+	}
+}
+
+void ABoatFunctionality::HideEnterBoatPrompt()
+{
+	if (EnterBoatPromptWidget)
+	{
+		EnterBoatPromptWidget->RemoveFromParent();
+		EnterBoatPromptWidget = nullptr;
+	}
+}
+
+void ABoatFunctionality::PossessedBy(AController* NewController)
+{
+	Super::PossessedBy(NewController);
+
+	// When the player enters the boat, remove the "enter boat" prompt immediately.
+	HideEnterBoatPrompt();
+
+	// Also hide dock prompt if the boat is still near a dock.
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
 }
