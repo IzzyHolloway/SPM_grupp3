@@ -97,6 +97,12 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			EnhancedInput->BindAction(InteractAction, ETriggerEvent::Started, this, &ACharacterAimi::Interact);
 		}
 		
+		if (DialogueAdvanceAction)
+		{
+			EnhancedInput->BindAction(DialogueAdvanceAction, ETriggerEvent::Started, this, &ACharacterAimi::AdvanceDialoguePressed);
+			EnhancedInput->BindAction(DialogueAdvanceAction, ETriggerEvent::Completed, this, &ACharacterAimi::AdvanceDialogueReleased);
+		}
+		
 		if (JumpAction)
 		{
 			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacterAimi::StartJump);
@@ -173,6 +179,8 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
+	// Remove the Dialogue part from the Interact
+	/*
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
@@ -182,6 +190,7 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		DialogueManager->AdvanceDialogue();
 		return;
 	}
+	*/
 
 	if (CurrentInteractable)
 	{
@@ -313,6 +322,30 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	if (IsValid(CurrentInteractable))
 	{
 		CurrentInteractable->SetPromptVisible(true);
+	}
+}
+
+void ACharacterAimi::AdvanceDialoguePressed(const FInputActionValue& Value)
+{
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		DialogueManager->StartDialogueAdvanceHold();
+	}
+}
+
+void ACharacterAimi::AdvanceDialogueReleased(const FInputActionValue& Value)
+{
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		DialogueManager->FinishDialogueAdvanceHold();
 	}
 }
 
