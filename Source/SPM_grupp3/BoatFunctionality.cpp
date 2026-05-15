@@ -123,7 +123,6 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 	if (Controller)
 	{
 		// Apply rotation input
-		const FVector RotationInput = GetActorRightVector();
 		AddActorWorldRotation(FRotator(0.f, MovementValue.X * RotationSpeed * GetWorld()->GetDeltaSeconds(), 0.f));
 		
 		// Apply forward and back movement
@@ -136,8 +135,12 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 	// 2D Vector of look values returned from the input action
 	const FVector2D LookValue = Value.Get<FVector2D>();
 
-	AddControllerYawInput(LookValue.X);
-	AddControllerPitchInput(LookValue.Y);
+	// Check if the controller possessing this Actor is valid
+	if (Controller)
+	{
+		AddControllerYawInput(LookValue.X);
+		AddControllerPitchInput(LookValue.Y);
+	}
 }
 
 // --------------------------------- INTERACTION ---------------------------------
