@@ -13,6 +13,7 @@
 
 void APickupInteractable::Interact()
 {
+	
 	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
 	);

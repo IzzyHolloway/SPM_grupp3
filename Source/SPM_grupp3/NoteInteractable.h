@@ -17,6 +17,7 @@ class SPM_GRUPP3_API ANoteInteractable : public AInteractableActor
 	GENERATED_BODY()
 	
 public:
+
 	ANoteInteractable();
 	
 	virtual void Interact() override;
