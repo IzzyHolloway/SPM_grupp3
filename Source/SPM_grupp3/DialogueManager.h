@@ -36,6 +36,9 @@ public:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	float MessageDisplayTime = 2.0f;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue|Skip")
+	float DialogueSkipHoldTime = 3.0f;
 
 	FTimerHandle MessageHideTimerHandle;
 
@@ -54,6 +57,18 @@ public:
 	// ADvance the dialogue to the next line
 	UFUNCTION(BlueprintCallable)
 	void AdvanceDialogue();
+	
+	// Called when the dialogue advance button is pressed.
+	UFUNCTION(BlueprintCallable)
+	void StartDialogueAdvanceHold();
+
+	// Called when the dialogue advance button is released.
+	UFUNCTION(BlueprintCallable)
+	void FinishDialogueAdvanceHold();
+
+	// Skips the whole active dialogue.
+	UFUNCTION(BlueprintCallable)
+	void SkipActiveDialogue();
 
 	// Ends current dialogue, restores movement and applied pending progression if needed
 	UFUNCTION(BlueprintCallable)
@@ -92,6 +107,13 @@ protected:
 	// Last message or dialogue shown.
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FText CurrentMessage;
+	
+	// Timer used for holding the dialogue button to skip.
+	FTimerHandle DialogueSkipTimerHandle;
+
+	// True after the 3 second skip has happened.
+	// Prevents the button release from also advancing dialogue.
+	bool bDialogueSkipTriggered = false;
 
 	// ru only while multi-line dialogue is active
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")

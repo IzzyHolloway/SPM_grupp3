@@ -71,6 +71,10 @@ void ADialogueManager::HideMessage()
 
 void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 {
+	
+	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+	bDialogueSkipTriggered = false;
+	
 	if (InLines.IsEmpty())
 	{
 		return;
@@ -112,8 +116,67 @@ void ADialogueManager::AdvanceDialogue()
 	ShowCurrentDialogueLine();
 }
 
+void ADialogueManager::StartDialogueAdvanceHold()
+{
+	if (!bDialogueActive)
+	{
+		return;
+	}
+
+	bDialogueSkipTriggered = false;
+
+	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+
+	GetWorldTimerManager().SetTimer(
+		DialogueSkipTimerHandle,
+		this,
+		&ADialogueManager::SkipActiveDialogue,
+		DialogueSkipHoldTime,
+		false
+	);
+}
+
+void ADialogueManager::FinishDialogueAdvanceHold()
+{
+	if (!bDialogueActive)
+	{
+		GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+		return;
+	}
+
+	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+
+	if (bDialogueSkipTriggered)
+	{
+		bDialogueSkipTriggered = false;
+		return;
+	}
+
+	AdvanceDialogue();
+}
+
+void ADialogueManager::SkipActiveDialogue()
+{
+	if (!bDialogueActive)
+	{
+		return;
+	}
+
+	bDialogueSkipTriggered = true;
+
+	EndDialogue();
+}
+
 void ADialogueManager::EndDialogue()
 {
+	
+	if (GetWorld())
+	{
+		GetWorld()->GetTimerManager().ClearTimer(DialogueSkipTimerHandle);
+	}
+
+	bDialogueSkipTriggered = false;
+	
 	bDialogueActive = false;
 	CurrentDialogueIndex = 0;
 	ActiveDialogueLines.Empty();
@@ -188,6 +251,9 @@ void ADialogueManager::SetPlayerMovementEnabled(bool bEnabled)
 
 void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLines, FName FlagToSetOnEnd)
 {
+	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+	bDialogueSkipTriggered = false;
+	
 	if (InLines.IsEmpty())
 	{
 		return;

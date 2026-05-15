@@ -61,6 +61,9 @@ protected:
 	TObjectPtr<UInputAction> InteractAction;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
+	TObjectPtr<UInputAction> DialogueAdvanceAction;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input")
 	TObjectPtr<UInputAction> JumpAction;
 
 	UFUNCTION()
@@ -71,6 +74,12 @@ protected:
 
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
+	
+	UFUNCTION()
+	void AdvanceDialoguePressed(const FInputActionValue& Value);
+
+	UFUNCTION()
+	void AdvanceDialogueReleased(const FInputActionValue& Value);
 	
 	UFUNCTION()
 	void StartJump();
