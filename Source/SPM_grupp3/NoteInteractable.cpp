@@ -12,6 +12,7 @@ ANoteInteractable::ANoteInteractable()
 
 void ANoteInteractable::Interact()
 {
+	
 	if (NoteWidget && NoteWidget->IsInViewport()) 
 	{
 		return;
@@ -25,6 +26,8 @@ void ANoteInteractable::Interact()
 	UNoteWidgetBase* Widget = CreateWidget<UNoteWidgetBase>(PC, NoteWidgetClass);
     
 	if (!Widget) return;
+	
+	
     
 	Widget->SetNoteContent(NoteTitle, NoteText);
 	Widget->AddToViewport();
