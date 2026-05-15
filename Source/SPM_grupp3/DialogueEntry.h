@@ -12,6 +12,9 @@ struct FDialogueEntry
 {
 	GENERATED_BODY()
 
+	// DialogueID for checking which dialogue you are editing
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FName DialogueID;
 	
 	//All of these flags must exist for this dialogue entry to match.
 	//Leave empty if the entry should not require any progression flags.
