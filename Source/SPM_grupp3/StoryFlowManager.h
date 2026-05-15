@@ -49,6 +49,27 @@ enum class EStoryState : uint8
 	Island3_OpenPadlock UMETA(DisplayName = "Island 3 - Open the Padlock"),
 	Island3_OpenGate UMETA(DisplayName = "Island 3 - Open the gate to Level2"),
 	Island3_ReadyToLeave UMETA(DisplayName = "Island 3 - Leave Level1"),
+	
+	// Level2
+	Level2_ChooseIsland UMETA(DisplayName = "Level 2 - Choose Island"),
+	
+	Level2_MotorIslandExplore UMETA(DisplayName = "Level 2 - Motor Island Explore"),
+	Level2_MotorIslandFindParts UMETA(DisplayName = "Level 2 - Motor Island Find Parts"),
+	Level2_MotorIslandCraftHalf UMETA(DisplayName = "Level 2 - Motor Island Craft Half"),
+	Level2_MotorIslandSolved UMETA(DisplayName = "Level 2 - Motor Island Solved"),
+	
+	Level2_LeverIslandExplore UMETA(DisplayName = "Level 2 - Lever Island Explore"),
+	Level2_LeverIslandFindParts UMETA(DisplayName = "Level 2 - Lever Island Find Parts"),
+	Level2_LeverIslandCraftHalf UMETA(DisplayName = "Level 2 - Lever Island Craft Half"),
+	Level2_LeverIslandSolved UMETA(DisplayName = "Level 2 - Lever Island Solved"),
+	
+	Level2_FinalCraftAvailable UMETA(DisplayName = "Level 2 - Final Craft Available"),
+	Level2_FinalItemCrafted UMETA(DisplayName = "Level 2 - Final Item Crafted"),
+	
+	Lighthouse_NotReady UMETA(DisplayName = "Lighthouse - NotReady"),
+	Lighthouse_Ready UMETA(DisplayName = "Lighthouse - Ready"),
+	Lighthouse_Ending UMETA(DisplayName = "Lighthouse - Ending"),
+	
 };
 
 /**
@@ -218,6 +239,44 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3PuzzleSolvedFlag = "Island3PuzzleSolved";
+	
+	
+	/****************** LEVEL 2 ********************/
+
+	void UpdateLevel2Flow(AProgressionManager* ProgressionManager);
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName ArrivedLevel2Flag = "ArrivedLevel2";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName ArrivedLevel2MotorIslandFlag = "ArrivedLevel2MotorIsland";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName ArrivedLevel2LeverIslandFlag = "ArrivedLevel2LeverIsland";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName ArrivedLighthouseIslandFlag = "ArrivedLighthouseIsland";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName Level2MotorIslandSolvedFlag = "Level2MotorIslandSolved";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName Level2LeverIslandSolvedFlag = "Level2LeverIslandSolved";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName Level2FinalItemCraftedFlag = "Level2FinalItemCrafted";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName LifeCompassReceivedFlag = "LifeCompassReceived";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName LighthouseReadyFlag = "LighthouseReady";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName LighthouseLitFlag = "LighthouseLit";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName GameEndingStartedFlag = "GameEndingStarted";
 	
 	
 	/*** HARD CODED!!!! REMOVE LATER!!!! ***/

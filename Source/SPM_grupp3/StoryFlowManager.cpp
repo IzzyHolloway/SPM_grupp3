@@ -22,6 +22,30 @@ void AStoryFlowManager::BeginPlay()
 	{
 		return;
 	}
+	
+	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
+	ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
+	ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
+	ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	{
+		SetStoryState(EStoryState::Level2_ChooseIsland);
+	}
+	else if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
+	{
+		SetStoryState(EStoryState::Island3_TalkToNPC);
+	}
+	else if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
+	{
+		SetStoryState(EStoryState::Island2_TalkToNPCInside);
+	}
+	else if (ProgressionManager->HasFlag(ArrivedIsland1Flag))
+	{
+		SetStoryState(EStoryState::Island1_Explore);
+	}
+	else
+	{
+		SetStoryState(EStoryState::Home_Explore);
+	}
 
 	if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
 	{
@@ -73,14 +97,30 @@ void AStoryFlowManager::UpdateStoryFlow()
 		TryAddShellToInventory(ProgressionManager);
 	}
 	
-	// Check Island 3 first, because earlier island flags may still exist.
+	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
+	ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
+	ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
+	ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	{
+		SetStoryState(EStoryState::Level2_ChooseIsland);
+	}
+	
+	// Check Level 2 first, because old Island 1/2/3 arrival flags may still exist.
+	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
+		ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
+		ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
+		ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	{
+		UpdateLevel2Flow(ProgressionManager);
+		return;
+	}
+	
 	if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
 	{
 		UpdateIsland3Flow(ProgressionManager);
 		return;
 	}
 	
-	// Check Island 2 first, because the player may still have ArrivedIsland1 from earlier.
 	if (ProgressionManager->HasFlag(ArrivedIsland2Flag))
 	{
 		UpdateIsland2Flow(ProgressionManager);
@@ -368,6 +408,95 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 	}
 
 	SetStoryState(EStoryState::Island3_TalkToNPC);
+}
+
+void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	const bool bMotorIslandSolved = ProgressionManager->HasFlag(Level2MotorIslandSolvedFlag);
+	const bool bLeverIslandSolved = ProgressionManager->HasFlag(Level2LeverIslandSolvedFlag);
+	const bool bFinalItemCrafted = ProgressionManager->HasFlag(Level2FinalItemCraftedFlag);
+	const bool bLifeCompassReceived = ProgressionManager->HasFlag(LifeCompassReceivedFlag);
+	const bool bLighthouseLit = ProgressionManager->HasFlag(LighthouseLitFlag);
+
+	// Final ending state
+	if (bLighthouseLit)
+	{
+		if (!ProgressionManager->HasFlag(GameEndingStartedFlag))
+		{
+			ProgressionManager->AddFlag(GameEndingStartedFlag);
+		}
+
+		SetStoryState(EStoryState::Lighthouse_Ending);
+		return;
+	}
+
+	// If the final item is crafted, unlock lighthouse progression.
+	if (bFinalItemCrafted || bLifeCompassReceived)
+	{
+		if (!ProgressionManager->HasFlag(LifeCompassReceivedFlag))
+		{
+			ProgressionManager->AddFlag(LifeCompassReceivedFlag);
+		}
+
+		if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
+		{
+			ProgressionManager->AddFlag(LighthouseReadyFlag);
+		}
+
+		SetStoryState(EStoryState::Lighthouse_Ready);
+		return;
+	}
+
+	// When both Level 2 islands are solved, allow the final craft.
+	if (bMotorIslandSolved && bLeverIslandSolved)
+	{
+		SetStoryState(EStoryState::Level2_FinalCraftAvailable);
+		return;
+	}
+
+	// Individual island states.
+	if (ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag))
+	{
+		if (bMotorIslandSolved)
+		{
+			SetStoryState(EStoryState::Level2_MotorIslandSolved);
+			return;
+		}
+
+		SetStoryState(EStoryState::Level2_MotorIslandExplore);
+		return;
+	}
+
+	if (ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag))
+	{
+		if (bLeverIslandSolved)
+		{
+			SetStoryState(EStoryState::Level2_LeverIslandSolved);
+			return;
+		}
+
+		SetStoryState(EStoryState::Level2_LeverIslandExplore);
+		return;
+	}
+
+	if (ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	{
+		if (ProgressionManager->HasFlag(LighthouseReadyFlag))
+		{
+			SetStoryState(EStoryState::Lighthouse_Ready);
+			return;
+		}
+
+		SetStoryState(EStoryState::Lighthouse_NotReady);
+		return;
+	}
+
+	SetStoryState(EStoryState::Level2_ChooseIsland);
 }
 
 void AStoryFlowManager::SetStoryState(EStoryState NewState)
