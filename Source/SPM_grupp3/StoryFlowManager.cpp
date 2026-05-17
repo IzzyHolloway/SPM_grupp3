@@ -247,6 +247,9 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
+	//Izzy lagt till för inventoryrensning
+	TryClearIsland1ItemsFromInventory(ProgressionManager);
+
 	const bool bTalkedToNPCIntro = ProgressionManager->HasFlag(Island2NPCIntroTalkedFlag);
 	const bool bHasCrank = ProgressionManager->HasFlag(RustyCrankPickedUpFlag);
 	const bool bHasGear = ProgressionManager->HasFlag(SmallGearPickedUpFlag);
@@ -691,4 +694,38 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 	{
 		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: Inventory rejected item."));
 	}
+}
+
+//Izzy lagt till för inventoryrensning
+void AStoryFlowManager::TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager) return;
+
+	// Kör bara en gång.
+	if (ProgressionManager->HasFlag(Island1ItemsClearedFlag)) return;
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Island 1 items: No player character."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Island 1 items: No InventoryComponent."));
+		return;
+	}
+
+	for (const FName& ItemID : Island1ItemsToClearOnLeave)
+	{
+		if (ItemID.IsNone()) continue;
+
+		const bool bRemoved = InventoryComponent->RemoveItemByID(ItemID);
+		UE_LOG(LogTemp, Warning, TEXT("Island 1 cleanup: %s -> %s"),
+			*ItemID.ToString(), bRemoved ? TEXT("removed") : TEXT("not found"));
+	}
+
+	ProgressionManager->AddFlag(Island1ItemsClearedFlag);
 }

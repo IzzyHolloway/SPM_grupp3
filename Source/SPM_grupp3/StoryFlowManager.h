@@ -160,6 +160,17 @@ protected:
 	bool AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const;
 	bool HasAnyMelodyPiece(AProgressionManager* ProgressionManager) const;
 
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Cleanup")
+	TArray<FName> Island1ItemsToClearOnLeave;
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Cleanup")
+	FName Island1ItemsClearedFlag = "Island1ItemsCleared";
+
+	//Izzy lagt till för inventoryrensning
+	void TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager);
+
 	/****************** ISLAND 2 ********************/
 
 	void UpdateIsland2Flow(AProgressionManager* ProgressionManager);
