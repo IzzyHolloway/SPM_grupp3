@@ -72,6 +72,10 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
 
+    /** Removes every slot whose ItemID matches. Returns true if anything was removed. */
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool RemoveItemByID(FName ItemID);
+
     UFUNCTION(BlueprintPure, Category = "Inventory")
     bool IsSlotOccupied(int32 SlotIndex) const;
 

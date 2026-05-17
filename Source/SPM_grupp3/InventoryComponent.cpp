@@ -267,3 +267,28 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
     }
     return false;
 }
+
+bool UInventoryComponent::RemoveItemByID(FName ItemID)
+{
+    if (ItemID.IsNone()) return false;
+
+    bool bRemoved = false;
+    for (FInventorySlot& Slot : InventorySlots)
+    {
+        if (Slot.ItemID == ItemID)
+        {
+            Slot.ItemID = NAME_None;
+            Slot.ItemQuantity = 0;
+            Slot.bIsOnWorkbench = false;
+            bRemoved = true;
+        }
+    }
+
+    if (bRemoved)
+    {
+        // Selected slot may now be empty; reselect first occupied (or 0).
+        SelectFirstAvailableSlot(); // broadcasts OnInventoryUpdated
+    }
+
+    return bRemoved;
+}
