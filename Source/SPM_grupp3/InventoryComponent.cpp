@@ -35,7 +35,6 @@ void UInventoryComponent::MoveSelection(int32 Direction)
 
 void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
-    // Per design: navigation is only allowed at a crafting station.
     if (!bIsWorkbenchOpen) return;
 
     TArray<int32> Occupied;
@@ -51,26 +50,30 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
         OnInventoryUpdated.Broadcast();
         return;
     }
-
     if (Occupied.Num() == 1) return;
 
     const int32 Cols = FMath::Max(1, GridColumns);
     const int32 Rows = FMath::DivideAndRoundUp(InventorySlots.Num(), Cols);
     const int32 CurRow = SelectedSlotIndex / Cols;
     const int32 CurCol = SelectedSlotIndex % Cols;
+
     int32 Best = SelectedSlotIndex;
 
     if (DeltaX != 0 && DeltaY == 0)
     {
+        // Linjär navigation, clamped vid båda ändar.
         const int32 N = Occupied.Num();
         const int32 Idx = Occupied.IndexOfByKey(SelectedSlotIndex);
-        Best = Occupied[(Idx + DeltaX + N) % N];
+        const int32 NewIdx = FMath::Clamp(Idx + DeltaX, 0, N - 1);
+        Best = Occupied[NewIdx];
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        for (int32 Step = 1; Step <= Rows; ++Step)
+        // Steg uppåt/neråt i grid, stoppa vid kant (ingen wrap).
+        for (int32 Step = 1; Step < Rows; ++Step)
         {
-            const int32 TargetRow = (CurRow + DeltaY * Step + Rows) % Rows;
+            const int32 TargetRow = CurRow + DeltaY * Step;
+            if (TargetRow < 0 || TargetRow >= Rows) break;
 
             const int32 SameCol = TargetRow * Cols + CurCol;
             if (SameCol < InventorySlots.Num() &&
