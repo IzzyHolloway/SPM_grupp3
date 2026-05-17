@@ -47,6 +47,7 @@ void AStoryFlowManager::BeginPlay()
 		SetStoryState(EStoryState::Home_Explore);
 	}
 
+	/*
 	if (ProgressionManager->HasFlag(ArrivedIsland3Flag))
 	{
 		SetStoryState(EStoryState::Island3_TalkToNPC);
@@ -63,6 +64,7 @@ void AStoryFlowManager::BeginPlay()
 	{
 		SetStoryState(EStoryState::Home_Explore);
 	}
+	*/
 
 	UpdateStoryFlow();
 }
