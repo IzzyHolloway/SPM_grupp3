@@ -32,6 +32,9 @@ protected:
     void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+    UFUNCTION()
+    void HandleCraftSuccess();
+
     void OpenCrafting(AActor* Interactor);
     void CloseCrafting();
 
@@ -48,6 +51,10 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
     TSubclassOf<UCraftingViewWidget> CraftingViewClass;
 
+    /** Seconds to wait after a successful craft before closing the station. */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
+    float CloseDelayAfterCraft = 1.5f;
+
 protected:
     UPROPERTY(Transient)
     TObjectPtr<UCraftingViewWidget> CraftingViewWidget;
@@ -57,4 +64,6 @@ protected:
 
     UPROPERTY(Transient)
     TWeakObjectPtr<AActor> ActiveInteractor;
+
+    FTimerHandle CloseAfterCraftTimer;
 };

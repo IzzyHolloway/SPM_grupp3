@@ -123,6 +123,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Travel|Flags")
 	FName ArrivedIsland2Flag = "ArrivedIsland2";
 
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Home|Cleanup")
+	TArray<FName> HomeItemsToClearOnLeave;
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Home|Cleanup")
+	FName HomeItemsClearedFlag = "HomeItemsCleared";
+
+	//Izzy lagt till för inventoryrensning
+	void TryClearHomeItemsFromInventory(AProgressionManager* ProgressionManager);
+
 	/****************** ISLAND 1 ********************/
 
 	void UpdateIsland1Flow(AProgressionManager* ProgressionManager);
@@ -159,6 +170,17 @@ protected:
 
 	bool AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const;
 	bool HasAnyMelodyPiece(AProgressionManager* ProgressionManager) const;
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Cleanup")
+	TArray<FName> Island1ItemsToClearOnLeave;
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Cleanup")
+	FName Island1ItemsClearedFlag = "Island1ItemsCleared";
+
+	//Izzy lagt till för inventoryrensning
+	void TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager);
 
 	/****************** ISLAND 2 ********************/
 
@@ -205,6 +227,17 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Flags")
 	FName Island3UnlockedFlag = "Island3Unlocked";
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Cleanup")
+	TArray<FName> Island2ItemsToClearOnLeave;
+
+	//Izzy lagt till för inventoryrensning
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2|Cleanup")
+	FName Island2ItemsClearedFlag = "Island2ItemsCleared";
+
+	//Izzy lagt till för inventoryrensning
+	void TryClearIsland2ItemsFromInventory(AProgressionManager* ProgressionManager);
 
 	bool AreAllGramophonePartsFound(AProgressionManager* ProgressionManager) const;
 	bool HasAnyGramophonePart(AProgressionManager* ProgressionManager) const;

@@ -6,6 +6,7 @@
 #include "InventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
@@ -21,6 +22,9 @@ protected:
 public:
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnInventoryUpdated OnInventoryUpdated;
+
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnCraftSuccess OnCraftSuccess;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TArray<FInventorySlot> InventorySlots;
@@ -71,6 +75,10 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
+
+    /** Removes every slot whose ItemID matches. Returns true if anything was removed. */
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool RemoveItemByID(FName ItemID);
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
     bool IsSlotOccupied(int32 SlotIndex) const;

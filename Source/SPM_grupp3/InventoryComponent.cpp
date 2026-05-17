@@ -35,7 +35,6 @@ void UInventoryComponent::MoveSelection(int32 Direction)
 
 void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
-    // Per design: navigation is only allowed at a crafting station.
     if (!bIsWorkbenchOpen) return;
 
     TArray<int32> Occupied;
@@ -51,26 +50,38 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
         OnInventoryUpdated.Broadcast();
         return;
     }
-
     if (Occupied.Num() == 1) return;
 
     const int32 Cols = FMath::Max(1, GridColumns);
     const int32 Rows = FMath::DivideAndRoundUp(InventorySlots.Num(), Cols);
     const int32 CurRow = SelectedSlotIndex / Cols;
     const int32 CurCol = SelectedSlotIndex % Cols;
+
     int32 Best = SelectedSlotIndex;
 
     if (DeltaX != 0 && DeltaY == 0)
     {
-        const int32 N = Occupied.Num();
-        const int32 Idx = Occupied.IndexOfByKey(SelectedSlotIndex);
-        Best = Occupied[(Idx + DeltaX + N) % N];
+        // Steg vänster/höger i samma rad, stoppa vid kant.
+        for (int32 Step = 1; Step < Cols; ++Step)
+        {
+            const int32 TargetCol = CurCol + DeltaX * Step;
+            if (TargetCol < 0 || TargetCol >= Cols) break;
+
+            const int32 Candidate = CurRow * Cols + TargetCol;
+            if (Candidate >= InventorySlots.Num()) break;
+            if (InventorySlots[Candidate].ItemID != NAME_None)
+            {
+                Best = Candidate; break;
+            }
+        }
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        for (int32 Step = 1; Step <= Rows; ++Step)
+        // Steg upp/ner i samma kolumn, stoppa vid kant.
+        for (int32 Step = 1; Step < Rows; ++Step)
         {
-            const int32 TargetRow = (CurRow + DeltaY * Step + Rows) % Rows;
+            const int32 TargetRow = CurRow + DeltaY * Step;
+            if (TargetRow < 0 || TargetRow >= Rows) break;
 
             const int32 SameCol = TargetRow * Cols + CurCol;
             if (SameCol < InventorySlots.Num() &&
@@ -239,6 +250,8 @@ void UInventoryComponent::CraftItem()
                    *ProgressionFlagToAdd.ToString());
         }
     }
+
+    OnCraftSuccess.Broadcast();
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
@@ -255,4 +268,29 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
         }
     }
     return false;
+}
+
+bool UInventoryComponent::RemoveItemByID(FName ItemID)
+{
+    if (ItemID.IsNone()) return false;
+
+    bool bRemoved = false;
+    for (FInventorySlot& Slot : InventorySlots)
+    {
+        if (Slot.ItemID == ItemID)
+        {
+            Slot.ItemID = NAME_None;
+            Slot.ItemQuantity = 0;
+            Slot.bIsOnWorkbench = false;
+            bRemoved = true;
+        }
+    }
+
+    if (bRemoved)
+    {
+        // Selected slot may now be empty; reselect first occupied (or 0).
+        SelectFirstAvailableSlot(); // broadcasts OnInventoryUpdated
+    }
+
+    return bRemoved;
 }
