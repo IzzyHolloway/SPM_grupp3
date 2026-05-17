@@ -12,13 +12,20 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
-    InventorySlots.Init(FInventorySlot(), 6);
+    InventorySlots.Init(FInventorySlot(), FMath::Max(1, SlotCount));
 }
 
 bool UInventoryComponent::IsSlotOccupied(int32 SlotIndex) const
 {
     return InventorySlots.IsValidIndex(SlotIndex)
         && InventorySlots[SlotIndex].ItemID != NAME_None;
+}
+
+void UInventoryComponent::SetWorkbenchOpen(bool bOpen)
+{
+    if (bIsWorkbenchOpen == bOpen) return;
+    bIsWorkbenchOpen = bOpen;
+    OnInventoryUpdated.Broadcast();
 }
 
 void UInventoryComponent::MoveSelection(int32 Direction)
@@ -28,6 +35,9 @@ void UInventoryComponent::MoveSelection(int32 Direction)
 
 void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
+    // Per design: navigation is only allowed at a crafting station.
+    if (!bIsWorkbenchOpen) return;
+
     TArray<int32> Occupied;
     for (int32 i = 0; i < InventorySlots.Num(); ++i)
     {
@@ -41,13 +51,13 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
         OnInventoryUpdated.Broadcast();
         return;
     }
-    if (Occupied.Num() == 1) return; 
+
+    if (Occupied.Num() == 1) return;
 
     const int32 Cols = FMath::Max(1, GridColumns);
     const int32 Rows = FMath::DivideAndRoundUp(InventorySlots.Num(), Cols);
     const int32 CurRow = SelectedSlotIndex / Cols;
     const int32 CurCol = SelectedSlotIndex % Cols;
-
     int32 Best = SelectedSlotIndex;
 
     if (DeltaX != 0 && DeltaY == 0)
@@ -63,7 +73,8 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
             const int32 TargetRow = (CurRow + DeltaY * Step + Rows) % Rows;
 
             const int32 SameCol = TargetRow * Cols + CurCol;
-            if (SameCol < InventorySlots.Num() && InventorySlots[SameCol].ItemID != NAME_None)
+            if (SameCol < InventorySlots.Num() &&
+                InventorySlots[SameCol].ItemID != NAME_None)
             {
                 Best = SameCol; break;
             }
@@ -92,7 +103,8 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 
 void UInventoryComponent::SetSelectedSlot(int32 NewIndex)
 {
-    if (!IsSlotOccupied(NewIndex)) return; 
+    if (!bIsWorkbenchOpen) return;
+    if (!IsSlotOccupied(NewIndex)) return;
     SelectedSlotIndex = NewIndex;
     OnInventoryUpdated.Broadcast();
 }
@@ -114,12 +126,12 @@ void UInventoryComponent::SelectFirstAvailableSlot()
 
 void UInventoryComponent::ToggleItemOnWorkbench()
 {
+    if (!bIsWorkbenchOpen) return;
     if (!InventorySlots.IsValidIndex(SelectedSlotIndex)) return;
     if (InventorySlots[SelectedSlotIndex].ItemID == NAME_None) return;
 
     InventorySlots[SelectedSlotIndex].bIsOnWorkbench =
         !InventorySlots[SelectedSlotIndex].bIsOnWorkbench;
-
     OnInventoryUpdated.Broadcast();
 }
 
@@ -128,7 +140,11 @@ void UInventoryComponent::ClearWorkbench()
     bool bAny = false;
     for (FInventorySlot& Slot : InventorySlots)
     {
-        if (Slot.bIsOnWorkbench) { Slot.bIsOnWorkbench = false; bAny = true; }
+        if (Slot.bIsOnWorkbench)
+        {
+            Slot.bIsOnWorkbench = false;
+            bAny = true;
+        }
     }
     if (bAny) OnInventoryUpdated.Broadcast();
 }
@@ -141,11 +157,16 @@ void UInventoryComponent::CraftItem()
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.bIsOnWorkbench && Slot.ItemID != NAME_None)
+        {
             ItemsOnBench.Add(Slot.ItemID);
+        }
     }
     if (ItemsOnBench.Num() == 0) return;
 
-    ItemsOnBench.Sort([](const FName& A, const FName& B){ return A.ToString() < B.ToString(); });
+    ItemsOnBench.Sort([](const FName& A, const FName& B)
+    {
+        return A.ToString() < B.ToString();
+    });
 
     TArray<FCraftingRecipe*> Recipes;
     RecipeDataTable->GetAllRows<FCraftingRecipe>(TEXT("Crafting Context"), Recipes);
@@ -157,16 +178,21 @@ void UInventoryComponent::CraftItem()
     for (FCraftingRecipe* Recipe : Recipes)
     {
         if (!Recipe) continue;
+
         TArray<FName> RecipeIngredients = Recipe->RequiredIngredients;
         if (RecipeIngredients.Num() != ItemsOnBench.Num()) continue;
 
-        RecipeIngredients.Sort([](const FName& A, const FName& B){ return A.ToString() < B.ToString(); });
+        RecipeIngredients.Sort([](const FName& A, const FName& B)
+        {
+            return A.ToString() < B.ToString();
+        });
 
         bool bMatch = true;
         for (int32 i = 0; i < ItemsOnBench.Num(); ++i)
         {
             if (ItemsOnBench[i] != RecipeIngredients[i]) { bMatch = false; break; }
         }
+
         if (bMatch)
         {
             bSuccess = true;
@@ -178,6 +204,7 @@ void UInventoryComponent::CraftItem()
 
     if (!bSuccess) return;
 
+    // Consume ingredients.
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.bIsOnWorkbench)
@@ -188,19 +215,19 @@ void UInventoryComponent::CraftItem()
         }
     }
 
+    // Place result in first empty slot.
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.ItemID == NAME_None)
         {
             Slot.ItemID = ResultingItem;
             Slot.ItemQuantity = 1;
-            Slot.bIsOnWorkbench = false; 
+            Slot.bIsOnWorkbench = false;
             break;
         }
     }
 
-    SelectFirstAvailableSlot();
-    OnInventoryUpdated.Broadcast();
+    SelectFirstAvailableSlot(); // broadcasts OnInventoryUpdated
 
     if (!ProgressionFlagToAdd.IsNone())
     {
@@ -208,14 +235,15 @@ void UInventoryComponent::CraftItem()
             UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())))
         {
             PM->AddFlag(ProgressionFlagToAdd);
-            UE_LOG(LogTemp, Warning, TEXT("Crafting added progression flag: %s"), *ProgressionFlagToAdd.ToString());
+            UE_LOG(LogTemp, Warning, TEXT("Crafting added progression flag: %s"),
+                   *ProgressionFlagToAdd.ToString());
         }
     }
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
 {
-    for (int32 i = 0; i < 6; ++i)
+    for (int32 i = 0; i < InventorySlots.Num(); ++i)
     {
         if (InventorySlots[i].ItemID == NAME_None)
         {

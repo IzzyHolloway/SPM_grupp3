@@ -8,7 +8,7 @@
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class UInventoryComponent : public UActorComponent
+class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 
@@ -26,18 +26,28 @@ public:
     TArray<FInventorySlot> InventorySlots;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
+    int32 SlotCount = 6;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
     int32 GridColumns = 2;
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory|Selection")
-    int32 SelectedSlotIndex;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Inventory|State")
-    bool bIsWorkbenchOpen = false;
+    int32 SelectedSlotIndex = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
-    class UDataTable* RecipeDataTable;
+    TObjectPtr<UDataTable> RecipeDataTable;
 
-    
+    UFUNCTION(BlueprintPure, Category = "Inventory|State")
+    bool IsWorkbenchOpen() const { return bIsWorkbenchOpen; }
+
+    /** Owned by ACraftingStation; do not set from gameplay code. */
+    UFUNCTION(BlueprintCallable, Category = "Inventory|State")
+    void SetWorkbenchOpen(bool bOpen);
+
+    /** Use from the character's inventory-toggle input handler. */
+    UFUNCTION(BlueprintPure, Category = "Inventory|State")
+    bool CanToggleInventoryUI() const { return !bIsWorkbenchOpen; }
+
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void MoveSelection(int32 Direction);
 
@@ -67,4 +77,9 @@ public:
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
     bool IsSlotSelected(int32 SlotIndex) const { return SlotIndex == SelectedSlotIndex; }
+
+private:
+    UPROPERTY(BlueprintReadOnly, Category = "Inventory|State",
+              meta=(AllowPrivateAccess="true"))
+    bool bIsWorkbenchOpen = false;
 };
