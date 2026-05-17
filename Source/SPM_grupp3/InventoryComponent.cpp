@@ -61,15 +61,23 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 
     if (DeltaX != 0 && DeltaY == 0)
     {
-        // Linjär navigation, clamped vid båda ändar.
-        const int32 N = Occupied.Num();
-        const int32 Idx = Occupied.IndexOfByKey(SelectedSlotIndex);
-        const int32 NewIdx = FMath::Clamp(Idx + DeltaX, 0, N - 1);
-        Best = Occupied[NewIdx];
+        // Steg vänster/höger i samma rad, stoppa vid kant.
+        for (int32 Step = 1; Step < Cols; ++Step)
+        {
+            const int32 TargetCol = CurCol + DeltaX * Step;
+            if (TargetCol < 0 || TargetCol >= Cols) break;
+
+            const int32 Candidate = CurRow * Cols + TargetCol;
+            if (Candidate >= InventorySlots.Num()) break;
+            if (InventorySlots[Candidate].ItemID != NAME_None)
+            {
+                Best = Candidate; break;
+            }
+        }
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        // Steg uppåt/neråt i grid, stoppa vid kant (ingen wrap).
+        // Steg upp/ner i samma kolumn, stoppa vid kant.
         for (int32 Step = 1; Step < Rows; ++Step)
         {
             const int32 TargetRow = CurRow + DeltaY * Step;
