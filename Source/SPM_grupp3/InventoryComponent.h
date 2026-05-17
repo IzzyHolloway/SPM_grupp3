@@ -6,6 +6,7 @@
 #include "InventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
@@ -21,6 +22,9 @@ protected:
 public:
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnInventoryUpdated OnInventoryUpdated;
+
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnCraftSuccess OnCraftSuccess;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TArray<FInventorySlot> InventorySlots;

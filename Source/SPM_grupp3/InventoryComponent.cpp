@@ -250,6 +250,8 @@ void UInventoryComponent::CraftItem()
                    *ProgressionFlagToAdd.ToString());
         }
     }
+
+    OnCraftSuccess.Broadcast();
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)

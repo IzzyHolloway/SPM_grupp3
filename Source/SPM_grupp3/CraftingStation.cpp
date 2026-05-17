@@ -54,6 +54,11 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
     ActiveInventory = Interactor->FindComponentByClass<UInventoryComponent>();
     if (!ActiveInventory) return;
 
+    if (!ActiveInventory->OnCraftSuccess.IsAlreadyBound(this, &ACraftingStation::HandleCraftSuccess))
+    {
+        ActiveInventory->OnCraftSuccess.AddDynamic(this, &ACraftingStation::HandleCraftSuccess);
+    }
+
     APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
     if (!PC) return;
 
@@ -77,7 +82,7 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
 
     UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
         PC, nullptr, EMouseLockMode::DoNotLock, /*bHideCursorDuringCapture=*/true);
-    PC->bShowMouseCursor = true;
+    PC->bShowMouseCursor = false;
 }
 
 void ACraftingStation::CloseCrafting()
@@ -90,9 +95,12 @@ void ACraftingStation::CloseCrafting()
 
     if (ActiveInventory)
     {
+        ActiveInventory->OnCraftSuccess.RemoveDynamic(this, &ACraftingStation::HandleCraftSuccess);
         ActiveInventory->ClearWorkbench();
         ActiveInventory->SetWorkbenchOpen(false);
     }
+
+    GetWorld()->GetTimerManager().ClearTimer(CloseAfterCraftTimer);
 
     if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
     {
@@ -122,4 +130,13 @@ void ACraftingStation::OnSphereEndOverlap(UPrimitiveComponent* /*OverlappedCompo
     {
         CloseCrafting();
     }
+}
+
+void ACraftingStation::HandleCraftSuccess()
+{
+    if (!IsCraftingOpen()) return;
+
+    GetWorld()->GetTimerManager().SetTimer(
+        CloseAfterCraftTimer, this, &ACraftingStation::CloseCrafting,
+        FMath::Max(0.f, CloseDelayAfterCraft), false);
 }
