@@ -75,26 +75,9 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
         Character->GetCharacterMovement()->DisableMovement();
     }
 
-    // Defer focus until next tick so the widget tree is laid out.
-    TWeakObjectPtr<ACraftingStation> WeakThis(this);
-    TWeakObjectPtr<APlayerController> WeakPC(PC);
-    GetWorld()->GetTimerManager().SetTimerForNextTick([WeakThis, WeakPC]()
-    {
-        if (!WeakThis.IsValid() || !WeakPC.IsValid() || !WeakThis->CraftingViewWidget) return;
-
-        UWidget* FocusTarget = WeakThis->CraftingViewWidget;
-        if (UPanelWidget* Slots = Cast<UPanelWidget>(
-                WeakThis->CraftingViewWidget->GetWidgetFromName(TEXT("CraftingSlots_Box"))))
-        {
-            if (Slots->GetChildrenCount() > 0)
-            {
-                FocusTarget = Slots->GetChildAt(0);
-            }
-        }
-        UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
-            WeakPC.Get(), FocusTarget, EMouseLockMode::DoNotLock, /*bHideCursorDuringCapture=*/true);
-        WeakPC->bShowMouseCursor = true;
-    });
+    UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
+        PC, nullptr, EMouseLockMode::DoNotLock, /*bHideCursorDuringCapture=*/true);
+    PC->bShowMouseCursor = true;
 }
 
 void ACraftingStation::CloseCrafting()
