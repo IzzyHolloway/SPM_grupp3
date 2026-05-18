@@ -7,6 +7,7 @@
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, FName, ItemID, bool, bFirstPickupEver);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
@@ -25,6 +26,13 @@ public:
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnCraftSuccess OnCraftSuccess;
+
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemPickedUp OnItemPickedUp;
+
+    /** True after the player has ever added at least one item via pickup. */
+    UPROPERTY(BlueprintReadOnly, Category = "Inventory|State")
+    bool bHasEverPickedUpItem = false;
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TArray<FInventorySlot> InventorySlots;
