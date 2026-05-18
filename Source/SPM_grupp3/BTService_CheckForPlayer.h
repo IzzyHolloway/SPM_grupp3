@@ -14,18 +14,4 @@ class SPM_GRUPP3_API UBTService_CheckForPlayer : public UBTService
 {
 	GENERATED_BODY()
 	
-public:
-	UBTService_CheckForPlayer();
-	
-	UPROPERTY(EditAnywhere, Category = "Blackboard Key")
-	FBlackboardKeySelector IsPlayerInWater;
-	
-	virtual void SetIsPlayerOnBoat(bool InIsPlayerOnBoat);
-
-protected:
-	virtual void IsPlayerOnBoat(UBehaviorTreeComponent& OwnerComp,bool InWater);
-	
-private:
-	UPROPERTY()
-	UBlackboardComponent* Blackboard = nullptr;
 };
