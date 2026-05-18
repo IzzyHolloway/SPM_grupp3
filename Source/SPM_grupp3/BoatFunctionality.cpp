@@ -3,6 +3,7 @@
 
 #include "BoatFunctionality.h"
 
+#include "AIController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
 
@@ -15,6 +16,8 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/MovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+
+#include "BehaviorTree/BlackboardComponent.h"
 
 // Sets default values
 ABoatFunctionality::ABoatFunctionality()
@@ -377,6 +380,14 @@ void ABoatFunctionality::ExitBoat()
 			// Player character found, no need to go through the rest of the attached actors
 			return;
 		}
+	}
+	
+	//---------------------- MADDE AI FOR WATER ----------------------
+	//This checks if we have selected an AI in the details and if we have we will set the key in the BB_AIForWater
+	if (AIWater)
+	{
+		AAIController* AIController = Cast<AAIController>(AIWater-> GetController());
+		AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", false);
 	}
 }
 

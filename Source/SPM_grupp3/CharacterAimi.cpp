@@ -14,9 +14,11 @@
 #include "Kismet/KismetSystemLibrary.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
+#include "AIController.h"
 #include "ProgressionManager.h"
 
 #include "BoatFunctionality.h"
+#include "BehaviorTree/BlackboardComponent.h"
 
 ACharacterAimi::ACharacterAimi()
 {
@@ -548,6 +550,21 @@ void ACharacterAimi::EnterBoat()
 	
 	// Possess the boat
 	GetController()->Possess(CurrentBoatInReach);
+	
+	
+	//---------------------- MADDE AI FOR WATER ----------------------
+	//This checks if we have selected an AI in the details and if we have we will set the key in the BB_AIForWater
+	TArray<AActor*> AICharacters;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters);
+	if (AICharacters.Num() > 0)
+	{
+		AAIController* AIController = Cast<AAIController>(Cast<APawn>(AICharacters[0])->GetController());
+		if (AIController)
+		{
+			AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", true);
+		}
+	}
+
 }
 
 void ACharacterAimi::SetBoatInReach(ABoatFunctionality* Boat)
