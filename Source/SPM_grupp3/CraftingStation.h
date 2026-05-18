@@ -25,6 +25,14 @@ public:
     UFUNCTION(BlueprintPure, Category = "Crafting")
     bool IsCraftingOpen() const { return CraftingViewWidget != nullptr; }
 
+    /** Opens the crafting view bound to the given interactor's inventory. */
+    UFUNCTION(BlueprintCallable, Category = "Crafting")
+    void OpenCrafting(AActor* Interactor);
+
+    /** Closes the crafting view if it is open. Safe to call when closed. */
+    UFUNCTION(BlueprintCallable, Category = "Crafting")
+    void CloseCrafting();
+
 protected:
     virtual void BeginPlay() override;
 
@@ -34,9 +42,6 @@ protected:
 
     UFUNCTION()
     void HandleCraftSuccess();
-
-    void OpenCrafting(AActor* Interactor);
-    void CloseCrafting();
 
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
