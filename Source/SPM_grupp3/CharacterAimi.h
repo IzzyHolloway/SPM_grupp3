@@ -111,6 +111,19 @@ protected:
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
 	
 	/******* WARNING: DEBUG KEYS! REMOVE LATER!!!! ********/
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Debug")
+	TObjectPtr<UInputAction> DebugSolveIsland3Action;
+	
+	UFUNCTION()
+	void DebugSolveIsland3();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Debug")
+	TObjectPtr<UInputAction> DebugSolveIsland2Action;
+	
+	UFUNCTION()
+	void DebugSolveIsland2();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Input|Debug")
 	TObjectPtr<UInputAction> DebugSolveIsland1Action;
 	
