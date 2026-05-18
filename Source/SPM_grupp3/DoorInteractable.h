@@ -6,6 +6,8 @@
 #include "InteractableActor.h"
 #include "DoorInteractable.generated.h"
 
+class ADialogueManager;
+
 /**
  * 
  */
@@ -35,5 +37,11 @@ protected:
 	// Optional event for locked feedback in Blueprint.
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnDoorLocked();
+	
+	// Message shown if player tries to use the door too early.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	FText LockedMessage = FText::FromString(TEXT("The door is locked."));
+	
+	void ShowLockedMessage();
 	
 };

@@ -258,3 +258,39 @@ void ADock::HideEnterDockPrompt()
 		EnterDockPromptWidget = nullptr;
 	}
 }
+
+bool ADock::CanLeaveDock() const
+{
+	if (!bRequiresFlagToLeaveDock)
+	{
+		return true;
+	}
+
+	if (RequiredFlagToLeaveDock.IsNone())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Dock requires a leave flag, but RequiredFlagToLeaveDock is None."));
+		return false;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Dock could not find ProgressionManager when checking leave flag."));
+		return false;
+	}
+
+	return ProgressionManager->HasFlag(RequiredFlagToLeaveDock);
+}
+
+FText ADock::GetCannotLeaveDockMessage() const
+{
+	if (CannotLeaveDockMessage.IsEmpty())
+	{
+		return FText::FromString(TEXT("I should finish helping here before leaving."));
+	}
+
+	return CannotLeaveDockMessage;
+}
