@@ -235,7 +235,9 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 					-1,
 					3.0f,
 					FColor::White,
-					CannotEnterBoatMessage.ToString()
+					CannotEnterBoatMessage.IsEmpty()
+	? TEXT("I should finish helping here before leaving.")
+	: CannotEnterBoatMessage.ToString()
 				);
 			}
 
@@ -255,6 +257,27 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 			TEXT("Press E to enter the boat!") // Message
 		);
 	 */
+	
+	// If the boat is currently at a dock, ask the dock if the player is allowed to leave.
+	if (DockInReach && !DockInReach->CanLeaveDock())
+	{
+		PlayerCharacter->RemoveBoatInReach();
+		HideEnterBoatPrompt();
+
+		UE_LOG(LogTemp, Warning, TEXT("Boat locked by dock leave requirement."));
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::White,
+				DockInReach->GetCannotLeaveDockMessage().ToString()
+			);
+		}
+
+		return;
+	}
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);

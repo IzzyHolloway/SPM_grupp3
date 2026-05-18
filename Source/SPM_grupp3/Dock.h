@@ -8,6 +8,8 @@
 
 class ABoatFunctionality;
 class UBoxComponent;
+class UPrimitiveComponent;
+class UUserWidget;
 
 UCLASS()
 class SPM_GRUPP3_API ADock : public AActor
@@ -32,6 +34,13 @@ public:
 	// Adding Flag when docking. Like ArriveIsland1 and so on...
 	UFUNCTION()
 	void ApplyDockingProgressionFlag();
+	
+	// Called by the boat before allowing the player to board.
+	UFUNCTION(BlueprintCallable)
+	bool CanLeaveDock() const;
+
+	UFUNCTION(BlueprintCallable)
+	FText GetCannotLeaveDockMessage() const;
 
 protected:
 	// Called when the game starts or when spawned
@@ -64,6 +73,17 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName FlagToAddWhenDocking = NAME_None;
 	
+	// If true, the player cannot board the boat from this dock until this flag is active.
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Progression|Leaving")
+	bool bRequiresFlagToLeaveDock = false;
+
+	UPROPERTY(EditInstanceOnly, BlueprintReadOnly, Category = "Progression|Leaving", meta = (EditCondition = "bRequiresFlagToLeaveDock"))
+	FName RequiredFlagToLeaveDock = NAME_None;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression|Leaving")
+	FText CannotLeaveDockMessage = FText::FromString(TEXT("I should finish helping here before leaving."));
+
+
 	
 	/************** WIDGETS TEMPORARY *************/
 	// Widget class for "Press X / Press E to enter boat"
