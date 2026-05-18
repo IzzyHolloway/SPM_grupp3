@@ -252,6 +252,7 @@ void UInventoryComponent::CraftItem()
     }
 
     OnCraftSuccess.Broadcast();
+    OnItemCrafted.Broadcast(ResultingItem);
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
