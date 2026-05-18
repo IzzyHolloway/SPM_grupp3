@@ -48,6 +48,9 @@ public:
 	// clears all progression flags
 	UFUNCTION(BlueprintCallable, Category = "Progression|Debug")
 	void ClearAllFlags();
+
+	// Read all current progression flags (used by save system).
+	const TSet<FName>& GetAllFlags() const { return ProgressFlags; }
 	
 	// Set current objective text shown to player
 	UFUNCTION(BlueprintCallable)
