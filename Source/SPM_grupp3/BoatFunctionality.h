@@ -165,6 +165,10 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression")
 	FText CannotEnterBoatMessage = FText::FromString("I should help them first before leaving.");
+	
+	// AI FOR THE WATERAI
+	UPROPERTY(EditAnywhere, Category = "WaterAI")
+	ACharacter* AIWater;
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
