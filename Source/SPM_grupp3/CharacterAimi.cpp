@@ -109,6 +109,16 @@ void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputCompo
 			EnhancedInput->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacterAimi::StopJump);
 		}
 		
+		if (DebugSolveIsland3Action)
+		{
+			EnhancedInput->BindAction(DebugSolveIsland3Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland3);
+		}
+		
+		if (DebugSolveIsland2Action)
+		{
+			EnhancedInput->BindAction(DebugSolveIsland2Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland2);
+		}
+		
 		if (DebugSolveIsland1Action)
 		{
 			EnhancedInput->BindAction(DebugSolveIsland1Action, ETriggerEvent::Started, this, &ACharacterAimi::DebugSolveIsland1);
@@ -386,6 +396,58 @@ void ACharacterAimi::DebugSolveIsland1()
 	}
 	
 
+}
+
+void ACharacterAimi::DebugSolveIsland2()
+{
+	if (!bEnableDebugKeys)
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	ProgressionManager->AddFlag("Island2PuzzleSolved");
+
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island2PuzzleSolved flag added"));
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: Island1Solved added"));
+	}
+}
+
+void ACharacterAimi::DebugSolveIsland3()
+{
+	if (!bEnableDebugKeys)
+	{
+		return;
+	}
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	ProgressionManager->AddFlag("Island3PuzzleSolved");
+
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island3PuzzleSolved flag added"));
+
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(-1, 2.f, FColor::Yellow, TEXT("DEBUG: Island3Solved added"));
+	}
 }
 
 void ACharacterAimi::DebugCraftLantern()
