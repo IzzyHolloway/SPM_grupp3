@@ -348,6 +348,23 @@ void ABoatFunctionality::ExitBoat()
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
 	
+	//---------------------- MADDE AI FOR WATER ----------------------
+	//This gets an array with all the actors that has the tag WaterAI on it.
+	TArray<AActor*> AICharacters;
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters);
+	
+	UE_LOG(LogTemp, Warning, TEXT("We have exited the boat!"));
+	
+	//If we found an actor we will get its controller. 
+	if (AICharacters.Num() > 0)
+	{
+		AAIController* AIController = Cast<AAIController>(Cast<APawn>(AICharacters[0])->GetController());
+		if (AIController)
+		{
+			AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", false);
+		}
+	}
+	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
 	GetAttachedActors(AttachedActors);
@@ -380,14 +397,6 @@ void ABoatFunctionality::ExitBoat()
 			// Player character found, no need to go through the rest of the attached actors
 			return;
 		}
-	}
-	
-	//---------------------- MADDE AI FOR WATER ----------------------
-	//This checks if we have selected an AI in the details and if we have we will set the key in the BB_AIForWater
-	if (AIWater)
-	{
-		AAIController* AIController = Cast<AAIController>(AIWater-> GetController());
-		AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", false);
 	}
 }
 
