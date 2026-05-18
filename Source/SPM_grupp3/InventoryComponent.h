@@ -6,9 +6,11 @@
 #include "InventoryComponent.generated.h"
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, FName, ItemID, bool, bFirstPickupEver);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
-class UInventoryComponent : public UActorComponent
+class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
 {
     GENERATED_BODY()
 
@@ -22,22 +24,42 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnInventoryUpdated OnInventoryUpdated;
 
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnCraftSuccess OnCraftSuccess;
+
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnItemPickedUp OnItemPickedUp;
+
+    /** True after the player has ever added at least one item via pickup. */
+    UPROPERTY(BlueprintReadOnly, Category = "Inventory|State")
+    bool bHasEverPickedUpItem = false;
+
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
     TArray<FInventorySlot> InventorySlots;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
+    int32 SlotCount = 6;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
     int32 GridColumns = 2;
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory|Selection")
-    int32 SelectedSlotIndex;
-
-    UPROPERTY(BlueprintReadWrite, Category = "Inventory|State")
-    bool bIsWorkbenchOpen = false;
+    int32 SelectedSlotIndex = 0;
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
-    class UDataTable* RecipeDataTable;
+    TObjectPtr<UDataTable> RecipeDataTable;
 
-    
+    UFUNCTION(BlueprintPure, Category = "Inventory|State")
+    bool IsWorkbenchOpen() const { return bIsWorkbenchOpen; }
+
+    /** Owned by ACraftingStation; do not set from gameplay code. */
+    UFUNCTION(BlueprintCallable, Category = "Inventory|State")
+    void SetWorkbenchOpen(bool bOpen);
+
+    /** Use from the character's inventory-toggle input handler. */
+    UFUNCTION(BlueprintPure, Category = "Inventory|State")
+    bool CanToggleInventoryUI() const { return !bIsWorkbenchOpen; }
+
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void MoveSelection(int32 Direction);
 
@@ -62,9 +84,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
 
+    /** Removes every slot whose ItemID matches. Returns true if anything was removed. */
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool RemoveItemByID(FName ItemID);
+
     UFUNCTION(BlueprintPure, Category = "Inventory")
     bool IsSlotOccupied(int32 SlotIndex) const;
 
     UFUNCTION(BlueprintPure, Category = "Inventory")
     bool IsSlotSelected(int32 SlotIndex) const { return SlotIndex == SelectedSlotIndex; }
+
+private:
+    UPROPERTY(BlueprintReadOnly, Category = "Inventory|State",
+              meta=(AllowPrivateAccess="true"))
+    bool bIsWorkbenchOpen = false;
 };

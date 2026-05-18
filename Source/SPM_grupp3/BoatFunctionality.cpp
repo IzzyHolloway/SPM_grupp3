@@ -210,13 +210,39 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 		return;
 	}
 	
-	// Player only allowed to use boat after lantern is lit
-	if (!ProgressionManager->HasFlag(TEXT("LitLantern")))
+	// Player is only allowed to enter the boat if the required progression flag is active.
+	if (bRequiresFlagToEnterBoat)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("LitLantern is not active. Player needs to craft a lit lantern"));
-		
-		PlayerCharacter->RemoveBoatInReach();
-		return;
+		if (RequiredFlagToEnterBoat.IsNone())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat requires a flag, but RequiredFlagToEnterBoat is None."));
+			PlayerCharacter->RemoveBoatInReach();
+			HideEnterBoatPrompt();
+			return;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlagToEnterBoat))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat locked. Missing flag: %s"), *RequiredFlagToEnterBoat.ToString());
+
+			PlayerCharacter->RemoveBoatInReach();
+			HideEnterBoatPrompt();
+
+			// Temporary feedback. Later this can call DialogueManager or your message system.
+			if (GEngine)
+			{
+				GEngine->AddOnScreenDebugMessage(
+					-1,
+					3.0f,
+					FColor::White,
+					CannotEnterBoatMessage.IsEmpty()
+	? TEXT("I should finish helping here before leaving.")
+	: CannotEnterBoatMessage.ToString()
+				);
+			}
+
+			return;
+		}
 	}
 	
 	// If the LitLantern flag is true, the player is allowed to enter the boat
@@ -231,6 +257,27 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 			TEXT("Press E to enter the boat!") // Message
 		);
 	 */
+	
+	// If the boat is currently at a dock, ask the dock if the player is allowed to leave.
+	if (DockInReach && !DockInReach->CanLeaveDock())
+	{
+		PlayerCharacter->RemoveBoatInReach();
+		HideEnterBoatPrompt();
+
+		UE_LOG(LogTemp, Warning, TEXT("Boat locked by dock leave requirement."));
+
+		if (GEngine)
+		{
+			GEngine->AddOnScreenDebugMessage(
+				-1,
+				3.0f,
+				FColor::White,
+				DockInReach->GetCannotLeaveDockMessage().ToString()
+			);
+		}
+
+		return;
+	}
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
