@@ -252,6 +252,7 @@ void UInventoryComponent::CraftItem()
     }
 
     OnCraftSuccess.Broadcast();
+    OnItemCrafted.Broadcast(ResultingItem);
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
@@ -263,7 +264,12 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
             InventorySlots[i].ItemID = ItemToAdd;
             InventorySlots[i].ItemQuantity = Quantity;
             InventorySlots[i].bIsOnWorkbench = false;
+
+            const bool bFirstPickupEver = !bHasEverPickedUpItem;
+            bHasEverPickedUpItem = true;
+
             OnInventoryUpdated.Broadcast();
+            OnItemPickedUp.Broadcast(ItemToAdd, bFirstPickupEver);
             return true;
         }
     }

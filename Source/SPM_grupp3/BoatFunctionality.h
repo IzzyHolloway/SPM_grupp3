@@ -133,7 +133,7 @@ protected:
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 	
 	
-	/************** WIDGETS TEMPORARY *************/
+	/************** WIDGETS *************/
 	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
 	TSubclassOf<UUserWidget> EnterBoatPromptWidgetClass;
@@ -145,6 +145,26 @@ protected:
 
 	void ShowEnterBoatPrompt();
 	void HideEnterBoatPrompt();
+	
+	/************** PROGRESSION *************/
+	/*
+	 * This part is needed to check if you can board the boat
+	 * Example:
+	 *  - You started a quest in Island 1
+	 *  - You need to complete the quest
+	 *  - The player decides to board onto the boat before completing the quest
+	 *  - The player should NOT be able to board the boat before they complete a started quest
+	 *  
+	 */
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression")
+	bool bRequiresFlagToEnterBoat = true;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression", meta = (EditCondition = "bRequiresFlagToEnterBoat"))
+	FName RequiredFlagToEnterBoat = "LitLantern";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression")
+	FText CannotEnterBoatMessage = FText::FromString("I should help them first before leaving.");
 
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null

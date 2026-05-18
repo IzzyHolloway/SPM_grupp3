@@ -312,7 +312,7 @@ protected:
 	FName GameEndingStartedFlag = "GameEndingStarted";
 	
 	
-	/*** HARD CODED!!!! REMOVE LATER!!!! ***/
+	/*** Look more into these ones. See if there is flexible way ***/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
 	FName ShellItemAddedToInventoryFlag = "ShellItemAddedToInventory";
 
