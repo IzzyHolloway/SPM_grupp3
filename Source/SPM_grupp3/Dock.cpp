@@ -88,15 +88,14 @@ void ADock::OnExitBoatTriggerRightBeginOverlap(UPrimitiveComponent* OverlappedCo
 		*/
 		
 		// Safe the docking spot corresponding to the trigger box
-		GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Current Docking Spot is the right one now") // Message
-		);
 		CurrentDockingSpotPosition = &RightDockingSpotPosition;
 		CurrentDockingSpotRotation = &RightDockingSpotRotation;
 		
+		/*
+		// Safe the enter spot corresponding to the trigger box (from which the player should enter the boat later)
+		CurrentEnterSpotPosition = &RightEnterSpotPosition;
+		CurrentEnterSpotRotation = &RightEnterSpotRotation;
+		*/
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -119,14 +118,14 @@ void ADock::OnExitBoatTriggerLeftBeginOverlap(UPrimitiveComponent* OverlappedCom
 		*/
 		
 		// Safe the docking spot corresponding to the trigger box
-		GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Current Docking Spot is the left one now") // Message
-		);
 		CurrentDockingSpotPosition = &LeftDockingSpotPosition;
 		CurrentDockingSpotRotation = &RightDockingSpotRotation;
+		
+		/*
+		// Safe the enter spot corresponding to the trigger box (from which the player should enter the boat later)
+		CurrentEnterSpotPosition = &LeftEnterSpotPosition;
+		CurrentEnterSpotRotation = &LeftEnterSpotRotation;
+		*/
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -161,10 +160,22 @@ FVector ADock::GetDockingSpotPosition() const
 	return *CurrentDockingSpotPosition;
 }
 
-FVector ADock::GetDockingSpotRotation() const
+FRotator ADock::GetDockingSpotRotation() const
 {
 	return *CurrentDockingSpotRotation;
 }
+
+/*
+FVector ADock::GetEnterSpotPosition() const
+{
+	return *CurrentEnterSpotPosition;
+}
+
+FRotator ADock::GetEnterSpotRotation() const
+{
+	return *CurrentEnterSpotRotation;
+}
+*/
 
 void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 {

@@ -38,13 +38,27 @@ public:
 	UFUNCTION()
 	FVector GetCharacterPositionOffset() const;
 	
+	// ------------------------- DOCKING SPOTS -------------------------
+	
 	// Returns the position the boat should have after docking
 	UFUNCTION()
 	FVector GetDockingSpotPosition() const;
 	
 	// Returns the rotation the boat should have after docking
 	UFUNCTION()
-	FVector GetDockingSpotRotation() const;
+	FRotator GetDockingSpotRotation() const;
+	
+	/*
+	// Returns the position the boat should have after docking
+	UFUNCTION()
+	FVector GetEnterSpotPosition() const;
+	
+	// Returns the rotation the boat should have after docking
+	UFUNCTION()
+	FRotator GetEnterSpotRotation() const;
+	*/
+	
+	// ------------------------- PROGRESSION -------------------------
 	
 	// Adding Flag when docking. Like ArriveIsland1 and so on...
 	UFUNCTION()
@@ -74,6 +88,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 	
+	// ------------------------- DOCKING SPOTS -------------------------
+	
+	// Boat position
+	
 	// Where the boat should dock when it comes from the right
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	FVector RightDockingSpotPosition = FVector(0.0f, 0.0f, 0.0f);
@@ -84,14 +102,33 @@ protected:
 	
 	// In which rotation the boat should dock when it comes from the right
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector RightDockingSpotRotation = FVector(0.0f, 0.0f, 0.0f);
+	FRotator RightDockingSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
 	
 	// In which rotation the boat should dock when it comes from the left
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector LeftDockingSpotRotation = FVector(0.0f, 0.0f, 0.0f);
+	FRotator LeftDockingSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
 	
+	/*
+	// Character position
 	
-	/******** PROGRESSION ********/
+	// Where the character should enter when the boat lies on the right side of the dock
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
+	FVector RightEnterSpotPosition = FVector(0.0f, 0.0f, 0.0f);
+	
+	// Where the character should enter when the boat lies on the left side of the dock
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
+	FVector LeftEnterSpotPosition = FVector(0.0f, 0.0f, 0.0f);
+	
+	// In which rotation the character should enter when the boat lies on the right side of the dock
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
+	FRotator RightEnterSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
+	
+	// In which rotation the character should enter when the boat lies on the left side of the dock
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
+	FRotator LeftEnterSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
+	*/
+	
+	// ------------------------- PROGRESSION -------------------------
 	
 	// Progression flag required before the boat can dock here.
 	// Leave as None if this dock should always be usable.
@@ -141,10 +178,20 @@ private:
 	void DisableExitingBoat(ABoatFunctionality* Boat);
 	
 	// Position where the boat should dock (e.g. on the right of the dock)
-	// Null, if boat is out of reach, otherwise either RightDockingSpotPosition or LeftDockingSpotPosition
+	// Either RightDockingSpotPosition or LeftDockingSpotPosition
 	FVector* CurrentDockingSpotPosition = nullptr;
 	
 	// Rotation in which the boat should dock (e.g. on the right of the dock)
-	// Null, if boat is out of reach, otherwise either RightDockingSpotRotation or LeftDockingSpotRotation
-	FVector* CurrentDockingSpotRotation = nullptr;
+	// Either RightDockingSpotRotation or LeftDockingSpotRotation
+	FRotator* CurrentDockingSpotRotation = nullptr;
+	
+	/*
+	// Position from which the character should enter the boat later (e.g. on the right of the dock)
+	// Either RightEnterSpotPosition or LeftEnterSpotPosition
+	FVector* CurrentEnterSpotPosition = nullptr;
+	
+	// Rotation in which the character should enter the boat later (e.g. on the right of the dock)
+	// Either RightEnterSpotRotation or LeftEnterSpotRotation
+	FRotator* CurrentEnterSpotRotation = nullptr;
+	*/
 };
