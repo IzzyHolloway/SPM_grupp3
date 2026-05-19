@@ -390,7 +390,7 @@ void ACharacterAimi::DebugSolveIsland1()
 
 	ProgressionManager->AddFlag("Island1PuzzleSolved");
 
-	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island1PuzzleSolved flag added"));
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island2PuzzleSolved flag added"));
 
 	if (GEngine)
 	{
