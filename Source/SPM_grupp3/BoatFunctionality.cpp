@@ -6,11 +6,11 @@
 #include "AIController.h"
 #include "GameFramework/SpringArmComponent.h"
 #include "Components/BoxComponent.h"
+#include "Components/CapsuleComponent.h"
 
 #include "ProgressionManager.h"
 
 #include "CharacterAimi.h"
-#include "CharacterPaula.h"
 #include "Dock.h"
 
 #include "GameFramework/FloatingPawnMovement.h"
@@ -25,17 +25,21 @@ ABoatFunctionality::ABoatFunctionality()
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 	
-	// ---
-	RootComponent = CreateDefaultSubobject<USceneComponent>(TEXT("Root"));
+	// ---------------------------------- COLLISION ----------------------------------
+	
+	// FloatingPawnMovement needs a collision component as root
+	CollisionComponent = CreateDefaultSubobject<UBoxComponent>(TEXT("Collision"));
+	CollisionComponent->SetWorldRotation(FRotator(0.0, 90.0, 0.0));
+	RootComponent = CollisionComponent;
+	
+	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+	CollisionComponent->SetCollisionObjectType(ECC_Pawn);
+	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
+	
+	// ------------------------------------ MESH ------------------------------------
     
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
 	MeshComponent->SetupAttachment(RootComponent);
-	// ---
-	
-	/*
-	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
-	RootComponent = MeshComponent;
-	 */
 	
 	// ----------------------------------- CAMERA -----------------------------------
 
@@ -55,7 +59,7 @@ ABoatFunctionality::ABoatFunctionality()
 	// ---------------------------------- MOVEMENT ----------------------------------
 	
 	MovementComponent = CreateDefaultSubobject<UFloatingPawnMovement>(TEXT("MovementComponent"));
-	MovementComponent->UpdatedComponent = RootComponent;
+	MovementComponent->UpdatedComponent = CollisionComponent;
 	
 	// -------------------------------- ENTER & EXIT --------------------------------
 	
@@ -179,9 +183,7 @@ void ABoatFunctionality::Interact(const FInputActionValue& Value)
 
 // Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
-	// UE_LOG(LogTemp, Warning, TEXT("DEBUG: Oh, an overlap began! :D Other actor: %s"), *OtherActor->GetName());
-	
+{	
 	// Check if the overlapping object is the player character
 	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
 	{

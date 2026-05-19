@@ -13,8 +13,8 @@
 #include "Components/WidgetComponent.h"
 #include "BoatFunctionality.generated.h"
 
-class ADock;
 // Forward declares
+
 // Input
 class UInputMappingContext;
 class UInputAction;
@@ -26,6 +26,7 @@ class UFloatingPawnMovement;
 // Enter & Exit
 class UBoxComponent;
 class ACharacterAimi;
+class ADock;
 
 UCLASS()
 class SPM_GRUPP3_API ABoatFunctionality : public APawn
@@ -86,6 +87,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+		
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	TObjectPtr<UBoxComponent> CollisionComponent;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly)
 	TObjectPtr<UStaticMeshComponent> MeshComponent;
