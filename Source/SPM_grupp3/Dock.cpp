@@ -21,14 +21,23 @@ ADock::ADock()
 	
 	// -------------------------------- INTERACTION WITH BOAT --------------------------------
 	
-	ExitBoatTrigger = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitBoatTrigger"));
-	ExitBoatTrigger->SetupAttachment(MeshComponent);
+	ExitBoatTriggerRight = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitBoatTriggerRight"));
+	ExitBoatTriggerRight->SetupAttachment(MeshComponent);
+	
+	ExitBoatTriggerLeft = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitBoatTriggerLeft"));
+	ExitBoatTriggerLeft->SetupAttachment(MeshComponent);
 	
 	// Subscribe OnEnterTriggerBeginOverlap function to the OnComponentBeginOverlap event of the enter trigger box
-	ExitBoatTrigger->OnComponentBeginOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerBeginOverlap);
+	ExitBoatTriggerRight->OnComponentBeginOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerRightBeginOverlap);
 	
 	// Subscribe OnEnterTriggerEndOverlap function to the OnComponentEndOverlap event of the enter trigger box
-	ExitBoatTrigger->OnComponentEndOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerEndOverlap);
+	ExitBoatTriggerRight->OnComponentEndOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerRightEndOverlap);
+	
+	// Subscribe OnEnterTriggerBeginOverlap function to the OnComponentBeginOverlap event of the enter trigger box
+	ExitBoatTriggerLeft->OnComponentBeginOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerLeftBeginOverlap);
+	
+	// Subscribe OnEnterTriggerEndOverlap function to the OnComponentEndOverlap event of the enter trigger box
+	ExitBoatTriggerLeft->OnComponentEndOverlap.AddDynamic(this, &ADock::OnExitBoatTriggerLeftEndOverlap);
 
 }
 
@@ -43,7 +52,7 @@ void ADock::BeginPlay()
 	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
 	{
 		TArray<AActor*> OverlappingBoats;
-		ExitBoatTrigger->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
+		ExitBoatTriggerRight->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
 		
 		for (AActor* Actor : OverlappingBoats)
 		{
@@ -63,7 +72,7 @@ void ADock::Tick(float DeltaTime)
 	// Careful: Tick is turned off!
 }
 
-void ADock::OnExitBoatTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+void ADock::OnExitBoatTriggerRightBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
@@ -78,16 +87,66 @@ void ADock::OnExitBoatTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, A
 		);
 		*/
 		
+		// Safe the docking spot corresponding to the trigger box
+		GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("Current Docking Spot is the right one now") // Message
+		);
+		CurrentDockingSpotPosition = &RightDockingSpotPosition;
+		CurrentDockingSpotRotation = &RightDockingSpotRotation;
+		
+		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
 	}
 }
 
-void ADock::OnExitBoatTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+void ADock::OnExitBoatTriggerLeftBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
 	{
+		/*
+		 * Only for debugging:
+		GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("Press E to exit the boat!") // Message
+		);
+		*/
+		
+		// Safe the docking spot corresponding to the trigger box
+		GEngine->AddOnScreenDebugMessage(
+			-1,                // Key (-1 means add a new message)
+			5.0f,              // Display time in seconds
+			FColor::White,     // Text color
+			TEXT("Current Docking Spot is the left one now") // Message
+		);
+		CurrentDockingSpotPosition = &LeftDockingSpotPosition;
+		CurrentDockingSpotRotation = &RightDockingSpotRotation;
+		
+		// Enable exiting the boat
+		EnableExitingBoat(Boat);
+	}
+}
+
+void ADock::OnExitBoatTriggerRightEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// Check if the overlapping object is the boat
+	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
+	{		
+		DisableExitingBoat(Boat);
+	}
+}
+
+void ADock::OnExitBoatTriggerLeftEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// Check if the overlapping object is the boat
+	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
+	{		
 		DisableExitingBoat(Boat);
 	}
 }
@@ -95,6 +154,16 @@ void ADock::OnExitBoatTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AAc
 FVector ADock::GetCharacterPositionOffset() const
 {
 	return CharacterPositionOffset;
+}
+
+FVector ADock::GetDockingSpotPosition() const
+{
+	return *CurrentDockingSpotPosition;
+}
+
+FVector ADock::GetDockingSpotRotation() const
+{
+	return *CurrentDockingSpotRotation;
 }
 
 void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
