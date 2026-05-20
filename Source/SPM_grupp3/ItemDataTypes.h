@@ -3,6 +3,8 @@
 #include "Engine/DataTable.h"
 #include "ItemDataTypes.generated.h"
 
+class UUserWidget;
+
 USTRUCT(BlueprintType)
 struct FItemDetail: public FTableRowBase
 {
@@ -58,4 +60,14 @@ struct FCraftingRecipe : public FTableRowBase
 	// Optional progression flag added when this recipe is crafted successfully.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe|Progression")
 	FName ProgressionFlagToAdd = NAME_None;
+
+	/**
+	 * If set, the craft opens this widget instead of placing the result directly in the inventory.
+	 * The widget is responsible for calling InventoryComponent::AddCraftedItem(ResultItemID)
+	 * when the puzzle is completed. Used for "puzzle crafts" such as the Drawing puzzle.
+	 *
+	 * //Izzy lagt till för ritpussel
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe|Puzzle")
+	TSubclassOf<UUserWidget> PuzzleWidgetClass;
 };

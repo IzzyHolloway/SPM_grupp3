@@ -59,6 +59,12 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
         ActiveInventory->OnCraftSuccess.AddDynamic(this, &ACraftingStation::HandleCraftSuccess);
     }
 
+    //Izzy lagt till för ritpussel
+    if (!ActiveInventory->OnPuzzleCraftRequested.IsAlreadyBound(this, &ACraftingStation::HandlePuzzleCraftRequested))
+    {
+        ActiveInventory->OnPuzzleCraftRequested.AddDynamic(this, &ACraftingStation::HandlePuzzleCraftRequested);
+    }
+
     APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
     if (!PC) return;
 
@@ -96,6 +102,7 @@ void ACraftingStation::CloseCrafting()
     if (ActiveInventory)
     {
         ActiveInventory->OnCraftSuccess.RemoveDynamic(this, &ACraftingStation::HandleCraftSuccess);
+        ActiveInventory->OnPuzzleCraftRequested.RemoveDynamic(this, &ACraftingStation::HandlePuzzleCraftRequested); //Izzy lagt till för ritpussel
         ActiveInventory->ClearWorkbench();
         ActiveInventory->SetWorkbenchOpen(false);
     }
@@ -139,4 +146,15 @@ void ACraftingStation::HandleCraftSuccess()
     GetWorld()->GetTimerManager().SetTimer(
         CloseAfterCraftTimer, this, &ACraftingStation::CloseCrafting,
         FMath::Max(0.f, CloseDelayAfterCraft), false);
+}
+
+// //Izzy lagt till för ritpussel
+void ACraftingStation::HandlePuzzleCraftRequested(FName /*ResultItemID*/,
+                                                  TSubclassOf<UUserWidget> /*PuzzleWidgetClass*/)
+{
+    if (!IsCraftingOpen()) return;
+
+    // Cancel the regular post-craft close delay; the puzzle widget needs input now.
+    GetWorld()->GetTimerManager().ClearTimer(CloseAfterCraftTimer);
+    CloseCrafting();
 }
