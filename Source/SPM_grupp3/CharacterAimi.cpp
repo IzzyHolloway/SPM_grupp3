@@ -416,9 +416,9 @@ void ACharacterAimi::DebugSolveIsland2()
 		return;
 	}
 
-	ProgressionManager->AddFlag("Island2PuzzleSolved");
+	ProgressionManager->AddFlag("GramophonePlayed");
 
-	UE_LOG(LogTemp, Warning, TEXT("DEBUG: Island2PuzzleSolved flag added"));
+	UE_LOG(LogTemp, Warning, TEXT("DEBUG: GramophonePlayed flag added"));
 
 	if (GEngine)
 	{
