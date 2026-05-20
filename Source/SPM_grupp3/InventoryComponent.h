@@ -5,10 +5,15 @@
 #include "ItemDataTypes.h"
 #include "InventoryComponent.generated.h"
 
+class UUserWidget;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnInventoryUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, FName, ItemID, bool, bFirstPickupEver);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemCrafted, FName, ItemID);
+
+// //Izzy lagt till för ritpussel
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPuzzleCraftRequested, FName, ResultItemID, TSubclassOf<UUserWidget>, PuzzleWidgetClass);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
 class SPM_GRUPP3_API UInventoryComponent : public UActorComponent
@@ -34,6 +39,13 @@ public:
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
     FOnItemCrafted OnItemCrafted;
 
+    // Broadcast when a craft matched a recipe with a PuzzleWidgetClass set.
+    // Listener (e.g. player character / HUD) should spawn the widget; the widget
+    // itself calls AddCraftedItem when the puzzle is finished.
+    // //Izzy lagt till för ritpussel
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnPuzzleCraftRequested OnPuzzleCraftRequested;
+
     /** True after the player has ever added at least one item via pickup. */
     UPROPERTY(BlueprintReadOnly, Category = "Inventory|State")
     bool bHasEverPickedUpItem = false;
@@ -52,6 +64,16 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
     TObjectPtr<UDataTable> RecipeDataTable;
+
+    /** How hard the controller buzzes when a craft fails (no matching recipe). 0..1.
+     *  Set to 0 to disable the haptic feedback completely.
+     *  //Izzy lagt till för craft-fail-haptik */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
+    float CraftFailHapticIntensity = 0.4f;
+
+    /** How long the failure-buzz lasts in seconds. //Izzy lagt till för craft-fail-haptik */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
+    float CraftFailHapticDuration = 0.2f;
 
     UFUNCTION(BlueprintPure, Category = "Inventory|State")
     bool IsWorkbenchOpen() const { return bIsWorkbenchOpen; }
@@ -87,6 +109,12 @@ public:
 
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
+
+    // Adds an item to inventory and broadcasts OnItemCrafted (not OnItemPickedUp).
+    // Use this from puzzle widgets that grant a crafted item on completion.
+    // //Izzy lagt till för ritpussel
+    UFUNCTION(BlueprintCallable, Category = "Inventory")
+    bool AddCraftedItem(FName ItemID);
 
     /** Removes every slot whose ItemID matches. Returns true if anything was removed. */
     UFUNCTION(BlueprintCallable, Category = "Inventory")
