@@ -81,5 +81,5 @@ protected:
 	USoundBase* PickupSound = nullptr;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
-	float PickupSoundVolume = 1.0f;
+	float PickupSoundVolume = 0.1f;
 };

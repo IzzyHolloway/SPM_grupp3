@@ -317,7 +317,7 @@ protected:
 	FName ShellItemAddedToInventoryFlag = "ShellItemAddedToInventory";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
-	FName ShellItemID = "Shell";
+	FName ShellItemID = "Crank";
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
 	FName PenItemAddedToInventoryFlag = "PenItemAddedToInventory";
