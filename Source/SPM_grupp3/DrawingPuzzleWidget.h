@@ -8,20 +8,18 @@
 
 class UTextureRenderTarget2D;
 class UInventoryComponent;
+class UImage;
 
 /**
  * Base class for the Drawing puzzle widget.
  *
- * Subclass this in UMG (WBP_DrawingPuzzle) and:
- *   - Add an Image bound to CanvasTexture (paper background that shows the drawing).
- *   - Add an Image acting as a crosshair, positioned each tick.
- *   - Read input (right stick via GetRightStickInput, or mouse via GetMousePosition),
- *     move the crosshair, and call DrawSegment(prevUV, newUV) every tick.
- *   - On A press (or left click), call FinishPuzzle.
+ * The WBP subclass only needs to provide the Designer hierarchy:
+ *   - A CanvasPanel root.
+ *   - An Image child named EXACTLY "PaperBackground"  (bound via BindWidget).
+ *   - An Image child named EXACTLY "Crosshair"        (bound via BindWidget).
  *
- * Lifecycle:
- *   - NativeConstruct creates the CanvasTexture and clears it.
- *   - FinishPuzzle adds ResultItemID to the player's inventory and removes the widget.
+ * Everything else — input, rendering, crosshair movement, A-button to finish —
+ * is handled here in C++. The WBP's event graph can be completely empty.
  */
 UCLASS(Abstract, Blueprintable)
 class SPM_GRUPP3_API UDrawingPuzzleWidget : public UUserWidget
@@ -29,11 +27,21 @@ class SPM_GRUPP3_API UDrawingPuzzleWidget : public UUserWidget
 	GENERATED_BODY()
 
 public:
-	/** Item ID granted to the player when FinishPuzzle is called. */
+	// ===== Bound widgets (must exist in WBP with these names) =====
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> PaperBackground;
+
+	UPROPERTY(meta = (BindWidget))
+	TObjectPtr<UImage> Crosshair;
+
+	// ===== Editable in WBP defaults =====
+
+	/** Item ID granted to the player when the puzzle is finished. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
 	FName ResultItemID = TEXT("Drawing");
 
-	/** Resolution of the drawing canvas, in pixels (square). */
+	/** Resolution of the drawing canvas in pixels (square). */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
 	int32 CanvasSize = 1024;
 
@@ -45,40 +53,66 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
 	FLinearColor LineColor = FLinearColor::Black;
 
-	/** Paper background color (used when clearing). */
+	/** Paper background color (used when clearing). Default transparent so a paper-texture
+	 *  Image placed BEHIND PaperBackground in the WBP can shine through. */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
-	FLinearColor BackgroundColor = FLinearColor::White;
+	FLinearColor BackgroundColor = FLinearColor(1.f, 1.f, 1.f, 0.f);
 
-	/** Render target the paper Image should display. Generated in NativeConstruct. */
+	/** If true, pushing the right stick UP moves the crosshair UP on screen.
+	 *  Set to false if input feels inverted on your project. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle|Input")
+	bool bInvertStickY = false;
+
+	/** Speed (UV per second) at full right-stick deflection. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
+	float CrosshairSpeed = 0.6f;
+
+	/** On-screen pixel size of PaperBackground. The Crosshair is positioned within this rect. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
+	FVector2D PaperSizePixels = FVector2D(800.f, 800.f);
+
+	/** Pixel size of the Crosshair widget. Used to center it on the UV target. */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
+	FVector2D CrosshairSize = FVector2D(32.f, 32.f);
+
+	/** Right stick magnitude below this is treated as no input (avoids drift). */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Drawing Puzzle")
+	float StickDeadzone = 0.15f;
+
+	// ===== Runtime data =====
+
 	UPROPERTY(BlueprintReadOnly, Category = "Drawing Puzzle")
 	TObjectPtr<UTextureRenderTarget2D> CanvasTexture;
 
-	/** Resets the drawing to BackgroundColor. */
+	// ===== BP-callable utilities (rarely needed; kept for flexibility) =====
+
 	UFUNCTION(BlueprintCallable, Category = "Drawing Puzzle")
 	void ClearCanvas();
 
-	/**
-	 * Draws a line segment between two UV positions on the canvas.
-	 * Both inputs are in [0,1] where (0,0) is top-left and (1,1) is bottom-right.
-	 * Call from BP each tick: FromUV = previous crosshair UV, ToUV = current.
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Drawing Puzzle")
 	void DrawSegment(FVector2D FromUV, FVector2D ToUV);
 
-	/**
-	 * Completes the puzzle: grants ResultItemID to the player's InventoryComponent,
-	 * restores Game-only input mode, hides the cursor, and removes this widget.
-	 */
 	UFUNCTION(BlueprintCallable, Category = "Drawing Puzzle")
 	void FinishPuzzle();
 
-	/** Returns the right analog stick as (X,Y) in [-1,1]. (0,0) if no controller / no PC. */
 	UFUNCTION(BlueprintPure, Category = "Drawing Puzzle")
 	FVector2D GetRightStickInput() const;
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
+	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
 
 private:
+	/** Current crosshair UV in [0,1]² — top-left is (0,0), bottom-right is (1,1). */
+	FVector2D CurrentUV = FVector2D(0.5f, 0.5f);
+
+	/** UV from the previous tick — DrawSegment uses this as the segment start. */
+	FVector2D PreviousUV = FVector2D(0.5f, 0.5f);
+
 	UInventoryComponent* GetPlayerInventory() const;
+	void ApplyBrushToPaperBackground();
+	void UpdateCrosshairWidgetPosition();
+	bool IsConfirmKey(const FKey& Key) const;
 };
