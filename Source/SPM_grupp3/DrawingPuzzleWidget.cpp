@@ -12,6 +12,8 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "InputCoreTypes.h"
+#include "GameFramework/Pawn.h"
+#include "Framework/Application/SlateApplication.h"
 
 void UDrawingPuzzleWidget::NativeConstruct()
 {
@@ -33,8 +35,37 @@ void UDrawingPuzzleWidget::NativeConstruct()
 	PreviousUV = CurrentUV;
 	UpdateCrosshairWidgetPosition();
 
-	// Take keyboard focus so NativeOnKeyDown fires for the A button / Enter / Space.
+	// Make sure the widget can actually take focus (so OnKeyDown fires for gamepad A).
+	SetIsFocusable(true);
 	SetKeyboardFocus();
+
+	// Block player input so the right stick / mouse-look doesn't move the camera while drawing.
+	SetPlayerInputBlocked(true);
+}
+
+void UDrawingPuzzleWidget::NativeDestruct()
+{
+	// Safety: if the widget is removed without FinishPuzzle being called, restore input.
+	SetPlayerInputBlocked(false);
+	Super::NativeDestruct();
+}
+
+void UDrawingPuzzleWidget::SetPlayerInputBlocked(bool bBlocked)
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return;
+
+	APawn* Pawn = PC->GetPawn();
+	if (!Pawn) return;
+
+	if (bBlocked)
+	{
+		Pawn->DisableInput(PC);
+	}
+	else
+	{
+		Pawn->EnableInput(PC);
+	}
 }
 
 void UDrawingPuzzleWidget::ApplyBrushToPaperBackground()
@@ -52,7 +83,22 @@ void UDrawingPuzzleWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 {
 	Super::NativeTick(MyGeometry, InDeltaTime);
 
-	// Read right stick. bInvertStickY toggles whether up-on-stick = up-on-screen.
+	if (bIsFinishing) return;
+
+	// 1) Polling fallback: A / Enter / Space / LMB → finish.
+	if (PollConfirmInput())
+	{
+		FinishPuzzle();
+		return;
+	}
+
+	// 2) Mouse drawing (works even when widget didn't get UI focus).
+	if (PollMouseDrawing())
+	{
+		return; // Mouse moved this tick → don't also process stick.
+	}
+
+	// 3) Gamepad right stick.
 	const FVector2D Stick = GetRightStickInput();
 	const FVector2D Delta(Stick.X, bInvertStickY ? -Stick.Y : Stick.Y);
 
@@ -73,6 +119,56 @@ void UDrawingPuzzleWidget::NativeTick(const FGeometry& MyGeometry, float InDelta
 	UpdateCrosshairWidgetPosition();
 }
 
+bool UDrawingPuzzleWidget::PollConfirmInput()
+{
+	APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+	if (!PC) return false;
+
+	return PC->WasInputKeyJustPressed(EKeys::Gamepad_FaceButton_Bottom)
+	    || PC->WasInputKeyJustPressed(EKeys::Enter)
+	    || PC->WasInputKeyJustPressed(EKeys::SpaceBar)
+	    || PC->WasInputKeyJustPressed(EKeys::LeftMouseButton);
+}
+
+bool UDrawingPuzzleWidget::PollMouseDrawing()
+{
+	if (!PaperBackground) return false;
+	if (!FSlateApplication::IsInitialized()) return false;
+
+	// Use Slate's cursor position — it's in absolute screen pixels, which matches
+	// the coordinate system used by FGeometry::AbsoluteToLocal().
+	// (APlayerController::GetMousePosition returns viewport-local pixels, which
+	//  is the WRONG space and was the cause of mouse drawing not working.)
+	const FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
+
+	const FGeometry  PaperGeom  = PaperBackground->GetCachedGeometry();
+	const FVector2D  LocalMouse = PaperGeom.AbsoluteToLocal(ScreenPos);
+	const FVector2D  PaperSize  = PaperGeom.GetLocalSize();
+
+	if (PaperSize.X < 1.f || PaperSize.Y < 1.f) return false;
+
+	// Only react when the cursor is actually inside the paper rectangle.
+	if (LocalMouse.X < 0.f || LocalMouse.X > PaperSize.X ||
+	    LocalMouse.Y < 0.f || LocalMouse.Y > PaperSize.Y)
+	{
+		return false;
+	}
+
+	FVector2D NewUV(LocalMouse.X / PaperSize.X, LocalMouse.Y / PaperSize.Y);
+	NewUV.X = FMath::Clamp(NewUV.X, 0.f, 1.f);
+	NewUV.Y = FMath::Clamp(NewUV.Y, 0.f, 1.f);
+
+	// No movement → don't waste a render pass.
+	if (NewUV.Equals(CurrentUV, 0.001f)) return false;
+
+	PreviousUV = CurrentUV;
+	CurrentUV  = NewUV;
+
+	DrawSegment(PreviousUV, CurrentUV);
+	UpdateCrosshairWidgetPosition();
+	return true;
+}
+
 void UDrawingPuzzleWidget::UpdateCrosshairWidgetPosition()
 {
 	if (!Crosshair) return;
@@ -90,17 +186,21 @@ void UDrawingPuzzleWidget::UpdateCrosshairWidgetPosition()
 	}
 
 	const FVector2D CenterPx = CurrentUV * PaperSize;
-	const FVector2D TopLeft  = CenterPx - CrosshairSize * 0.5f;
 
 	// Preferred: change the layout position via the CanvasPanel slot.
 	if (UCanvasPanelSlot* CanvasSlot = Cast<UCanvasPanelSlot>(Crosshair->Slot))
 	{
-		CanvasSlot->SetPosition(TopLeft);
+		// Force anchor=top-left + alignment=center so SetPosition places the
+		// crosshair's CENTER at CenterPx regardless of what the WBP author set.
+		// This avoids relying on the CrosshairSize UPROPERTY matching the actual image size.
+		CanvasSlot->SetAnchors(FAnchors(0.f, 0.f, 0.f, 0.f));
+		CanvasSlot->SetAlignment(FVector2D(0.5f, 0.5f));
+		CanvasSlot->SetPosition(CenterPx);
 	}
 	else
 	{
 		// Fallback (Crosshair not in a CanvasPanel): use render translation.
-		Crosshair->SetRenderTranslation(TopLeft);
+		Crosshair->SetRenderTranslation(CenterPx - CrosshairSize * 0.5f);
 	}
 }
 
@@ -129,6 +229,44 @@ FReply UDrawingPuzzleWidget::NativeOnMouseButtonDown(const FGeometry& InGeometry
 		return FReply::Handled();
 	}
 	return Super::NativeOnMouseButtonDown(InGeometry, InMouseEvent);
+}
+
+FReply UDrawingPuzzleWidget::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+	if (!PaperBackground)
+	{
+		return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
+	}
+
+	// Convert absolute screen-space mouse position to PaperBackground-local pixels,
+	// then to UV in [0,1]² so it matches the gamepad-stick coordinate system.
+	const FGeometry  PaperGeom  = PaperBackground->GetCachedGeometry();
+	const FVector2D  LocalMouse = PaperGeom.AbsoluteToLocal(InMouseEvent.GetScreenSpacePosition());
+	const FVector2D  PaperSize  = PaperGeom.GetLocalSize();
+
+	if (PaperSize.X < 1.f || PaperSize.Y < 1.f)
+	{
+		return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
+	}
+
+	// Only react when the cursor is actually inside the paper rectangle.
+	if (LocalMouse.X < 0.f || LocalMouse.X > PaperSize.X ||
+	    LocalMouse.Y < 0.f || LocalMouse.Y > PaperSize.Y)
+	{
+		return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
+	}
+
+	FVector2D NewUV(LocalMouse.X / PaperSize.X, LocalMouse.Y / PaperSize.Y);
+	NewUV.X = FMath::Clamp(NewUV.X, 0.f, 1.f);
+	NewUV.Y = FMath::Clamp(NewUV.Y, 0.f, 1.f);
+
+	PreviousUV = CurrentUV;
+	CurrentUV  = NewUV;
+
+	DrawSegment(PreviousUV, CurrentUV);
+	UpdateCrosshairWidgetPosition();
+
+	return FReply::Handled();
 }
 
 void UDrawingPuzzleWidget::ClearCanvas()
@@ -166,6 +304,16 @@ void UDrawingPuzzleWidget::DrawSegment(FVector2D FromUV, FVector2D ToUV)
 
 void UDrawingPuzzleWidget::FinishPuzzle()
 {
+	// Guard against double-trigger from polling + event path.
+	if (bIsFinishing) return;
+	bIsFinishing = true;
+
+	// Re-enable player input BEFORE granting the item, so any reaction (like a
+	// "You created X" notification widget) starts from a clean input state.
+	SetPlayerInputBlocked(false);
+
+	// Granting the item broadcasts OnItemCrafted, which the player character
+	// listens to and uses to spawn the existing "You created X" notification widget.
 	if (UInventoryComponent* Inv = GetPlayerInventory())
 	{
 		Inv->AddCraftedItem(ResultItemID);
