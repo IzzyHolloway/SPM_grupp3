@@ -37,11 +37,10 @@ FText ACraftingStation::LookAtActor_Implementation() const
 
 void ACraftingStation::InteractWith_Implementation(AActor* Interactor)
 {
-    if (IsCraftingOpen())
-    {
-        CloseCrafting();
-    }
-    else
+    //Izzy: X (Interact) ska bara öppna — close hanteras av separat B-input.
+    // Annars triggrar både X (Interact) och B (Close) close, vilket ger ofrivilliga stängningar
+    // när spelaren försöker crafta med X.
+    if (!IsCraftingOpen())
     {
         OpenCrafting(Interactor);
     }
