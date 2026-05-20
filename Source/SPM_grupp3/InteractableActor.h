@@ -15,16 +15,23 @@ class SPM_GRUPP3_API AInteractableActor : public AActor
 public:
 	AInteractableActor();
 
-	virtual void Tick(float DeltaTime) override;
-	virtual void OnConstruction(const FTransform& Transform) override;
+	//virtual void Tick(float DeltaTime) override;
+	//virtual void OnConstruction(const FTransform& Transform) override;
 
 protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
 	TObjectPtr<UStaticMeshComponent> Mesh;
 
-	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Interactable")
-	TObjectPtr<UWidgetComponent> PromptWidget;
+	/***** Removing the widget that you can see in the world. Instead we have a simpler one you can see on the bottom of the screen instead *****/
+	
+	// The widget blueprint that says "X - Interact"
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Prompt")
+	TSubclassOf<UUserWidget> InteractPromptWidgetClass;
 
+	UPROPERTY()
+	TObjectPtr<UUserWidget> InteractPromptWidgetInstance;
+
+/*
 	//Local position of the prompt above the object. Adjust per Blueprint.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Prompt")
 	FVector PromptOffset = FVector(50.f, 0.f, 120.f);
@@ -40,10 +47,12 @@ protected:
 	//If true, the prompt rotates to face the camera.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Prompt")
 	bool bPromptFacesCamera = true;
+	*/
 
 public:
 	UFUNCTION()
 	virtual void Interact();
-
-	void SetPromptVisible(bool bVisible);
+	
+	UFUNCTION(BlueprintCallable)
+	virtual void SetPromptVisible(bool bVisible);
 };

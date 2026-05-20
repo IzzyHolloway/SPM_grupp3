@@ -2,6 +2,7 @@
 #include "ProgressionManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "ItemDataTypes.h"
+#include "Blueprint/UserWidget.h" //Izzy lagt till för ritpussel (TSubclassOf<UUserWidget>)
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -141,8 +142,29 @@ void UInventoryComponent::ToggleItemOnWorkbench()
     if (!InventorySlots.IsValidIndex(SelectedSlotIndex)) return;
     if (InventorySlots[SelectedSlotIndex].ItemID == NAME_None) return;
 
-    InventorySlots[SelectedSlotIndex].bIsOnWorkbench =
-        !InventorySlots[SelectedSlotIndex].bIsOnWorkbench;
+    FInventorySlot& Slot = InventorySlots[SelectedSlotIndex];
+    Slot.bIsOnWorkbench = !Slot.bIsOnWorkbench;
+
+    if (Slot.bIsOnWorkbench)
+    {
+        // Assign the next available WorkbenchOrder so we know where in the sequence
+        // this item was placed. Used by order-sensitive recipes.
+        int32 MaxOrder = -1;
+        for (const FInventorySlot& Other : InventorySlots)
+        {
+            if (Other.bIsOnWorkbench && Other.WorkbenchOrder > MaxOrder)
+            {
+                MaxOrder = Other.WorkbenchOrder;
+            }
+        }
+        Slot.WorkbenchOrder = MaxOrder + 1;
+    }
+    else
+    {
+        // Removed from bench — clear order.
+        Slot.WorkbenchOrder = -1;
+    }
+
     OnInventoryUpdated.Broadcast();
 }
 
@@ -154,6 +176,7 @@ void UInventoryComponent::ClearWorkbench()
         if (Slot.bIsOnWorkbench)
         {
             Slot.bIsOnWorkbench = false;
+            Slot.WorkbenchOrder = -1; //Izzy lagt till för ordnings-recept
             bAny = true;
         }
     }
@@ -164,17 +187,36 @@ void UInventoryComponent::CraftItem()
 {
     if (!RecipeDataTable) return;
 
-    TArray<FName> ItemsOnBench;
+    // //Izzy lagt till för ordnings-recept
+    // Collect items WITH their placement order so we can support order-sensitive recipes.
+    struct FBenchEntry
+    {
+        FName ItemID;
+        int32 Order;
+    };
+    TArray<FBenchEntry> BenchEntries;
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.bIsOnWorkbench && Slot.ItemID != NAME_None)
         {
-            ItemsOnBench.Add(Slot.ItemID);
+            BenchEntries.Add({Slot.ItemID, Slot.WorkbenchOrder});
         }
     }
-    if (ItemsOnBench.Num() == 0) return;
+    if (BenchEntries.Num() == 0) return;
 
-    ItemsOnBench.Sort([](const FName& A, const FName& B)
+    // Sort by placement order — this is the "as-placed" view used for ordered recipes.
+    BenchEntries.Sort([](const FBenchEntry& A, const FBenchEntry& B)
+    {
+        return A.Order < B.Order;
+    });
+
+    TArray<FName> ItemsInOrder;
+    ItemsInOrder.Reserve(BenchEntries.Num());
+    for (const FBenchEntry& BE : BenchEntries) ItemsInOrder.Add(BE.ItemID);
+
+    // Alphabetical view used for unordered recipes (existing behavior).
+    TArray<FName> ItemsAlpha = ItemsInOrder;
+    ItemsAlpha.Sort([](const FName& A, const FName& B)
     {
         return A.ToString() < B.ToString();
     });
@@ -190,19 +232,36 @@ void UInventoryComponent::CraftItem()
     for (FCraftingRecipe* Recipe : Recipes)
     {
         if (!Recipe) continue;
-
-        TArray<FName> RecipeIngredients = Recipe->RequiredIngredients;
-        if (RecipeIngredients.Num() != ItemsOnBench.Num()) continue;
-
-        RecipeIngredients.Sort([](const FName& A, const FName& B)
-        {
-            return A.ToString() < B.ToString();
-        });
+        if (Recipe->RequiredIngredients.Num() != ItemsInOrder.Num()) continue;
 
         bool bMatch = true;
-        for (int32 i = 0; i < ItemsOnBench.Num(); ++i)
+
+        //Izzy lagt till för ordnings-recept
+        if (Recipe->bOrderMatters)
         {
-            if (ItemsOnBench[i] != RecipeIngredients[i]) { bMatch = false; break; }
+            // Strict order: compare item-by-item in placement order.
+            for (int32 i = 0; i < ItemsInOrder.Num(); ++i)
+            {
+                if (ItemsInOrder[i] != Recipe->RequiredIngredients[i])
+                {
+                    bMatch = false;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            // Unordered: sort both and compare (preserves existing behavior).
+            TArray<FName> RecipeSorted = Recipe->RequiredIngredients;
+            RecipeSorted.Sort([](const FName& A, const FName& B)
+            {
+                return A.ToString() < B.ToString();
+            });
+
+            for (int32 i = 0; i < ItemsAlpha.Num(); ++i)
+            {
+                if (ItemsAlpha[i] != RecipeSorted[i]) { bMatch = false; break; }
+            }
         }
 
         if (bMatch)
@@ -215,7 +274,37 @@ void UInventoryComponent::CraftItem()
         }
     }
 
-    if (!bSuccess) return;
+    if (!bSuccess)
+    {
+        //Izzy lagt till för craft-fail-haptik
+        // Light controller buzz to signal "that didn't work" — no recipe matched.
+        if (CraftFailHapticIntensity > 0.f)
+        {
+            if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
+            {
+                FForceFeedbackParameters Params;
+                Params.bLooping = false;
+                Params.Tag = TEXT("CraftFail");
+                // PlayDynamicForceFeedback fires all four motors lightly for Duration seconds.
+                PC->PlayDynamicForceFeedback(
+                    CraftFailHapticIntensity,
+                    CraftFailHapticDuration,
+                    /*LeftLarge=*/  true,
+                    /*LeftSmall=*/  true,
+                    /*RightLarge=*/ true,
+                    /*RightSmall=*/ true,
+                    EDynamicForceFeedbackAction::Start);
+            }
+        }
+
+        //Izzy lagt till — vid misslyckad craft, släng tillbaka items från workbenchen
+        // till inventoryt så spelaren måste placera dem igen. Bra för pussel-recept där
+        // ordningen var fel — då tvingas spelaren tänka om från början.
+        ClearWorkbench();
+        SelectFirstAvailableSlot(); // välj första item så cursor inte hänger på tom slot
+
+        return;
+    }
 
     // Consume ingredients.
     for (FInventorySlot& Slot : InventorySlots)
@@ -225,10 +314,10 @@ void UInventoryComponent::CraftItem()
             Slot.ItemID = NAME_None;
             Slot.ItemQuantity = 0;
             Slot.bIsOnWorkbench = false;
+            Slot.WorkbenchOrder = -1; //Izzy lagt till för ordnings-recept
         }
     }
 
-    // //Izzy lagt till för ritpussel
     // Puzzle crafts skip placing the result in the inventory — the puzzle widget
     // grants the item itself when the player finishes the puzzle.
     const bool bIsPuzzleCraft = (PuzzleWidgetClass != nullptr);
@@ -265,7 +354,6 @@ void UInventoryComponent::CraftItem()
 
     if (bIsPuzzleCraft)
     {
-        //Izzy lagt till för ritpussel
         // Don't broadcast OnItemCrafted yet — the puzzle widget does that via AddCraftedItem.
         OnPuzzleCraftRequested.Broadcast(ResultingItem, PuzzleWidgetClass);
     }
@@ -275,7 +363,6 @@ void UInventoryComponent::CraftItem()
     }
 }
 
-// //Izzy lagt till för ritpussel
 bool UInventoryComponent::AddCraftedItem(FName ItemID)
 {
     if (ItemID.IsNone()) return false;

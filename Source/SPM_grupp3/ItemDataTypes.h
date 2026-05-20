@@ -37,12 +37,23 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
 	bool bIsOnWorkbench;
 
+	/**
+	 * Order in which the item was placed on the workbench (0 = first, 1 = second, ...).
+	 * -1 means "not on the workbench". Used for order-sensitive recipes
+	 * (e.g. the colored notes puzzle on Island 1 where order matters).
+	 *
+	 * //Izzy lagt till för ordnings-recept
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
+	int32 WorkbenchOrder = -1;
+
 	// se till att en tom slot är nollställd
 	FInventorySlot()
 	{
 		ItemID = NAME_None;
 		ItemQuantity = 0;
 		bIsOnWorkbench = false; // Som standard ligger inget på workbench
+		WorkbenchOrder = -1;    // Inte placerad
 	}
 };
 
@@ -70,4 +81,14 @@ struct FCraftingRecipe : public FTableRowBase
 	 */
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe|Puzzle")
 	TSubclassOf<UUserWidget> PuzzleWidgetClass;
+
+	/**
+	 * If true, RequiredIngredients must appear in EXACTLY this order on the workbench
+	 * (according to the order the player placed them). Used for puzzles like the colored
+	 * notes on Island 1 (Blue → Yellow → Green → Red). Default false = order doesn't matter.
+	 *
+	 * //Izzy lagt till för ordnings-recept
+	 */
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Recipe")
+	bool bOrderMatters = false;
 };

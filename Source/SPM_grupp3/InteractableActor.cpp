@@ -12,6 +12,7 @@ AInteractableActor::AInteractableActor()
 	Mesh = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("Mesh"));
 	RootComponent = Mesh;
 
+	/*
 	PromptWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("PromptWidget"));
 	PromptWidget->SetupAttachment(RootComponent);
 
@@ -30,8 +31,10 @@ AInteractableActor::AInteractableActor()
 	PromptWidget->SetWorldScale3D(FVector(PromptWorldScale));
 
 	PromptWidget->SetVisibility(false);
+	*/
 }
 
+/*
 void AInteractableActor::OnConstruction(const FTransform& Transform)
 {
 	Super::OnConstruction(Transform);
@@ -46,7 +49,9 @@ void AInteractableActor::OnConstruction(const FTransform& Transform)
 		PromptWidget->SetWorldScale3D(FVector(PromptWorldScale));
 	}
 }
+*/
 
+/*
 void AInteractableActor::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
@@ -72,6 +77,7 @@ void AInteractableActor::Tick(float DeltaTime)
 		PromptWidget->SetWorldRotation(DirectionToCamera.Rotation());
 	}
 }
+*/
 
 void AInteractableActor::Interact()
 {
@@ -80,10 +86,34 @@ void AInteractableActor::Interact()
 
 void AInteractableActor::SetPromptVisible(bool bVisible)
 {
-	if (!IsValid(PromptWidget))
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (!PlayerController)
 	{
 		return;
 	}
 
-	PromptWidget->SetVisibility(bVisible);
+	if (bVisible)
+	{
+		if (!InteractPromptWidgetInstance && InteractPromptWidgetClass)
+		{
+			InteractPromptWidgetInstance = CreateWidget<UUserWidget>(
+				PlayerController,
+				InteractPromptWidgetClass
+			);
+		}
+
+		if (InteractPromptWidgetInstance && !InteractPromptWidgetInstance->IsInViewport())
+		{
+			InteractPromptWidgetInstance->AddToViewport();
+		}
+	}
+	else
+	{
+		if (InteractPromptWidgetInstance)
+		{
+			InteractPromptWidgetInstance->RemoveFromParent();
+			InteractPromptWidgetInstance = nullptr;
+		}
+	}
 }
