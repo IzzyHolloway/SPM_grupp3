@@ -185,6 +185,7 @@ void UInventoryComponent::CraftItem()
     bool bSuccess = false;
     FName ResultingItem = NAME_None;
     FName ProgressionFlagToAdd = NAME_None;
+    TSubclassOf<UUserWidget> PuzzleWidgetClass = nullptr; //Izzy lagt till för ritpussel
 
     for (FCraftingRecipe* Recipe : Recipes)
     {
@@ -209,6 +210,7 @@ void UInventoryComponent::CraftItem()
             bSuccess = true;
             ResultingItem = Recipe->ResultItemID;
             ProgressionFlagToAdd = Recipe->ProgressionFlagToAdd;
+            PuzzleWidgetClass = Recipe->PuzzleWidgetClass; //Izzy lagt till för ritpussel
             break;
         }
     }
@@ -226,15 +228,23 @@ void UInventoryComponent::CraftItem()
         }
     }
 
-    // Place result in first empty slot.
-    for (FInventorySlot& Slot : InventorySlots)
+    // //Izzy lagt till för ritpussel
+    // Puzzle crafts skip placing the result in the inventory — the puzzle widget
+    // grants the item itself when the player finishes the puzzle.
+    const bool bIsPuzzleCraft = (PuzzleWidgetClass != nullptr);
+
+    if (!bIsPuzzleCraft)
     {
-        if (Slot.ItemID == NAME_None)
+        // Place result in first empty slot.
+        for (FInventorySlot& Slot : InventorySlots)
         {
-            Slot.ItemID = ResultingItem;
-            Slot.ItemQuantity = 1;
-            Slot.bIsOnWorkbench = false;
-            break;
+            if (Slot.ItemID == NAME_None)
+            {
+                Slot.ItemID = ResultingItem;
+                Slot.ItemQuantity = 1;
+                Slot.bIsOnWorkbench = false;
+                break;
+            }
         }
     }
 
@@ -252,7 +262,38 @@ void UInventoryComponent::CraftItem()
     }
 
     OnCraftSuccess.Broadcast();
-    OnItemCrafted.Broadcast(ResultingItem);
+
+    if (bIsPuzzleCraft)
+    {
+        //Izzy lagt till för ritpussel
+        // Don't broadcast OnItemCrafted yet — the puzzle widget does that via AddCraftedItem.
+        OnPuzzleCraftRequested.Broadcast(ResultingItem, PuzzleWidgetClass);
+    }
+    else
+    {
+        OnItemCrafted.Broadcast(ResultingItem);
+    }
+}
+
+// //Izzy lagt till för ritpussel
+bool UInventoryComponent::AddCraftedItem(FName ItemID)
+{
+    if (ItemID.IsNone()) return false;
+
+    for (FInventorySlot& Slot : InventorySlots)
+    {
+        if (Slot.ItemID == NAME_None)
+        {
+            Slot.ItemID = ItemID;
+            Slot.ItemQuantity = 1;
+            Slot.bIsOnWorkbench = false;
+
+            OnInventoryUpdated.Broadcast();
+            OnItemCrafted.Broadcast(ItemID);
+            return true;
+        }
+    }
+    return false;
 }
 
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
