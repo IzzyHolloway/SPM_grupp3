@@ -10,8 +10,8 @@ public class SPM_grupp3 : ModuleRules
 	
 		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "NavigationSystem", "CinematicCamera", "AIModule" });
 
-		// Slate/SlateCore needed for FReply, FSlateBrush in DrawingPuzzleWidget. //Izzy lagt till för ritpussel
-		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
+		// Uncomment if you are using Slate UI
+		// PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
 		
 		// Uncomment if you are using online features
 		// PrivateDependencyModuleNames.Add("OnlineSubsystem");
