@@ -9,6 +9,7 @@ class USphereComponent;
 class UStaticMeshComponent;
 class UCraftingViewWidget;
 class UInventoryComponent;
+class UUserWidget;
 
 UCLASS()
 class SPM_GRUPP3_API ACraftingStation : public AActor, public IInteractable
@@ -42,6 +43,12 @@ protected:
 
     UFUNCTION()
     void HandleCraftSuccess();
+
+    // //Izzy lagt till för ritpussel
+    // Fires when a puzzle craft happens. Closes the station immediately so the
+    // puzzle widget owns input.
+    UFUNCTION()
+    void HandlePuzzleCraftRequested(FName ResultItemID, TSubclassOf<UUserWidget> PuzzleWidgetClass);
 
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
