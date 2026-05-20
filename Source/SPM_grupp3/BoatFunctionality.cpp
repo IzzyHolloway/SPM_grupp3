@@ -280,6 +280,31 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 		);
 	 */
 	
+	// Check if the current dock allows the player to leave this island.
+	if (DockInReach && !DockInReach->CanLeaveDock())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Boat locked by dock leave requirement."));
+
+		PlayerCharacter->RemoveBoatInReach();
+		HideEnterBoatPrompt();
+
+		ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+		);
+
+		if (DialogueManager)
+		{
+			DialogueManager->ShowMessage(DockInReach->GetCannotLeaveDockMessage());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat could not find DialogueManager."));
+		}
+
+		return;
+	}
+	
+	/*
 	// If the boat is currently at a dock, ask the dock if the player is allowed to leave.
 	if (DockInReach && !DockInReach->CanLeaveDock())
 	{
@@ -300,6 +325,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 
 		return;
 	}
+	*/
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
