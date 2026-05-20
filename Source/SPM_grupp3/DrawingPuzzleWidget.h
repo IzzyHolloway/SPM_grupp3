@@ -100,9 +100,15 @@ public:
 
 protected:
 	virtual void NativeConstruct() override;
+	virtual void NativeDestruct() override;
 	virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 	virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
 	virtual FReply NativeOnMouseButtonDown(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+	virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+
+	/** Disables / re-enables the player pawn's input so right-stick / mouse-look
+	 *  doesn't move the camera while the puzzle is open. */
+	void SetPlayerInputBlocked(bool bBlocked);
 
 private:
 	/** Current crosshair UV in [0,1]² — top-left is (0,0), bottom-right is (1,1). */
@@ -111,8 +117,16 @@ private:
 	/** UV from the previous tick — DrawSegment uses this as the segment start. */
 	FVector2D PreviousUV = FVector2D(0.5f, 0.5f);
 
+	/** Guards against double-calling FinishPuzzle from both event and polling paths. */
+	bool bIsFinishing = false;
+
 	UInventoryComponent* GetPlayerInventory() const;
 	void ApplyBrushToPaperBackground();
 	void UpdateCrosshairWidgetPosition();
 	bool IsConfirmKey(const FKey& Key) const;
+
+	/** Polls the player controller for confirm keys / mouse drawing. Called from NativeTick.
+	 *  Bypasses UMG focus so it works even if SetKeyboardFocus didn't stick. */
+	bool PollConfirmInput();
+	bool PollMouseDrawing();
 };
