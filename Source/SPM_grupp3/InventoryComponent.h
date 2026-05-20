@@ -65,6 +65,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
     TObjectPtr<UDataTable> RecipeDataTable;
 
+    /** How hard the controller buzzes when a craft fails (no matching recipe). 0..1.
+     *  Set to 0 to disable the haptic feedback completely.
+     *  //Izzy lagt till för craft-fail-haptik */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
+    float CraftFailHapticIntensity = 0.4f;
+
+    /** How long the failure-buzz lasts in seconds. //Izzy lagt till för craft-fail-haptik */
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
+    float CraftFailHapticDuration = 0.2f;
+
     UFUNCTION(BlueprintPure, Category = "Inventory|State")
     bool IsWorkbenchOpen() const { return bIsWorkbenchOpen; }
 
