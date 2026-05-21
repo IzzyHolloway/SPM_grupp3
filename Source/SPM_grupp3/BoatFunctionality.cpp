@@ -443,6 +443,12 @@ void ABoatFunctionality::ExitBoat()
 			// Add the dock's arrival/progression flag, for example ArrivedIsland1, ArrivedIsland2, etc.
 			CurrentDockInReach->ApplyDockingProgressionFlag();
 			
+			//Zoey moved this part up
+			// BoatSound-stop
+			BoatSoundStop();
+			//Zoey end
+			
+			
 			// Repossess player character
 			AController* PlayerController = GetController();
 			PlayerController->Possess(PlayerCharacter);
@@ -450,8 +456,6 @@ void ABoatFunctionality::ExitBoat()
 			// Fix camera after repossessing player
 			FixCameraAfterRepossessingPlayer();
 			
-			// BoatSound-stop
-			BoatSoundStop();
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;
