@@ -529,6 +529,9 @@ bool AStoryFlowManager::AreAllMelodyPiecesFound(AProgressionManager* Progression
 		return false;
 	}
 
+	int32 ValidFlagCount = 0;
+	int32 FoundFlagCount = 0;
+
 	for (const FName& Flag : MelodyPieceFlags)
 	{
 		if (Flag.IsNone())
@@ -536,13 +539,22 @@ bool AStoryFlowManager::AreAllMelodyPiecesFound(AProgressionManager* Progression
 			continue;
 		}
 
-		if (!ProgressionManager->HasFlag(Flag))
+		ValidFlagCount++;
+
+		if (ProgressionManager->HasFlag(Flag))
 		{
-			return false;
+			FoundFlagCount++;
 		}
 	}
 
-	return true;
+	// If no melody piece flags were configured, do NOT count it as all found.
+	if (ValidFlagCount == 0)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("AreAllMelodyPiecesFound: MelodyPieceFlags is empty or only contains None."));
+		return false;
+	}
+
+	return FoundFlagCount == ValidFlagCount;
 }
 
 bool AStoryFlowManager::HasAnyMelodyPiece(AProgressionManager* ProgressionManager) const
