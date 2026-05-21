@@ -541,6 +541,9 @@ void ACharacterAimi::EnterBoat()
 		MovementComponent->DisableMovement();
 	}
 	
+	// Lock the character's animations while in the boat
+	IsBoating = true;
+	
 	// Attach character to the boat so it moves with the boat
 	AttachToActor(CurrentBoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
 	

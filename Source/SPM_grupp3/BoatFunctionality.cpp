@@ -138,7 +138,7 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 		
 		// Make sure the boat stays on the same height
 		// TODO: Quick fix, replace later
-		SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
+		// SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
 	}
 }
 
@@ -431,6 +431,9 @@ void ABoatFunctionality::ExitBoat()
 	{
 		if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(AttachedActor))
 		{
+			// Enable animation changes again
+			PlayerCharacter->IsBoating = false;
+			
 			// Detach player character
 			PlayerCharacter->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			
