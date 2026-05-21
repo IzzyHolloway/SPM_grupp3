@@ -135,6 +135,10 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 		
 		// Apply forward and back movement
 		AddMovementInput(GetActorForwardVector(), MovementValue.Y);
+		
+		// Make sure the boat stays on the same height
+		// TODO: Quick fix, replace later
+		SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
 	}
 }
 
@@ -389,6 +393,9 @@ void ABoatFunctionality::ExitBoat()
 		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
 	}
+	
+	// Safe the pier in case we move out of reach during the process
+	TObjectPtr<ADock> CurrentDockInReach = DockInReach;
 
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
@@ -410,6 +417,13 @@ void ABoatFunctionality::ExitBoat()
 		}
 	}
 	
+	// Move boat to docking spot
+	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
+	SetActorRotation(CurrentDockInReach->GetDockingSpotRotation());
+	
+	// ExitAnimation
+	// TODO
+	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
 	GetAttachedActors(AttachedActors);
@@ -421,13 +435,13 @@ void ABoatFunctionality::ExitBoat()
 			PlayerCharacter->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			
 			// Move player character on top of the pier
-			PlayerCharacter->SetActorLocation(DockInReach->GetActorLocation() + DockInReach->GetCharacterPositionOffset());
+			PlayerCharacter->SetActorLocation(CurrentDockInReach->GetActorLocation() + CurrentDockInReach->GetCharacterPositionOffset());
 			
 			// Hide dock prompt because we are exiting the boat now
-			DockInReach->HideEnterDockPrompt();
+			CurrentDockInReach->HideEnterDockPrompt();
 			
 			// Add the dock's arrival/progression flag, for example ArrivedIsland1, ArrivedIsland2, etc.
-			DockInReach->ApplyDockingProgressionFlag();
+			CurrentDockInReach->ApplyDockingProgressionFlag();
 			
 			// Repossess player character
 			AController* PlayerController = GetController();
