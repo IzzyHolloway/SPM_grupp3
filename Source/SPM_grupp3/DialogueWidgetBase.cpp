@@ -32,6 +32,7 @@ void UDialogueWidgetBase::SetDialogueData(const FText& SpeakerName, const FText&
 
 		// Optional: make the dialogue text same color as the speaker.
 		// If you only want the speaker NAME colored, delete this color part.
+		/*
 		if (FoundStyle)
 		{
 			DialogueText->SetColorAndOpacity(FSlateColor(FoundStyle->SpeakerColor));
@@ -40,6 +41,7 @@ void UDialogueWidgetBase::SetDialogueData(const FText& SpeakerName, const FText&
 		{
 			DialogueText->SetColorAndOpacity(FSlateColor(DefaultSpeakerColor));
 		}
+		*/
 	}
 
 	if (SpeakerPortraitImage)
