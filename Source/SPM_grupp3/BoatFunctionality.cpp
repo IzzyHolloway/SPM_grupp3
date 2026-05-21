@@ -135,6 +135,10 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 		
 		// Apply forward and back movement
 		AddMovementInput(GetActorForwardVector(), MovementValue.Y);
+		
+		// Make sure the boat stays on the same height
+		// TODO: Quick fix, replace later
+		SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
 	}
 }
 
