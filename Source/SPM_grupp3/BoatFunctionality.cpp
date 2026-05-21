@@ -431,6 +431,9 @@ void ABoatFunctionality::ExitBoat()
 	{
 		if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(AttachedActor))
 		{
+			// Enable animation changes again
+			PlayerCharacter->IsBoating = false;
+			
 			// Detach player character
 			PlayerCharacter->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
 			

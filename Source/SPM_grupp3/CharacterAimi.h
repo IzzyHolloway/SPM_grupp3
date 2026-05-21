@@ -40,6 +40,10 @@ public:
 	//Function for locking or unlocking the charcter movements. Made to be callable in blueprints or other cpp files
 	UFUNCTION(BlueprintCallable)
 	void SetMovementLocked(bool bLock);
+	
+	// ANIMATION
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool IsBoating = false;
 
 protected:
 	virtual void BeginPlay() override;
