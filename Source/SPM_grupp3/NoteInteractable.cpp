@@ -3,7 +3,9 @@
 
 #include "NoteInteractable.h"
 
-
+//Zoey start
+#include "Kismet/GameplayStatics.h"
+//Zoey end
 
 ANoteInteractable::ANoteInteractable()
 {
@@ -12,6 +14,12 @@ ANoteInteractable::ANoteInteractable()
 
 void ANoteInteractable::Interact()
 {
+	//Zoey start
+	if (PickupSound)
+	{
+		UGameplayStatics::PlaySoundAtLocation(this, PickupSound, GetActorLocation());
+	}
+	//Zoey end
 	
 	if (NoteWidget && NoteWidget->IsInViewport()) 
 	{

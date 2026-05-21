@@ -29,6 +29,10 @@ public:
 	UPROPERTY(EditDefaultsOnly, Category = "Note")
 	TSubclassOf<UNoteWidgetBase> NoteWidgetClass;
 
+	//Zoey start
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Note")
+	USoundBase* PickupSound;
+	//Zoey end
 	
 private:
 	void LockPlayerControls(UNoteWidgetBase* NoteWidget);
@@ -36,4 +40,5 @@ private:
 	void OnWidgetClosed();
 	UPROPERTY()
 	UNoteWidgetBase* NoteWidget;
+	
 };
