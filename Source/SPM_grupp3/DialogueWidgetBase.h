@@ -17,7 +17,11 @@ struct FDialogueSpeakerStyle
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
 	FLinearColor SpeakerColor = FLinearColor::White;
-
+	
+	//
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
+	//FLinearColor SpeakerDialogueColor = FLinearColor::White;
+	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dialogue")
 	TObjectPtr<UTexture2D> SpeakerPortrait = nullptr;
 };
