@@ -541,6 +541,10 @@ void ACharacterAimi::EnterBoat()
 		MovementComponent->DisableMovement();
 	}
 	
+	// --- CHANGES ---
+	
+	// ---
+	
 	// Attach character to the boat so it moves with the boat
 	AttachToActor(CurrentBoatInReach, FAttachmentTransformRules(EAttachmentRule::SnapToTarget, EAttachmentRule::SnapToTarget, EAttachmentRule::KeepRelative, true), EName::None);
 	
