@@ -161,6 +161,15 @@ void ACharacterAimi::Move(const FInputActionValue& Value)
 
 void ACharacterAimi::Move(const FInputActionValue& Value)
 {
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+	UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		return;
+	}
+	
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
 	if (MovementVector.IsNearlyZero() || !Controller)
@@ -182,6 +191,17 @@ void ACharacterAimi::Move(const FInputActionValue& Value)
 
 void ACharacterAimi::Look(const FInputActionValue& Value)
 {
+	// Making sure character can't look around while in dialogue. Remove if not needed
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+	UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		return;
+	}
+	
+	
 	const FVector2D LookAxisVector = Value.Get<FVector2D>();
 
 	AddControllerYawInput(LookAxisVector.X);
@@ -363,6 +383,15 @@ void ACharacterAimi::AdvanceDialogueReleased(const FInputActionValue& Value)
 
 void ACharacterAimi::StartJump()
 {
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		return;
+	}
+
 	Jump();
 }
 
