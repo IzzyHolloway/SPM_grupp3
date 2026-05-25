@@ -6,11 +6,44 @@
 #include "Components/Image.h"
 #include "Engine/Texture2D.h"
 
+
+//Zoey Start
+#include "Kismet/GameplayStatics.h"
+#include "Components/AudioComponent.h"
+//Zoey end
+
 void UDialogueWidgetBase::SetDialogueData(const FText& SpeakerName, const FText& NewText)
 {
+	
 	const FName SpeakerKey = FName(*SpeakerName.ToString());
 
 	const FDialogueSpeakerStyle* FoundStyle = SpeakerStyles.Find(SpeakerKey);
+	
+	//Zoey start
+	USoundBase* SoundToPlay = nullptr;
+
+	if (SpeakerName.ToString() != "Lumi")
+	{
+		if (FoundStyle && FoundStyle->SpeakerSound)
+		{
+			SoundToPlay = FoundStyle->SpeakerSound;
+		}
+		else if (DefaultDialogueSound)
+		{
+			SoundToPlay = DefaultDialogueSound;
+		}
+	}
+
+	if (DialogueAudioComponent)
+	{
+		DialogueAudioComponent->Stop();
+	}
+
+	if (SoundToPlay)
+	{
+		DialogueAudioComponent = UGameplayStatics::SpawnSound2D(this, SoundToPlay);
+	}
+	//Zoey end
 
 	if (SpeakerNameText)
 	{
