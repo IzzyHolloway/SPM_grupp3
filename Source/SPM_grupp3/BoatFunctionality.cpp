@@ -93,6 +93,11 @@ void ABoatFunctionality::BeginPlay()
 		}
 	}
 	
+	// -------------------------------- MOVEMENT ---------------------------------
+	
+	// Save default movement speed for resetting after sprint
+	DefaultMovementSpeed = MovementComponent->GetMaxSpeed();
+	
 }
 
 // Called every frame
@@ -111,6 +116,10 @@ void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	{
 		// Bind Movement and Rotation Actions
 		EnhancedInputComponent->BindAction(MoveRotateAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::MoveRotate);
+		
+		// Bind Sprint Actions
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ABoatFunctionality::StartSprint);
+		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ABoatFunctionality::StopSprint);
 		
 		// Bind Look Actions
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::Look);
@@ -141,6 +150,20 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 		// SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
 	}
 }
+
+void ABoatFunctionality::StartSprint(const FInputActionValue& Value)
+{
+	// Make movement faster
+	MovementComponent->MaxSpeed = SprintMovementSpeed;
+}
+
+void ABoatFunctionality::StopSprint(const FInputActionValue& Value)
+{	
+	// Reset movement speed
+	MovementComponent->MaxSpeed = DefaultMovementSpeed;
+}
+
+// ---------------------------------- CAMERA ----------------------------------
 
 void ABoatFunctionality::Look(const FInputActionValue& Value)
 {
