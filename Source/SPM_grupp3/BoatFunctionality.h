@@ -37,9 +37,17 @@ public:
 	// Sets default values for this pawn's properties
 	ABoatFunctionality();
 	
+	// ---------------------------- INPUT ----------------------------
+	
 	// Handles Movement and Rotation Input
 	UFUNCTION()
 	void MoveRotate(const FInputActionValue& Value);
+	
+	// Handle Sprint Input
+	UFUNCTION()
+	void StartSprint(const FInputActionValue& Value);
+	UFUNCTION()
+	void StopSprint(const FInputActionValue& Value);
 	
 	// Handles Mouse Input
 	UFUNCTION()
@@ -49,7 +57,7 @@ public:
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
 	
-	// -------------------------- ENTER & EXIT --------------------------
+	// ------------------------- ENTER & EXIT -------------------------
 	
 	// Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 	UFUNCTION()
@@ -103,6 +111,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> MoveRotateAction;
 	
+	// Sprint Input Actions (boost)
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
+	TObjectPtr<UInputAction> SprintAction;
+	
 	// Look Input Actions (mouse)
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> LookAction;
@@ -115,6 +127,9 @@ protected:
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<UFloatingPawnMovement> MovementComponent;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
+	float SprintMovementSpeed = 2000.f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	float RotationSpeed = 50.f;
@@ -177,6 +192,9 @@ protected:
 private:	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
 	TObjectPtr<ADock> DockInReach;
+	
+	// The speed the MovementComponent has when sprint is inactive
+	float DefaultMovementSpeed;
 	
 	void ExitBoat();
 	
