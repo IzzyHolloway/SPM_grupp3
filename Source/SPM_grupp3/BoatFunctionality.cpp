@@ -220,6 +220,7 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 	}
 }
 
+/*
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
@@ -261,7 +262,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 			PlayerCharacter->RemoveBoatInReach();
 			HideEnterBoatPrompt();
 
-			/*
+			
 			// Temporary feedback. Later this can call DialogueManager or your message system.
 			if (GEngine)
 			{
@@ -274,7 +275,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	: CannotEnterBoatMessage.ToString()
 				);
 			}
-			*/
+			
 			
 			// Dialogue that says they can't board the boat yet
 			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
@@ -297,15 +298,15 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	// If the LitLantern flag is true, the player is allowed to enter the boat
 	//PlayerCharacter->SetBoatInReach(this);
 	
-	/*
-	* Only for debugging:
+	
+	 Only for debugging:
 	GEngine->AddOnScreenDebugMessage(
 			-1,                // Key (-1 means add a new message)
 			5.0f,              // Display time in seconds
 			FColor::White,     // Text color
 			TEXT("Press E to enter the boat!") // Message
 		);
-	 */
+	 
 	
 	// Check if the current dock allows the player to leave this island.
 	if (DockInReach && !DockInReach->CanLeaveDock())
@@ -331,7 +332,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 		return;
 	}
 	
-	/*
+	
 	// If the boat is currently at a dock, ask the dock if the player is allowed to leave.
 	if (DockInReach && !DockInReach->CanLeaveDock())
 	{
@@ -352,7 +353,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 
 		return;
 	}
-	*/
+	
 	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
@@ -363,6 +364,24 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	}
 	
 	// Show "Press X/E" UI
+	ShowEnterBoatPrompt();
+}
+*/
+
+void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
+{
+	if (!PlayerCharacter)
+	{
+		return;
+	}
+
+	PlayerCharacter->SetBoatInReach(this);
+
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
+
 	ShowEnterBoatPrompt();
 }
 
@@ -545,5 +564,68 @@ void ABoatFunctionality::PossessedBy(AController* NewController)
 	if (DockInReach)
 	{
 		DockInReach->HideEnterDockPrompt();
+	}
+}
+
+bool ABoatFunctionality::CanPlayerEnterBoat() const
+{
+	if (bRequiresFlagToEnterBoat)
+	{
+		if (RequiredFlagToEnterBoat.IsNone())
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat requires a flag, but RequiredFlagToEnterBoat is None."));
+			return false;
+		}
+
+		AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+		);
+
+		if (!ProgressionManager)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat could not find ProgressionManager."));
+			return false;
+		}
+
+		if (!ProgressionManager->HasFlag(RequiredFlagToEnterBoat))
+		{
+			UE_LOG(LogTemp, Warning, TEXT("Boat locked. Missing flag: %s"), *RequiredFlagToEnterBoat.ToString());
+			return false;
+		}
+	}
+
+	if (DockInReach && !DockInReach->CanLeaveDock())
+	{
+		return false;
+	}
+
+	return true;
+}
+
+void ABoatFunctionality::ShowCannotEnterBoatMessage() const
+{
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (!DialogueManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Boat could not find DialogueManager."));
+		return;
+	}
+
+	if (DockInReach && !DockInReach->CanLeaveDock())
+	{
+		DialogueManager->ShowMessage(DockInReach->GetCannotLeaveDockMessage());
+		return;
+	}
+
+	if (CannotEnterBoatMessage.IsEmpty())
+	{
+		DialogueManager->ShowMessage(FText::FromString(TEXT("I should finish helping here before leaving.")));
+	}
+	else
+	{
+		DialogueManager->ShowMessage(CannotEnterBoatMessage);
 	}
 }

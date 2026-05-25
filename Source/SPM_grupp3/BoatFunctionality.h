@@ -80,8 +80,15 @@ public:
 	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
 	UFUNCTION(BlueprintCallable)
 	void SetDockInReach(ADock* Dock);
+	
 	UFUNCTION(BlueprintCallable)
 	void RemoveDockInReach();
+	
+	UFUNCTION(BlueprintCallable)
+	bool CanPlayerEnterBoat() const;
+
+	UFUNCTION(BlueprintCallable)
+	void ShowCannotEnterBoatMessage() const;
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetCameraPositionWhenExiting(UCineCameraComponent* CameraComponent);

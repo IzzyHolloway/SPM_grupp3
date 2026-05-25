@@ -564,6 +564,12 @@ void ACharacterAimi::EnterBoat()
 	// Save the boat in reach in case the character leaves its trigger zone while being moved on the boat
 	ABoatFunctionality* CurrentBoatInReach = BoatInReach;
 	
+	if (!CurrentBoatInReach->CanPlayerEnterBoat())
+	{
+		CurrentBoatInReach->ShowCannotEnterBoatMessage();
+		return;
+	}
+	
 	// Disable movement
 	if (UCharacterMovementComponent* MovementComponent = GetCharacterMovement())
 	{
