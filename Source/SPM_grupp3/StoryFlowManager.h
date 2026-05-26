@@ -53,34 +53,34 @@ enum class EStoryState : uint8
 	// Level2
 	Level2_ChooseIsland UMETA(DisplayName = "Level 2 - Choose Island"),
 
-Level2_MotorIslandExplore UMETA(DisplayName = "Level 2 - Motor Island Explore"),
-Level2_MotorIslandFindParts UMETA(DisplayName = "Level 2 - Motor Island Find Parts"),
-Level2_MotorIslandCraftHalf UMETA(DisplayName = "Level 2 - Motor Island Craft Half"),
-Level2_MotorIslandSolved UMETA(DisplayName = "Level 2 - Motor Island Solved"),
+	Level2_MotorIslandExplore UMETA(DisplayName = "Level 2 - Motor Island Explore"),
+	Level2_MotorIslandFindParts UMETA(DisplayName = "Level 2 - Motor Island Find Parts"),
+	Level2_MotorIslandCraftHalf UMETA(DisplayName = "Level 2 - Motor Island Craft Half"),
+	Level2_MotorIslandSolved UMETA(DisplayName = "Level 2 - Motor Island Solved"),
 
-Level2_LeverIslandExplore UMETA(DisplayName = "Level 2 - Lever Island Explore"),
-Level2_LeverIslandFindParts UMETA(DisplayName = "Level 2 - Lever Island Find Parts"),
-Level2_LeverIslandCraftHalf UMETA(DisplayName = "Level 2 - Lever Island Craft Half"),
-Level2_LeverIslandSolved UMETA(DisplayName = "Level 2 - Lever Island Solved"),
+	Level2_LeverIslandExplore UMETA(DisplayName = "Level 2 - Lever Island Explore"),
+	Level2_LeverIslandFindParts UMETA(DisplayName = "Level 2 - Lever Island Find Parts"),
+	Level2_LeverIslandCraftHalf UMETA(DisplayName = "Level 2 - Lever Island Craft Half"),
+	Level2_LeverIslandSolved UMETA(DisplayName = "Level 2 - Lever Island Solved"),
 
-Level2_FinalCraftAvailable UMETA(DisplayName = "Level 2 - Final Craft Available"),
-Level2_FinalItemCrafted UMETA(DisplayName = "Level 2 - Final Item Crafted"),
-Level2_CompassBearerSpawned UMETA(DisplayName = "Level 2 - Compass Bearer Spawned"),
-Level2_CompassReceived UMETA(DisplayName = "Level 2 - Compass Received"),
+	Level2_FinalCraftAvailable UMETA(DisplayName = "Level 2 - Final Craft Available"),
+	Level2_FinalItemCrafted UMETA(DisplayName = "Level 2 - Final Item Crafted"),
+	Level2_CompassBearerSpawned UMETA(DisplayName = "Level 2 - Compass Bearer Spawned"),
+	Level2_CompassReceived UMETA(DisplayName = "Level 2 - Compass Received"),
 
-// Lighthouse
-Lighthouse_NotReady UMETA(DisplayName = "Lighthouse - Not Ready"),
-Lighthouse_TalkToEntity UMETA(DisplayName = "Lighthouse - Talk to Entity"),
-Lighthouse_EnterLighthouse UMETA(DisplayName = "Lighthouse - Enter Lighthouse"),
-Lighthouse_Explore UMETA(DisplayName = "Lighthouse - Explore"),
-Lighthouse_InstallEngine UMETA(DisplayName = "Lighthouse - Install Engine"),
-Lighthouse_LightCutscene UMETA(DisplayName = "Lighthouse - Light Cutscene"),
-Lighthouse_AfterLightDialogue UMETA(DisplayName = "Lighthouse - After Light Dialogue"),
-Lighthouse_EndingCutscene UMETA(DisplayName = "Lighthouse - Ending Cutscene"),
+	// Lighthouse
+	Lighthouse_NotReady UMETA(DisplayName = "Lighthouse - Not Ready"),
+	Lighthouse_TalkToEntity UMETA(DisplayName = "Lighthouse - Talk to Entity"),
+	Lighthouse_EnterLighthouse UMETA(DisplayName = "Lighthouse - Enter Lighthouse"),
+	Lighthouse_Explore UMETA(DisplayName = "Lighthouse - Explore"),
+	Lighthouse_InstallEngine UMETA(DisplayName = "Lighthouse - Install Engine"),
+	Lighthouse_LightCutscene UMETA(DisplayName = "Lighthouse - Light Cutscene"),
+	Lighthouse_AfterLightDialogue UMETA(DisplayName = "Lighthouse - After Light Dialogue"),
+	Lighthouse_EndingCutscene UMETA(DisplayName = "Lighthouse - Ending Cutscene"),
 
-// Keep old ones for safety if Blueprints already use them
-Lighthouse_Ready UMETA(DisplayName = "Lighthouse - Ready"),
-Lighthouse_Ending UMETA(DisplayName = "Lighthouse - Ending"),
+	// Keep old ones for safety if Blueprints already use them
+	Lighthouse_Ready UMETA(DisplayName = "Lighthouse - Ready"),
+	Lighthouse_Ending UMETA(DisplayName = "Lighthouse - Ending"),
 	
 };
 
