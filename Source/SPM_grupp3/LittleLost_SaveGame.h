@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -6,22 +7,20 @@
 #include "StoryFlowManager.h"
 #include "LittleLost_SaveGame.generated.h"
 
-/**
- * Single-slot gameplay save. Holds everything needed to restore a session.
- */
+
 UCLASS()
 class SPM_GRUPP3_API ULittleLost_SaveGame : public USaveGame
 {
     GENERATED_BODY()
 
 public:
-    /** Real-world timestamp this save was written. */
+    // Meta
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Meta")
-    FDateTime SavedAtUtc;
+    FDateTime SavedAtUtc;                   // When the save was created.
 
-    /** Level the player was in when saved. */
+    // Player
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
-    FName CurrentLevelName;
+    FName CurrentLevelName;                 // Level the player was in.
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     FVector PlayerLocation = FVector::ZeroVector;
@@ -29,27 +28,27 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     FRotator PlayerRotation = FRotator::ZeroRotator;
 
-    /** Inventory contents. */
+    // Inventory
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
-    TArray<FInventorySlot> InventorySlots;
+    TArray<FInventorySlot> InventorySlots;  // Snapshot of the inventory slots.
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
     int32 SelectedSlotIndex = 0;
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
-    bool bHasEverPickedUpItem = false;
+    bool bHasEverPickedUpItem = false;      // Used for one-time tutorials.
 
-    /** Progression flags from ProgressionManager. */
+    // Progression
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")
-    TSet<FName> ProgressFlags;
+    TSet<FName> ProgressFlags;              // All story flags set so far.
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")
-    FText CurrentObjectiveText;
+    FText CurrentObjectiveText;             // Current objective shown to the player.
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")
     FName CurrentObjectiveID;
 
-    /** Current StoryFlow state. */
+    // Story
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Story")
     EStoryState CurrentStoryState = EStoryState::Home_Explore;
 };

@@ -6,66 +6,48 @@
 
 class ULittleLost_SaveGame;
 
-/**
- * Owns save/load. Persists across level changes; single-slot for now.
- *
- * Usage from BP:
- *   - MainMenu's "New Game"  -> NewGame(StartLevelName)
- *   - MainMenu's "Continue"  -> ContinueGame()  (button greyed out if HasSave() == false)
- *   - PauseMenu's "Save"     -> SaveGameAsync()
- *   - After a level loads    -> call ApplyToWorld()  (from your character's BeginPlay,
- *                                                     once Inventory/ProgressionManager exist)
- */
 UCLASS()
 class SPM_GRUPP3_API ULittleLost_GameInstance : public UGameInstance
 {
     GENERATED_BODY()
 
 public:
-    /** Slot name on disk. Single slot for now. */
+    // Save slot configuration
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SaveGame")
     FString SaveSlotName = TEXT("MainSave");
 
     UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "SaveGame")
     int32 UserIndex = 0;
 
-    /** Returns true if a save file exists on disk. Used to enable/disable Continue. */
+    // API used by the Main Menu and gameplay code.
+
     UFUNCTION(BlueprintPure, Category = "SaveGame")
-    bool HasSave() const;
+    bool HasSave() const;                       // True if a save file exists on disk.
 
-    /** Wipes in-memory data and opens StartLevel. Use for New Game. */
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
-    void NewGame(FName StartLevelName);
+    void NewGame(FName StartLevelName);         // Wipe any old save and open the start level.
 
-    /** Loads save from disk, then opens the saved level. ApplyToWorld() runs on next world load. */
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
-    void ContinueGame();
+    void ContinueGame();                        // Load the saved file and open its level.
 
-    /** Captures current world state and writes async to disk. Returns immediately. */
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
-    void SaveGameAsync();
+    void SaveGameAsync();                       // Capture world state and write to disk in the background.
 
-    /**
-     * Call from the player's BeginPlay (or similar) after a level loads.
-     * Pushes saved data into Inventory / ProgressionManager / Player.
-     * Safe to call when there is no pending data — does nothing then.
-     */
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
-    void ApplyToWorld();
+    void ApplyToWorld();                        // Apply the loaded save to the current world (call after the level finishes loading).
 
-    /** Reads current world state into PendingSave. Mainly for internal use, exposed for testing. */
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
-    void CaptureFromWorld();
+    void CaptureFromWorld();                    // Read the current world state into PendingSave.
 
 protected:
     virtual void Init() override;
 
 private:
-    /** In-memory save data. Held across level changes. */
+    // Loaded or in-progress save kept in memory until written / applied.
     UPROPERTY(Transient)
     TObjectPtr<ULittleLost_SaveGame> PendingSave;
 
-    /** True when ContinueGame loaded data and we are waiting for the world to be ready to apply it. */
+    // Flag for ContinueGame -> ApplyToWorld: true while waiting for the new level to be ready.
     bool bShouldApplyOnNextWorldReady = false;
 
     void OnAsyncSaveFinished(const FString& Slot, const int32 Index, bool bSuccess);

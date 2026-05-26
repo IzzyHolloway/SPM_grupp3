@@ -1,8 +1,9 @@
+
 #include "InventoryComponent.h"
 #include "ProgressionManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "ItemDataTypes.h"
-#include "Blueprint/UserWidget.h" //Izzy lagt till för ritpussel (TSubclassOf<UUserWidget>)
+#include "Blueprint/UserWidget.h" // Needed for TSubclassOf<UUserWidget> in the puzzle-craft path
 
 UInventoryComponent::UInventoryComponent()
 {
@@ -13,6 +14,7 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
+    // Allocates the fixed number of slots so the array index can be used as the UI slot index
     InventorySlots.Init(FInventorySlot(), FMath::Max(1, SlotCount));
 }
 
@@ -34,10 +36,12 @@ void UInventoryComponent::MoveSelection(int32 Direction)
     MoveSelectionGrid(Direction, 0);
 }
 
+// Moves the selection cursor across a 2D grid of slots, skipping empty ones
 void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
     if (!bIsWorkbenchOpen) return;
 
+    // Collects occupied slot indices once so we don't recompute them in the loops below
     TArray<int32> Occupied;
     for (int32 i = 0; i < InventorySlots.Num(); ++i)
     {
@@ -45,6 +49,7 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
     }
     if (Occupied.Num() == 0) return;
 
+    // If the current selection sits on an empty slot, jump to the first occupied one
     if (!Occupied.Contains(SelectedSlotIndex))
     {
         SelectedSlotIndex = Occupied[0];
@@ -62,7 +67,7 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 
     if (DeltaX != 0 && DeltaY == 0)
     {
-        // Steg vänster/höger i samma rad, stoppa vid kant.
+        // Step left/right within the same row, stop at the edge
         for (int32 Step = 1; Step < Cols; ++Step)
         {
             const int32 TargetCol = CurCol + DeltaX * Step;
@@ -78,7 +83,7 @@ void UInventoryComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        // Steg upp/ner i samma kolumn, stoppa vid kant.
+        // Step up/down. Prefer the same column; if empty, scan the row for any occupied slot
         for (int32 Step = 1; Step < Rows; ++Step)
         {
             const int32 TargetRow = CurRow + DeltaY * Step;
@@ -121,6 +126,8 @@ void UInventoryComponent::SetSelectedSlot(int32 NewIndex)
     OnInventoryUpdated.Broadcast();
 }
 
+// Snaps the cursor to the first occupied slot, used after removing items so the cursor
+// doesn't get stuck on an empty slot.
 void UInventoryComponent::SelectFirstAvailableSlot()
 {
     for (int32 i = 0; i < InventorySlots.Num(); ++i)
@@ -136,6 +143,8 @@ void UInventoryComponent::SelectFirstAvailableSlot()
     OnInventoryUpdated.Broadcast();
 }
 
+// Places or removes the selected item on the workbench. Assigns a placement order
+// so order sensitive recipes can match against the sequence the player placed items in.
 void UInventoryComponent::ToggleItemOnWorkbench()
 {
     if (!bIsWorkbenchOpen) return;
@@ -147,8 +156,7 @@ void UInventoryComponent::ToggleItemOnWorkbench()
 
     if (Slot.bIsOnWorkbench)
     {
-        // Assign the next available WorkbenchOrder so we know where in the sequence
-        // this item was placed. Used by order-sensitive recipes.
+        // Assign the next placement order (existing max + 1)
         int32 MaxOrder = -1;
         for (const FInventorySlot& Other : InventorySlots)
         {
@@ -161,7 +169,7 @@ void UInventoryComponent::ToggleItemOnWorkbench()
     }
     else
     {
-        // Removed from bench — clear order.
+        // Removed from bench — clear order
         Slot.WorkbenchOrder = -1;
     }
 
@@ -176,19 +184,21 @@ void UInventoryComponent::ClearWorkbench()
         if (Slot.bIsOnWorkbench)
         {
             Slot.bIsOnWorkbench = false;
-            Slot.WorkbenchOrder = -1; //Izzy lagt till för ordnings-recept
+            Slot.WorkbenchOrder = -1;
             bAny = true;
         }
     }
     if (bAny) OnInventoryUpdated.Broadcast();
 }
 
+// Tries to match the items on the workbench against any recipe in the data table.
+// On success, consumes the ingredients and either places the result in inventory
+// or opens a puzzle widget (for puzzle-style crafts)
 void UInventoryComponent::CraftItem()
 {
     if (!RecipeDataTable) return;
 
-    // //Izzy lagt till för ordnings-recept
-    // Collect items WITH their placement order so we can support order-sensitive recipes.
+    // Collect items WITH their placement order so we can support order-sensitive recipes
     struct FBenchEntry
     {
         FName ItemID;
@@ -204,7 +214,7 @@ void UInventoryComponent::CraftItem()
     }
     if (BenchEntries.Num() == 0) return;
 
-    // Sort by placement order — this is the "as-placed" view used for ordered recipes.
+    // Sort by placement order, this is the "as-placed" view used for ordered recipes
     BenchEntries.Sort([](const FBenchEntry& A, const FBenchEntry& B)
     {
         return A.Order < B.Order;
@@ -214,7 +224,7 @@ void UInventoryComponent::CraftItem()
     ItemsInOrder.Reserve(BenchEntries.Num());
     for (const FBenchEntry& BE : BenchEntries) ItemsInOrder.Add(BE.ItemID);
 
-    // Alphabetical view used for unordered recipes (existing behavior).
+    // Alphabetical view used for unordered recipes
     TArray<FName> ItemsAlpha = ItemsInOrder;
     ItemsAlpha.Sort([](const FName& A, const FName& B)
     {
@@ -227,8 +237,9 @@ void UInventoryComponent::CraftItem()
     bool bSuccess = false;
     FName ResultingItem = NAME_None;
     FName ProgressionFlagToAdd = NAME_None;
-    TSubclassOf<UUserWidget> PuzzleWidgetClass = nullptr; //Izzy lagt till för ritpussel
+    TSubclassOf<UUserWidget> PuzzleWidgetClass = nullptr;
 
+    // Find the first recipe whose ingredients match the workbench
     for (FCraftingRecipe* Recipe : Recipes)
     {
         if (!Recipe) continue;
@@ -236,10 +247,9 @@ void UInventoryComponent::CraftItem()
 
         bool bMatch = true;
 
-        //Izzy lagt till för ordnings-recept
         if (Recipe->bOrderMatters)
         {
-            // Strict order: compare item-by-item in placement order.
+            // Strict order: compare item-by-item in placement order
             for (int32 i = 0; i < ItemsInOrder.Num(); ++i)
             {
                 if (ItemsInOrder[i] != Recipe->RequiredIngredients[i])
@@ -251,7 +261,7 @@ void UInventoryComponent::CraftItem()
         }
         else
         {
-            // Unordered: sort both and compare (preserves existing behavior).
+            // Unordered: sort both lists and compare
             TArray<FName> RecipeSorted = Recipe->RequiredIngredients;
             RecipeSorted.Sort([](const FName& A, const FName& B)
             {
@@ -269,15 +279,14 @@ void UInventoryComponent::CraftItem()
             bSuccess = true;
             ResultingItem = Recipe->ResultItemID;
             ProgressionFlagToAdd = Recipe->ProgressionFlagToAdd;
-            PuzzleWidgetClass = Recipe->PuzzleWidgetClass; //Izzy lagt till för ritpussel
+            PuzzleWidgetClass = Recipe->PuzzleWidgetClass;
             break;
         }
     }
 
     if (!bSuccess)
     {
-        //Izzy lagt till för craft-fail-haptik
-        // Light controller buzz to signal "that didn't work" — no recipe matched.
+        // Light controller buzz so the player feels that the craft failed
         if (CraftFailHapticIntensity > 0.f)
         {
             if (APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0))
@@ -285,7 +294,7 @@ void UInventoryComponent::CraftItem()
                 FForceFeedbackParameters Params;
                 Params.bLooping = false;
                 Params.Tag = TEXT("CraftFail");
-                // PlayDynamicForceFeedback fires all four motors lightly for Duration seconds.
+
                 PC->PlayDynamicForceFeedback(
                     CraftFailHapticIntensity,
                     CraftFailHapticDuration,
@@ -297,16 +306,15 @@ void UInventoryComponent::CraftItem()
             }
         }
 
-        //Izzy lagt till — vid misslyckad craft, släng tillbaka items från workbenchen
-        // till inventoryt så spelaren måste placera dem igen. Bra för pussel-recept där
-        // ordningen var fel — då tvingas spelaren tänka om från början.
+        // Clear the workbench on failure so the player has to rethink the placement
+        // important for order-sensitive recipes.
         ClearWorkbench();
-        SelectFirstAvailableSlot(); // välj första item så cursor inte hänger på tom slot
+        SelectFirstAvailableSlot();
 
         return;
     }
 
-    // Consume ingredients.
+    // Consume ingredients
     for (FInventorySlot& Slot : InventorySlots)
     {
         if (Slot.bIsOnWorkbench)
@@ -314,17 +322,17 @@ void UInventoryComponent::CraftItem()
             Slot.ItemID = NAME_None;
             Slot.ItemQuantity = 0;
             Slot.bIsOnWorkbench = false;
-            Slot.WorkbenchOrder = -1; //Izzy lagt till för ordnings-recept
+            Slot.WorkbenchOrder = -1;
         }
     }
 
-    // Puzzle crafts skip placing the result in the inventory — the puzzle widget
-    // grants the item itself when the player finishes the puzzle.
+    // Puzzle crafts skip placing the result in the inventory, the puzzle widget
+    // grants the item itself once the player finishes the puzzle
     const bool bIsPuzzleCraft = (PuzzleWidgetClass != nullptr);
 
     if (!bIsPuzzleCraft)
     {
-        // Place result in first empty slot.
+        // Place the result in the first empty slot
         for (FInventorySlot& Slot : InventorySlots)
         {
             if (Slot.ItemID == NAME_None)
@@ -339,6 +347,7 @@ void UInventoryComponent::CraftItem()
 
     SelectFirstAvailableSlot(); // broadcasts OnInventoryUpdated
 
+    // Optional story flag, drives the progression system
     if (!ProgressionFlagToAdd.IsNone())
     {
         if (AProgressionManager* PM = Cast<AProgressionManager>(
@@ -354,7 +363,8 @@ void UInventoryComponent::CraftItem()
 
     if (bIsPuzzleCraft)
     {
-        // Don't broadcast OnItemCrafted yet — the puzzle widget does that via AddCraftedItem.
+        // Don't broadcast OnItemCrafted yet, the puzzle widget will do that via AddCraftedItem
+        // once the player finishes the puzzle
         OnPuzzleCraftRequested.Broadcast(ResultingItem, PuzzleWidgetClass);
     }
     else
@@ -363,6 +373,7 @@ void UInventoryComponent::CraftItem()
     }
 }
 
+// Grants a crafted item directly, Called by puzzle widgets after the puzzle is finished
 bool UInventoryComponent::AddCraftedItem(FName ItemID)
 {
     if (ItemID.IsNone()) return false;
@@ -383,6 +394,7 @@ bool UInventoryComponent::AddCraftedItem(FName ItemID)
     return false;
 }
 
+// Adds a world pickup to the first empty slot, Returns false if the inventory is full
 bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
 {
     for (int32 i = 0; i < InventorySlots.Num(); ++i)
@@ -393,6 +405,7 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
             InventorySlots[i].ItemQuantity = Quantity;
             InventorySlots[i].bIsOnWorkbench = false;
 
+            // Track first-ever pickup so we can fire one-time tutorials / hints
             const bool bFirstPickupEver = !bHasEverPickedUpItem;
             bHasEverPickedUpItem = true;
 
@@ -404,6 +417,7 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
     return false;
 }
 
+// Removes every slot containing this item ID
 bool UInventoryComponent::RemoveItemByID(FName ItemID)
 {
     if (ItemID.IsNone()) return false;
@@ -422,8 +436,8 @@ bool UInventoryComponent::RemoveItemByID(FName ItemID)
 
     if (bRemoved)
     {
-        // Selected slot may now be empty; reselect first occupied (or 0).
-        SelectFirstAvailableSlot(); // broadcasts OnInventoryUpdated
+        // Selected slot may now be empty; reselect the first occupied (or 0)
+        SelectFirstAvailableSlot();
     }
 
     return bRemoved;
