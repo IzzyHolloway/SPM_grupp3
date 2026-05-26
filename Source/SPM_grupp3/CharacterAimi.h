@@ -27,8 +27,13 @@ class SPM_GRUPP3_API ACharacterAimi : public ACharacter
 public:
 	ACharacterAimi();
 
+	// ENTERING BOAT
 	UFUNCTION()
 	void SetBoatInReach(ABoatFunctionality* Boat);
+	
+	// ANIMATION
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
+	bool IsBoating = false;
 	
 	UFUNCTION()
 	void RemoveBoatInReach();
@@ -40,10 +45,6 @@ public:
 	//Function for locking or unlocking the charcter movements. Made to be callable in blueprints or other cpp files
 	UFUNCTION(BlueprintCallable)
 	void SetMovementLocked(bool bLock);
-	
-	// ANIMATION
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Animation")
-	bool IsBoating = false;
 
 protected:
 	virtual void BeginPlay() override;
@@ -111,9 +112,11 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AInteractableActor> CurrentInteractable;
 	
+	/*
 	// AI FOR THE WATERAI OBS TA BORT
 	UPROPERTY(EditAnywhere, Category = "WaterAI")
 	ACharacter* AIWater;
+	*/
 	
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
@@ -157,6 +160,8 @@ protected:
 	*/
 
 	private:
+		// ENTERING BOAT
+	
 		// If in reach of boat, reference to the corresponding BoatFunctionality, otherwise null
 		TObjectPtr<ABoatFunctionality> BoatInReach;
 		

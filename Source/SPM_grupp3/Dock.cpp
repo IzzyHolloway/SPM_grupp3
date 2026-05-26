@@ -19,7 +19,7 @@ ADock::ADock()
 	MeshComponent = CreateDefaultSubobject<UStaticMeshComponent>(TEXT("VisualMesh"));
 	MeshComponent->SetupAttachment(RootComponent);
 	
-	// -------------------------------- INTERACTION WITH BOAT --------------------------------
+	// -------------------------------- COMMUNICATION WITH BOAT --------------------------------
 	
 	ExitBoatTriggerRight = CreateDefaultSubobject<UBoxComponent>(TEXT("ExitBoatTriggerRight"));
 	ExitBoatTriggerRight->SetupAttachment(MeshComponent);
@@ -76,26 +76,10 @@ void ADock::OnExitBoatTriggerRightBeginOverlap(UPrimitiveComponent* OverlappedCo
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
-	{
-		/*
-		 * Only for debugging:
-		GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Press E to exit the boat!") // Message
-		);
-		*/
-		
+	{		
 		// Safe the docking spot corresponding to the trigger box
 		CurrentDockingSpotPosition = &RightDockingSpotPosition;
 		CurrentDockingSpotRotation = &RightDockingSpotRotation;
-		
-		/*
-		// Safe the enter spot corresponding to the trigger box (from which the player should enter the boat later)
-		CurrentEnterSpotPosition = &RightEnterSpotPosition;
-		CurrentEnterSpotRotation = &RightEnterSpotRotation;
-		*/
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -106,26 +90,10 @@ void ADock::OnExitBoatTriggerLeftBeginOverlap(UPrimitiveComponent* OverlappedCom
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
-	{
-		/*
-		 * Only for debugging:
-		GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Press E to exit the boat!") // Message
-		);
-		*/
-		
+	{		
 		// Safe the docking spot corresponding to the trigger box
 		CurrentDockingSpotPosition = &LeftDockingSpotPosition;
 		CurrentDockingSpotRotation = &RightDockingSpotRotation;
-		
-		/*
-		// Safe the enter spot corresponding to the trigger box (from which the player should enter the boat later)
-		CurrentEnterSpotPosition = &LeftEnterSpotPosition;
-		CurrentEnterSpotRotation = &LeftEnterSpotRotation;
-		*/
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -165,28 +133,53 @@ FRotator ADock::GetDockingSpotRotation() const
 	return *CurrentDockingSpotRotation;
 }
 
-/*
-FVector ADock::GetEnterSpotPosition() const
-{
-	return *CurrentEnterSpotPosition;
-}
-
-FRotator ADock::GetEnterSpotRotation() const
-{
-	return *CurrentEnterSpotRotation;
-}
-*/
-
 void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
-{
-	// Progression Flag added after solving Intro Puzzle and jumping off at Island1
-	// TODO: Progression stuff
-	
+{	
 	if (!Boat)
 	{
 		return;
 	}
 
+	// Progression: If the boat is not allowed to dock here, cancel exiting the boat
+	if (!IsExitingBoatAllowed(Boat))
+	{
+		Boat->RemoveDockInReach();
+		return;
+	}
+
+	// Hand over a reference to myself to the boat to enable exiting it.
+	Boat->SetDockInReach(this);
+
+	// -------------------------------- UI --------------------------------
+	
+	// Only show the dock prompt while the player is actually controlling the boat.
+	if (Boat->IsPlayerControlled())
+	{
+		ShowEnterDockPrompt();
+	}
+	else
+	{
+		HideEnterDockPrompt();
+	}
+}
+
+void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
+{
+	// Remove the reference to myself in the boat to disable exiting it
+	if (Boat)
+	{
+		Boat->RemoveDockInReach();
+	}
+	
+	// -------------------------------- UI --------------------------------
+	
+	HideEnterDockPrompt();
+}
+
+// ------------------------------------------------------------- PROGRESSION -------------------------------------------------------------
+
+bool ADock::IsExitingBoatAllowed(ABoatFunctionality* Boat)
+{
 	// If this dock has a required progression flag,
 	// check that the player has unlocked it before allowing docking.
 	if (!RequiredFlagToDock.IsNone())
@@ -209,19 +202,16 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 			}
 
 			// Do not allow docking if progression cannot be checked.
-			Boat->RemoveDockInReach();
-			return;
+			return false;
 		}
 
 		if (!ProgressionManager->HasFlag(RequiredFlagToDock))
 		{
 			
 			UE_LOG(LogTemp, Warning, TEXT("The flag required is FALSE"));
-
-			// Do not give the boat a dock reference.
-			// This prevents the player from exiting here.
-			Boat->RemoveDockInReach();
-			return;
+			
+			// Prevent the player from exiting here.
+			return false;
 		}
 	}
 
@@ -238,32 +228,9 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 		);
 		*/
 	}
-
-	// Hand over a reference to myself to the boat to enable exiting it.
-	Boat->SetDockInReach(this);
-
-	// Only show the dock prompt while the player is actually controlling the boat.
-	if (Boat->IsPlayerControlled())
-	{
-		ShowEnterDockPrompt();
-	}
-	else
-	{
-		HideEnterDockPrompt();
-	}
-}
-
-void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
-{
-	// Remove the reference to myself in the boat to disable exiting it
-	if (Boat)
-	{
-		Boat->RemoveDockInReach();
-	}
 	
-	HideEnterDockPrompt();
+	return true;
 }
-
 
 // Progression
 void ADock::ApplyDockingProgressionFlag()
@@ -308,37 +275,6 @@ void ADock::ApplyDockingProgressionFlag()
 	}
 }
 
-
-void ADock::ShowEnterDockPrompt()
-{
-	if (EnterDockPromptWidget || !EnterDockPromptWidgetClass)
-	{
-		return;
-	}
-
-	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
-	if (!PlayerController)
-	{
-		return;
-	}
-
-	EnterDockPromptWidget = CreateWidget<UUserWidget>(PlayerController, EnterDockPromptWidgetClass);
-
-	if (EnterDockPromptWidget)
-	{
-		EnterDockPromptWidget->AddToViewport();
-	}
-}
-
-void ADock::HideEnterDockPrompt()
-{
-	if (EnterDockPromptWidget)
-	{
-		EnterDockPromptWidget->RemoveFromParent();
-		EnterDockPromptWidget = nullptr;
-	}
-}
-
 bool ADock::CanLeaveDock() const
 {
 	if (!bRequiresFlagToLeaveDock)
@@ -373,4 +309,36 @@ FText ADock::GetCannotLeaveDockMessage() const
 	}
 
 	return CannotLeaveDockMessage;
+}
+
+// ---------------------------------------------------------------- UI ----------------------------------------------------------------
+
+void ADock::ShowEnterDockPrompt()
+{
+	if (EnterDockPromptWidget || !EnterDockPromptWidgetClass)
+	{
+		return;
+	}
+
+	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+	if (!PlayerController)
+	{
+		return;
+	}
+
+	EnterDockPromptWidget = CreateWidget<UUserWidget>(PlayerController, EnterDockPromptWidgetClass);
+
+	if (EnterDockPromptWidget)
+	{
+		EnterDockPromptWidget->AddToViewport();
+	}
+}
+
+void ADock::HideEnterDockPrompt()
+{
+	if (EnterDockPromptWidget)
+	{
+		EnterDockPromptWidget->RemoveFromParent();
+		EnterDockPromptWidget = nullptr;
+	}
 }
