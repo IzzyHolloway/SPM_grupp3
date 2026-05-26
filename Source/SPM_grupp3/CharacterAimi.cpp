@@ -591,11 +591,11 @@ void ACharacterAimi::EnterBoat()
 	// Possess the boat
 	GetController()->Possess(CurrentBoatInReach);
 	
-	
+	/*
 	//---------------------- MADDE AI FOR WATER ----------------------
 	//This gets an array with all the actors that has the tag WaterAI on it.
 	TArray<AActor*> AICharacters;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters);
+	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters); 
 	
 	
 	//If we found an actor we will get its controller. 
@@ -607,6 +607,7 @@ void ACharacterAimi::EnterBoat()
 			AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", true);
 		}
 	}
+	*/
 
 }
 

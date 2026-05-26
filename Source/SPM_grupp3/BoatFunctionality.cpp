@@ -283,24 +283,6 @@ void ABoatFunctionality::ExitBoat()
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
 	
-	// ---------------------------- WATER AI ----------------------------
-	/*
-	//This gets an array with all the actors that has the tag WaterAI on it.
-	TArray<AActor*> AICharacters;
-	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters);
-	
-	//If we found an actor we will get its controller. 
-	if (AICharacters.Num() > 0)
-	{
-		AAIController* AIController = Cast<AAIController>(Cast<APawn>(AICharacters[0])->GetController());
-		if (AIController)
-		{
-			AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", false);
-		}
-	}
-	*/
-	// ------------------------------------------------------------------
-	
 	// Move boat to docking spot
 	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
 	SetActorRotation(CurrentDockInReach->GetDockingSpotRotation());

@@ -112,9 +112,11 @@ protected:
 	UPROPERTY()
 	TObjectPtr<AInteractableActor> CurrentInteractable;
 	
+	/*
 	// AI FOR THE WATERAI OBS TA BORT
 	UPROPERTY(EditAnywhere, Category = "WaterAI")
 	ACharacter* AIWater;
+	*/
 	
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);

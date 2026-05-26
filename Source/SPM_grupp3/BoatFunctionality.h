@@ -210,12 +210,6 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression")
 	FText CannotEnterBoatMessage = FText::FromString("I should help them first before leaving.");
-	
-	// ---------------------------- WATER AI ----------------------------
-	/*
-	UPROPERTY(EditAnywhere, Category = "WaterAI")
-	ACharacter* AIWater;
-	*/
 
 private:	
 	// ------------------------------- EXIT -------------------------------
