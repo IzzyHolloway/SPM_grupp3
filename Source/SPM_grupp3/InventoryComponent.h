@@ -1,3 +1,4 @@
+
 #pragma once
 
 #include "CoreMinimal.h"
@@ -12,7 +13,7 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnCraftSuccess);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnItemPickedUp, FName, ItemID, bool, bFirstPickupEver);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnItemCrafted, FName, ItemID);
 
-// //Izzy lagt till för ritpussel
+// Fired when a successful craft should open a puzzle widget instead of granting the item directly.
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPuzzleCraftRequested, FName, ResultItemID, TSubclassOf<UUserWidget>, PuzzleWidgetClass);
 
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent))
@@ -27,96 +28,97 @@ protected:
     virtual void BeginPlay() override;
 
 public:
-    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnInventoryUpdated OnInventoryUpdated;
+    // Events the UI binds to
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnCraftSuccess OnCraftSuccess;
+    FOnInventoryUpdated OnInventoryUpdated;       // Slots / selection / workbench changed.
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemPickedUp OnItemPickedUp;
+    FOnCraftSuccess OnCraftSuccess;               // A recipe just matched.
 
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnItemCrafted OnItemCrafted;
+    FOnItemPickedUp OnItemPickedUp;               // World pickup added to inventory.
 
-    // Broadcast when a craft matched a recipe with a PuzzleWidgetClass set.
-    // Listener (e.g. player character / HUD) should spawn the widget; the widget
-    // itself calls AddCraftedItem when the puzzle is finished.
-    // //Izzy lagt till för ritpussel
     UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
-    FOnPuzzleCraftRequested OnPuzzleCraftRequested;
+    FOnItemCrafted OnItemCrafted;                 // Crafted item granted to the player.
 
-    /** True after the player has ever added at least one item via pickup. */
+    UPROPERTY(BlueprintAssignable, Category = "Inventory|Events")
+    FOnPuzzleCraftRequested OnPuzzleCraftRequested; // Recipe requires solving a puzzle first.
+
+    // State
+
     UPROPERTY(BlueprintReadOnly, Category = "Inventory|State")
-    bool bHasEverPickedUpItem = false;
+    bool bHasEverPickedUpItem = false;            // Used to fire onetime tutorials on first pickup
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Inventory")
-    TArray<FInventorySlot> InventorySlots;
+    TArray<FInventorySlot> InventorySlots;        // Backing storage, fixed size after BeginPlay
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
-    int32 SlotCount = 6;
+    int32 SlotCount = 6;                          // Total slots created on BeginPlay
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Inventory|Layout")
-    int32 GridColumns = 2;
+    int32 GridColumns = 2;                        // Columns used for grid based stick navigation
 
     UPROPERTY(BlueprintReadOnly, Category = "Inventory|Selection")
-    int32 SelectedSlotIndex = 0;
+    int32 SelectedSlotIndex = 0;                  // Slot currently highlighted in the UI
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
-    TObjectPtr<UDataTable> RecipeDataTable;
+    TObjectPtr<UDataTable> RecipeDataTable;       // All recipes (rows of FCraftingRecipe)
 
-    /** How hard the controller buzzes when a craft fails (no matching recipe). 0..1.
-     *  Set to 0 to disable the haptic feedback completely.
-     *  //Izzy lagt till för craft-fail-haptik */
+    // Controller rumble feedback on failed craft
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
     float CraftFailHapticIntensity = 0.4f;
 
-    /** How long the failure-buzz lasts in seconds. //Izzy lagt till för craft-fail-haptik */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting|Haptics")
     float CraftFailHapticDuration = 0.2f;
+
+    //API
 
     UFUNCTION(BlueprintPure, Category = "Inventory|State")
     bool IsWorkbenchOpen() const { return bIsWorkbenchOpen; }
 
-    /** Owned by ACraftingStation; do not set from gameplay code. */
     UFUNCTION(BlueprintCallable, Category = "Inventory|State")
     void SetWorkbenchOpen(bool bOpen);
 
-    /** Use from the character's inventory-toggle input handler. */
     UFUNCTION(BlueprintPure, Category = "Inventory|State")
     bool CanToggleInventoryUI() const { return !bIsWorkbenchOpen; }
 
+    // Move the selection cursor horizontally (positive = right)
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void MoveSelection(int32 Direction);
 
+    // Move the selection cursor in a 2D grid, skipping empty slots
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void MoveSelectionGrid(int32 DeltaX, int32 DeltaY);
 
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void SetSelectedSlot(int32 NewIndex);
 
+    // Snap the cursor to the first occupied slot (used after removing items)
     UFUNCTION(BlueprintCallable, Category = "Inventory|Selection")
     void SelectFirstAvailableSlot();
 
+    // Toggle whether the currently selected slot is placed on the workbench
     UFUNCTION(BlueprintCallable, Category = "Inventory|Input")
     void ToggleItemOnWorkbench();
 
+    // Try to match the items on the workbench against any recipe. Fires events on success or failure
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void CraftItem();
 
+    // Remove all items from the workbench (back into their slots)
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     void ClearWorkbench();
 
+    // Add a world pickup to the first empty slot. Returns false if the inventory is full
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddItemToInventory(FName ItemToAdd, int32 Quantity);
 
-    // Adds an item to inventory and broadcasts OnItemCrafted (not OnItemPickedUp).
-    // Use this from puzzle widgets that grant a crafted item on completion.
-    // //Izzy lagt till för ritpussel
+    // Grant a crafted item directly (used by puzzle widgets after the puzzle is finished)
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool AddCraftedItem(FName ItemID);
 
-    /** Removes every slot whose ItemID matches. Returns true if anything was removed. */
+    // Remove every slot containing this item ID
     UFUNCTION(BlueprintCallable, Category = "Inventory")
     bool RemoveItemByID(FName ItemID);
 

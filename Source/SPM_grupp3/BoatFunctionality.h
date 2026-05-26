@@ -57,11 +57,12 @@ public:
 	UFUNCTION()
 	void Interact(const FInputActionValue& Value);
 	
-	// ------------------------- ENTER & EXIT -------------------------
+	// ----------------------------- ENTER -----------------------------
 	
 	// Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 	UFUNCTION()
 	void OnEnterTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	
 	// Reacts to the OnComponentEndOverlap event of the EnterTrigger (for the player to enter the boat) - calls DisableEnteringBoat()
 	UFUNCTION()
 	void OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
@@ -69,6 +70,7 @@ public:
 	// Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 	UFUNCTION()
 	void EnableEnteringBoat(ACharacterAimi* PlayerCharacter);
+	
 	// Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 	UFUNCTION()
 	void DisableEnteringBoat(ACharacterAimi* PlayerCharacter);
@@ -77,24 +79,33 @@ public:
 	UFUNCTION()
 	FVector GetCharacterPositionOffset() const;
 	
-	// WARNING: Replace AActor with the C++ pier class as soon as it exists!
+	// ------------------------------- EXIT -------------------------------
+	
+	// Setter for DockInReach, supposed to be called by a dock if the boat is in close proximity and exiting the boat should be enabled
 	UFUNCTION(BlueprintCallable)
 	void SetDockInReach(ADock* Dock);
 	
+	// Setter for DockInReach, supposed to be called by a dock if the boat leaves the dock's trigger zone and exiting the boat should be disabled
 	UFUNCTION(BlueprintCallable)
 	void RemoveDockInReach();
+	
+	// --------------------------- PROGRESSION ---------------------------
 	
 	UFUNCTION(BlueprintCallable)
 	bool CanPlayerEnterBoat() const;
 
 	UFUNCTION(BlueprintCallable)
 	void ShowCannotEnterBoatMessage() const;
+	
+	// ----------------------------- CAMERA -----------------------------
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void SetCameraPositionWhenExiting(UCineCameraComponent* CameraComponent);
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void FixCameraAfterRepossessingPlayer();
+	
+	// ------------------------------ SOUND ------------------------------
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BoatSoundStop();
@@ -102,6 +113,9 @@ public:
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
 		
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Movement)
 	TObjectPtr<UBoxComponent> CollisionComponent;
@@ -130,6 +144,9 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input)
 	TObjectPtr<UInputAction> InteractAction;
 	
+	// Called to bind functionality to input
+	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	
 	// --------------------------- MOVEMENT ---------------------------
 	
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Movement)
@@ -151,6 +168,7 @@ protected:
 	
 	// -------------------------- ENTER & EXIT --------------------------
 	
+	// Trigger box: If the character is inside, entering the boat is possible
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	TObjectPtr<UBoxComponent> EnterTrigger;
 	
@@ -158,8 +176,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enter & Exit")
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 	
+	// ------------------------------- UI -------------------------------
 	
-	/************** WIDGETS *************/
 	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
 	TSubclassOf<UUserWidget> EnterBoatPromptWidgetClass;
@@ -172,7 +190,8 @@ protected:
 	void ShowEnterBoatPrompt();
 	void HideEnterBoatPrompt();
 	
-	/************** PROGRESSION *************/
+	// --------------------------- PROGRESSION ---------------------------
+	
 	/*
 	 * This part is needed to check if you can board the boat
 	 * Example:
@@ -191,24 +210,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|Progression")
 	FText CannotEnterBoatMessage = FText::FromString("I should help them first before leaving.");
-	
-	// AI FOR THE WATERAI
-	UPROPERTY(EditAnywhere, Category = "WaterAI")
-	ACharacter* AIWater;
 
 private:	
+	// ------------------------------- EXIT -------------------------------
+	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
 	TObjectPtr<ADock> DockInReach;
 	
-	// The speed the MovementComponent has when sprint is inactive
-	float DefaultMovementSpeed;
-	
 	void ExitBoat();
 	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-
-	// Called to bind functionality to input
-	virtual void SetupPlayerInputComponent(class UInputComponent* PlayerInputComponent) override;
+	// --------------------------- MOVEMENT ---------------------------
+	
+	// The speed the MovementComponent has when sprint is inactive
+	float DefaultMovementSpeed;
 
 };

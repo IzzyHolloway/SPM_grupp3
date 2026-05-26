@@ -20,6 +20,15 @@ public:
 	// Sets default values for this actor's properties
 	ADock();
 	
+	// Called every frame
+	virtual void Tick(float DeltaTime) override;
+	
+	// Returns offset the character should have to the dock's coordinate center when it gets placed on the dock
+	UFUNCTION()
+	FVector GetCharacterPositionOffset() const;
+	
+	// ------------- TRIGGER BOXES FOR DOCKING SPOTS ----------------
+	
 	// Reacts to the OnComponentBeginOverlap event of the right ExitBoatTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 	UFUNCTION()
 	void OnExitBoatTriggerRightBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
@@ -34,10 +43,6 @@ public:
 	UFUNCTION()
 	void OnExitBoatTriggerLeftEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 	
-	// Returns offset the character should have to the dock's coordinate center when it gets placed on the dock
-	UFUNCTION()
-	FVector GetCharacterPositionOffset() const;
-	
 	// ------------------------- DOCKING SPOTS -------------------------
 	
 	// Returns the position the boat should have after docking
@@ -47,16 +52,6 @@ public:
 	// Returns the rotation the boat should have after docking
 	UFUNCTION()
 	FRotator GetDockingSpotRotation() const;
-	
-	/*
-	// Returns the position the boat should have after docking
-	UFUNCTION()
-	FVector GetEnterSpotPosition() const;
-	
-	// Returns the rotation the boat should have after docking
-	UFUNCTION()
-	FRotator GetEnterSpotRotation() const;
-	*/
 	
 	// ------------------------- PROGRESSION -------------------------
 	
@@ -70,6 +65,11 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	FText GetCannotLeaveDockMessage() const;
+	
+	// ----------------------------- UI ------------------------------
+	
+	void ShowEnterDockPrompt();
+	void HideEnterDockPrompt();
 
 protected:
 	// Called when the game starts or when spawned
@@ -108,26 +108,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	FRotator LeftDockingSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
 	
-	/*
-	// Character position
-	
-	// Where the character should enter when the boat lies on the right side of the dock
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector RightEnterSpotPosition = FVector(0.0f, 0.0f, 0.0f);
-	
-	// Where the character should enter when the boat lies on the left side of the dock
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FVector LeftEnterSpotPosition = FVector(0.0f, 0.0f, 0.0f);
-	
-	// In which rotation the character should enter when the boat lies on the right side of the dock
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FRotator RightEnterSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
-	
-	// In which rotation the character should enter when the boat lies on the left side of the dock
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
-	FRotator LeftEnterSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
-	*/
-	
 	// ------------------------- PROGRESSION -------------------------
 	
 	// Progression flag required before the boat can dock here.
@@ -154,24 +134,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression|Leaving")
 	FText CannotLeaveDockMessage = FText::FromString(TEXT("I should finish helping here before leaving."));
 
-
+	// ------------------------- UI TEMPORARY -------------------------
 	
-	/************** WIDGETS TEMPORARY *************/
 	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
 	TSubclassOf<UUserWidget> EnterDockPromptWidgetClass;
 
 	UPROPERTY()
 	UUserWidget* EnterDockPromptWidget;
-
-
-
-public:	
-	// Called every frame
-	virtual void Tick(float DeltaTime) override;
-	
-	void ShowEnterDockPrompt();
-	void HideEnterDockPrompt();
 	
 private:
 	void EnableExitingBoat(ABoatFunctionality* Boat);
@@ -185,13 +155,7 @@ private:
 	// Either RightDockingSpotRotation or LeftDockingSpotRotation
 	FRotator* CurrentDockingSpotRotation = nullptr;
 	
-	/*
-	// Position from which the character should enter the boat later (e.g. on the right of the dock)
-	// Either RightEnterSpotPosition or LeftEnterSpotPosition
-	FVector* CurrentEnterSpotPosition = nullptr;
+	// ------------------------- PROGRESSION -------------------------
 	
-	// Rotation in which the character should enter the boat later (e.g. on the right of the dock)
-	// Either RightEnterSpotRotation or LeftEnterSpotRotation
-	FRotator* CurrentEnterSpotRotation = nullptr;
-	*/
+	bool IsExitingBoatAllowed(ABoatFunctionality* Boat);
 };

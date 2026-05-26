@@ -428,26 +428,111 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		return;
 	}
 
+	const bool bArrivedMotorIsland = ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag);
+	const bool bArrivedLeverIsland = ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag);
+	const bool bArrivedLighthouseIsland = ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag);
+
 	const bool bMotorIslandSolved = ProgressionManager->HasFlag(Level2MotorIslandSolvedFlag);
 	const bool bLeverIslandSolved = ProgressionManager->HasFlag(Level2LeverIslandSolvedFlag);
 	const bool bFinalItemCrafted = ProgressionManager->HasFlag(Level2FinalItemCraftedFlag);
-	const bool bLifeCompassReceived = ProgressionManager->HasFlag(LifeCompassReceivedFlag);
-	const bool bLighthouseLit = ProgressionManager->HasFlag(LighthouseLitFlag);
 
-	// Final ending state
-	if (bLighthouseLit)
+	const bool bCompassBearerSpawned = ProgressionManager->HasFlag(CompassBearerSpawnedFlag);
+	const bool bTalkedToCompassBearer = ProgressionManager->HasFlag(TalkedToCompassBearerFlag);
+	const bool bLifeCompassReceived = ProgressionManager->HasFlag(LifeCompassReceivedFlag);
+
+	const bool bTalkedToEntity = ProgressionManager->HasFlag(TalkedToLighthouseEntityFlag);
+	const bool bEnteredLighthouse = ProgressionManager->HasFlag(EnteredLighthouseFlag);
+	const bool bExploredLighthouse = ProgressionManager->HasFlag(LighthouseExploredFlag);
+	const bool bEngineInstalled = ProgressionManager->HasFlag(LighthouseEngineInstalledFlag);
+	const bool bLightCutscenePlayed = ProgressionManager->HasFlag(LighthouseLightCutscenePlayedFlag);
+	const bool bTalkedAfterLight = ProgressionManager->HasFlag(TalkedAfterLighthouseLightFlag);
+	const bool bFinalCutsceneStarted = ProgressionManager->HasFlag(FinalCutsceneStartedFlag);
+
+	// -------------------------------
+	// Lighthouse ending part
+	// Check latest steps first.
+	// -------------------------------
+
+	if (bFinalCutsceneStarted)
 	{
 		if (!ProgressionManager->HasFlag(GameEndingStartedFlag))
 		{
 			ProgressionManager->AddFlag(GameEndingStartedFlag);
 		}
 
-		SetStoryState(EStoryState::Lighthouse_Ending);
+		SetStoryState(EStoryState::Lighthouse_EndingCutscene);
 		return;
 	}
 
-	// If the final item is crafted, unlock lighthouse progression.
-	if (bFinalItemCrafted || bLifeCompassReceived)
+	if (bTalkedAfterLight)
+	{
+		SetStoryState(EStoryState::Lighthouse_EndingCutscene);
+		return;
+	}
+
+	if (bLightCutscenePlayed)
+	{
+		SetStoryState(EStoryState::Lighthouse_AfterLightDialogue);
+		return;
+	}
+
+	if (bEngineInstalled)
+	{
+		SetStoryState(EStoryState::Lighthouse_LightCutscene);
+		return;
+	}
+
+	if (bExploredLighthouse)
+	{
+		SetStoryState(EStoryState::Lighthouse_InstallEngine);
+		return;
+	}
+
+	if (bEnteredLighthouse)
+	{
+		SetStoryState(EStoryState::Lighthouse_Explore);
+		return;
+	}
+
+	if (bTalkedToEntity)
+	{
+		SetStoryState(EStoryState::Lighthouse_EnterLighthouse);
+		return;
+	}
+
+	if (bArrivedLighthouseIsland)
+	{
+		if (bLifeCompassReceived)
+		{
+			if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
+			{
+				ProgressionManager->AddFlag(LighthouseReadyFlag);
+			}
+
+			SetStoryState(EStoryState::Lighthouse_TalkToEntity);
+			return;
+		}
+
+		SetStoryState(EStoryState::Lighthouse_NotReady);
+		return;
+	}
+
+	// -------------------------------
+	// Compass Bearer / Level 2 reward
+	// -------------------------------
+
+	if (bLifeCompassReceived)
+	{
+		if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
+		{
+			ProgressionManager->AddFlag(LighthouseReadyFlag);
+		}
+
+		SetStoryState(EStoryState::Level2_CompassReceived);
+		return;
+	}
+
+	if (bTalkedToCompassBearer)
 	{
 		if (!ProgressionManager->HasFlag(LifeCompassReceivedFlag))
 		{
@@ -459,19 +544,37 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 			ProgressionManager->AddFlag(LighthouseReadyFlag);
 		}
 
-		SetStoryState(EStoryState::Lighthouse_Ready);
+		SetStoryState(EStoryState::Level2_CompassReceived);
 		return;
 	}
 
-	// When both Level 2 islands are solved, allow the final craft.
+	if (bCompassBearerSpawned)
+	{
+		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
+		return;
+	}
+
+	if (bFinalItemCrafted)
+	{
+		SetStoryState(EStoryState::Level2_FinalItemCrafted);
+		return;
+	}
+
+	// -------------------------------
+	// Two Level 2 islands solved
+	// -------------------------------
+
 	if (bMotorIslandSolved && bLeverIslandSolved)
 	{
 		SetStoryState(EStoryState::Level2_FinalCraftAvailable);
 		return;
 	}
 
-	// Individual island states.
-	if (ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag))
+	// -------------------------------
+	// Individual island states
+	// -------------------------------
+
+	if (bArrivedMotorIsland)
 	{
 		if (bMotorIslandSolved)
 		{
@@ -483,7 +586,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		return;
 	}
 
-	if (ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag))
+	if (bArrivedLeverIsland)
 	{
 		if (bLeverIslandSolved)
 		{
@@ -492,18 +595,6 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		}
 
 		SetStoryState(EStoryState::Level2_LeverIslandExplore);
-		return;
-	}
-
-	if (ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
-	{
-		if (ProgressionManager->HasFlag(LighthouseReadyFlag))
-		{
-			SetStoryState(EStoryState::Lighthouse_Ready);
-			return;
-		}
-
-		SetStoryState(EStoryState::Lighthouse_NotReady);
 		return;
 	}
 

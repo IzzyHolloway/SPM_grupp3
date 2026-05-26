@@ -1,8 +1,8 @@
+
 #include "LittleLost_GameInstance.h"
 #include "LittleLost_SaveGame.h"
 #include "InventoryComponent.h"
 #include "ProgressionManager.h"
-#include "StoryFlowManager.h"
 #include "Kismet/GameplayStatics.h"
 #include "GameFramework/Character.h"
 
@@ -18,12 +18,9 @@ bool ULittleLost_GameInstance::HasSave() const
 
 void ULittleLost_GameInstance::NewGame(FName StartLevelName)
 {
-    // Wipe in-memory data so ApplyToWorld() in the new level becomes a no-op.
     PendingSave = nullptr;
     bShouldApplyOnNextWorldReady = false;
 
-    // Optionally also delete the on-disk save so HasSave() returns false until next Save.
-    // Comment this out if you want New Game to coexist with an existing save until first Save.
     if (HasSave())
     {
         UGameplayStatics::DeleteGameInSlot(SaveSlotName, UserIndex);
@@ -35,6 +32,8 @@ void ULittleLost_GameInstance::NewGame(FName StartLevelName)
     }
 }
 
+// Loads the save file, opens the saved level, and flags that the world should be
+// restored from PendingSave as soon as the new level is ready.
 void ULittleLost_GameInstance::ContinueGame()
 {
     if (!HasSave())
@@ -61,9 +60,10 @@ void ULittleLost_GameInstance::ContinueGame()
     {
         UGameplayStatics::OpenLevel(this, LevelToOpen);
     }
-    // If no level was stored, caller can OpenLevel themselves; ApplyToWorld will still run.
 }
 
+// Capture the current world into PendingSave and write it to disk asynchronously
+// so saving doesn't block the game thread.
 void ULittleLost_GameInstance::SaveGameAsync()
 {
     CaptureFromWorld();
@@ -86,6 +86,7 @@ void ULittleLost_GameInstance::OnAsyncSaveFinished(const FString& Slot, const in
         *Slot, bSuccess ? TEXT("true") : TEXT("false"));
 }
 
+// Reads the current player, inventory and progression state into PendingSave
 void ULittleLost_GameInstance::CaptureFromWorld()
 {
     UWorld* World = GetWorld();
@@ -101,7 +102,7 @@ void ULittleLost_GameInstance::CaptureFromWorld()
     PendingSave->SavedAtUtc = FDateTime::UtcNow();
     PendingSave->CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this));
 
-    // Player position/rotation + inventory.
+    // Player transform + inventory snapshot
     if (ACharacter* Player = UGameplayStatics::GetPlayerCharacter(this, 0))
     {
         PendingSave->PlayerLocation = Player->GetActorLocation();
@@ -115,7 +116,7 @@ void ULittleLost_GameInstance::CaptureFromWorld()
         }
     }
 
-    // Progression flags + current objective.
+    // Story / progression flags
     if (AProgressionManager* PM = Cast<AProgressionManager>(
         UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass())))
     {
@@ -123,11 +124,9 @@ void ULittleLost_GameInstance::CaptureFromWorld()
         PendingSave->CurrentObjectiveText = PM->GetCurrentObjectiveText();
         PendingSave->CurrentObjectiveID = PM->GetCurrentObjectiveID();
     }
-
-    // CurrentStoryState is recomputed each tick from progression flags by StoryFlowManager,
-    // so we don't need to save/restore it explicitly. Restoring the flags is enough.
 }
 
+// Restores world state from PendingSave. Call this after the loaded level is ready
 void ULittleLost_GameInstance::ApplyToWorld()
 {
     if (!bShouldApplyOnNextWorldReady || !PendingSave) return;
@@ -135,7 +134,7 @@ void ULittleLost_GameInstance::ApplyToWorld()
     UWorld* World = GetWorld();
     if (!World) return;
 
-    // Restore player position + inventory.
+    // Restore player transform + inventory
     if (ACharacter* Player = UGameplayStatics::GetPlayerCharacter(this, 0))
     {
         Player->SetActorLocationAndRotation(
@@ -151,7 +150,7 @@ void ULittleLost_GameInstance::ApplyToWorld()
         }
     }
 
-    // Restore progression flags (re-add each via public API).
+    // Restore story flags + active objective
     if (AProgressionManager* PM = Cast<AProgressionManager>(
         UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass())))
     {
@@ -163,5 +162,6 @@ void ULittleLost_GameInstance::ApplyToWorld()
         PM->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
     }
 
+    // Only apply once per load
     bShouldApplyOnNextWorldReady = false;
 }
