@@ -231,6 +231,8 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
 	}
 
+	// ENTERING BOAT
+	
 	// Enter the boat if close enough
 	if (BoatInReach != nullptr)
 	{
@@ -552,6 +554,7 @@ bool ACharacterAimi::HasRequiredItems() const
 }
 */
 
+// ENTERING BOAT
 void ACharacterAimi::EnterBoat()
 {
 	// Double check that we're in reach of a boat
@@ -561,7 +564,7 @@ void ACharacterAimi::EnterBoat()
 		return;
 	}
 
-	// Save the boat in reach in case the character leaves its trigger zone while being moved on the boat
+	// Save the boat in reach in case the character leaves its trigger zone while being moved onto the boat
 	ABoatFunctionality* CurrentBoatInReach = BoatInReach;
 	
 	if (!CurrentBoatInReach->CanPlayerEnterBoat())
@@ -584,7 +587,6 @@ void ACharacterAimi::EnterBoat()
 	
 	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
 	SetActorRelativeLocation(CurrentBoatInReach->GetCharacterPositionOffset());
-	// AddActorWorldOffset(BoatInReach->GetCharacterPositionOffset());
 	
 	// Possess the boat
 	GetController()->Possess(CurrentBoatInReach);
