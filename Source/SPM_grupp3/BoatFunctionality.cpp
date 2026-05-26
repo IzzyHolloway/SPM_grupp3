@@ -24,6 +24,7 @@
 ABoatFunctionality::ABoatFunctionality()
 {
  	// Set this pawn to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
+	// Not needed in this script, but in Blueprint that inherits from the script
 	PrimaryActorTick.bCanEverTick = true;
 	
 	// ---------------------------------- COLLISION ----------------------------------
@@ -107,7 +108,7 @@ void ABoatFunctionality::Tick(float DeltaTime)
 
 }
 
-// ---------------------------------- INPUT ----------------------------------
+// ------------------------------------------------------------------ INPUT ------------------------------------------------------------------
 
 // Called to bind functionality to input
 void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
@@ -129,7 +130,7 @@ void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 	}
 }
 
-// -------------------------------- MOVEMENT --------------------------------
+// ----------------------------------------------------------------- MOVEMENT -----------------------------------------------------------------
 
 void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 {
@@ -144,10 +145,6 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 		
 		// Apply forward and back movement
 		AddMovementInput(GetActorForwardVector(), MovementValue.Y);
-		
-		// Make sure the boat stays on the same height
-		// TODO: Quick fix, replace later
-		// SetActorLocation(FVector(GetActorLocation().X, GetActorLocation().Y, 60.0));
 	}
 }
 
@@ -163,7 +160,7 @@ void ABoatFunctionality::StopSprint(const FInputActionValue& Value)
 	MovementComponent->MaxSpeed = DefaultMovementSpeed;
 }
 
-// ---------------------------------- CAMERA ----------------------------------
+// ------------------------------------------------------------------ CAMERA ------------------------------------------------------------------
 
 void ABoatFunctionality::Look(const FInputActionValue& Value)
 {
@@ -173,12 +170,13 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 	// Check if the controller possessing this Actor is valid
 	if (Controller)
 	{
+		// Apply camera input
 		AddControllerYawInput(LookValue.X);
 		AddControllerPitchInput(LookValue.Y);
 	}
 }
 
-// --------------------------------- INTERACTION ---------------------------------
+// ---------------------------------------------------------------- INTERACTION -----------------------------------------------------------------
 
 void ABoatFunctionality::Interact(const FInputActionValue& Value)
 {
@@ -193,21 +191,9 @@ void ABoatFunctionality::Interact(const FInputActionValue& Value)
 
 		ExitBoat();
 	}
-	/*
-	* Only for debugging:
-	else
-	{
-		GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("There is no dock to tie up at!") // Message
-		);
-	}
-	*/
 }
 
-// -------------------------------- ENTER & EXIT --------------------------------
+// ------------------------------------------------------------------ ENTER ------------------------------------------------------------------
 
 // Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
@@ -220,168 +206,25 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 	}
 }
 
-/*
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
 	if (!PlayerCharacter)
 	{
 		return;
-	} 
-	
-	// Find ProgressionManager in level
-	// TO be able to board the boat, it is enough to see if the player has lit the lantern
-	
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass()));
-
-	if (!ProgressionManager)
-	{
-		// Boat coult not find ProgressionManager
-		
-		UE_LOG(LogTemp, Warning, TEXT("Boat couldn't find ProgressionManager"));
-		
-		PlayerCharacter->RemoveBoatInReach();
-		return;
 	}
-	
-	// Player is only allowed to enter the boat if the required progression flag is active.
-	if (bRequiresFlagToEnterBoat)
-	{
-		if (RequiredFlagToEnterBoat.IsNone())
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Boat requires a flag, but RequiredFlagToEnterBoat is None."));
-			PlayerCharacter->RemoveBoatInReach();
-			HideEnterBoatPrompt();
-			return;
-		}
 
-		if (!ProgressionManager->HasFlag(RequiredFlagToEnterBoat))
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Boat locked. Missing flag: %s"), *RequiredFlagToEnterBoat.ToString());
-
-			PlayerCharacter->RemoveBoatInReach();
-			HideEnterBoatPrompt();
-
-			
-			// Temporary feedback. Later this can call DialogueManager or your message system.
-			if (GEngine)
-			{
-				GEngine->AddOnScreenDebugMessage(
-					-1,
-					3.0f,
-					FColor::White,
-					CannotEnterBoatMessage.IsEmpty()
-	? TEXT("I should finish helping here before leaving.")
-	: CannotEnterBoatMessage.ToString()
-				);
-			}
-			
-			
-			// Dialogue that says they can't board the boat yet
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-	UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-);
-
-			if (DialogueManager)
-			{
-				DialogueManager->ShowMessage(CannotEnterBoatMessage);
-			}
-			else
-			{
-				UE_LOG(LogTemp, Warning, TEXT("Boat could not find DialogueManager."));
-			}
-
-			return;
-		}
-	}
-	
-	// If the LitLantern flag is true, the player is allowed to enter the boat
-	//PlayerCharacter->SetBoatInReach(this);
-	
-	
-	 Only for debugging:
-	GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Press E to enter the boat!") // Message
-		);
-	 
-	
-	// Check if the current dock allows the player to leave this island.
-	if (DockInReach && !DockInReach->CanLeaveDock())
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Boat locked by dock leave requirement."));
-
-		PlayerCharacter->RemoveBoatInReach();
-		HideEnterBoatPrompt();
-
-		ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-			UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-		);
-
-		if (DialogueManager)
-		{
-			DialogueManager->ShowMessage(DockInReach->GetCannotLeaveDockMessage());
-		}
-		else
-		{
-			UE_LOG(LogTemp, Warning, TEXT("Boat could not find DialogueManager."));
-		}
-
-		return;
-	}
-	
-	
-	// If the boat is currently at a dock, ask the dock if the player is allowed to leave.
-	if (DockInReach && !DockInReach->CanLeaveDock())
-	{
-		PlayerCharacter->RemoveBoatInReach();
-		HideEnterBoatPrompt();
-
-		UE_LOG(LogTemp, Warning, TEXT("Boat locked by dock leave requirement."));
-
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				3.0f,
-				FColor::White,
-				DockInReach->GetCannotLeaveDockMessage().ToString()
-			);
-		}
-
-		return;
-	}
-	
-	
 	// Hand over a reference to myself to the player character to enable it to enter the boat
 	PlayerCharacter->SetBoatInReach(this);
+
+	// ------------------------------ UI ------------------------------
 	
 	if (DockInReach)
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
-	
+
 	// Show "Press X/E" UI
-	ShowEnterBoatPrompt();
-}
-*/
-
-void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
-{
-	if (!PlayerCharacter)
-	{
-		return;
-	}
-
-	PlayerCharacter->SetBoatInReach(this);
-
-	if (DockInReach)
-	{
-		DockInReach->HideEnterDockPrompt();
-	}
-
 	ShowEnterBoatPrompt();
 }
 
@@ -398,18 +241,10 @@ void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* Overlappe
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {	
-	/*
-	* Only for debugging:
-	GEngine->AddOnScreenDebugMessage(
-			-1,                // Key (-1 means add a new message)
-			5.0f,              // Display time in seconds
-			FColor::White,     // Text color
-			TEXT("Boat is out of reach.") // Message
-		);
-	 */
-	
 	// Remove the reference to myself in the player character to disable entering the boat
 	PlayerCharacter->RemoveBoatInReach();
+	
+	// ------------------------------ UI ------------------------------
 	
 	HideEnterBoatPrompt();
 }
@@ -420,14 +255,20 @@ FVector ABoatFunctionality::GetCharacterPositionOffset() const
 	return CharacterPositionOffset;
 }
 
+// ------------------------------------------------------------------ EXIT ------------------------------------------------------------------
+
 void ABoatFunctionality::ExitBoat()
 {
+	// ------------------------------ UI ------------------------------
+	
 	HideEnterBoatPrompt();
-
+	
 	if (DockInReach)
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
+	
+	// ----------------------------------------------------------------
 	
 	// Double check that we're in reach of a pier
 	if (DockInReach == nullptr)
@@ -442,12 +283,11 @@ void ABoatFunctionality::ExitBoat()
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
 	
-	//---------------------- MADDE AI FOR WATER ----------------------
+	// ---------------------------- WATER AI ----------------------------
+	/*
 	//This gets an array with all the actors that has the tag WaterAI on it.
 	TArray<AActor*> AICharacters;
 	UGameplayStatics::GetAllActorsWithTag(GetWorld(), FName("WaterAI"), AICharacters);
-	
-	UE_LOG(LogTemp, Warning, TEXT("We have exited the boat!"));
 	
 	//If we found an actor we will get its controller. 
 	if (AICharacters.Num() > 0)
@@ -458,6 +298,8 @@ void ABoatFunctionality::ExitBoat()
 			AIController->GetBlackboardComponent()->SetValueAsBool("IsInBoat", false);
 		}
 	}
+	*/
+	// ------------------------------------------------------------------
 	
 	// Move boat to docking spot
 	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
@@ -488,11 +330,8 @@ void ABoatFunctionality::ExitBoat()
 			// Add the dock's arrival/progression flag, for example ArrivedIsland1, ArrivedIsland2, etc.
 			CurrentDockInReach->ApplyDockingProgressionFlag();
 			
-			//Zoey moved this part up
-			// BoatSound-stop
+			// Play sound for when the boat stops
 			BoatSoundStop();
-			//Zoey end
-			
 			
 			// Repossess player character
 			AController* PlayerController = GetController();
@@ -500,7 +339,6 @@ void ABoatFunctionality::ExitBoat()
 			
 			// Fix camera after repossessing player
 			FixCameraAfterRepossessingPlayer();
-			
 			
 			// Player character found, no need to go through the rest of the attached actors
 			return;
@@ -522,6 +360,8 @@ void ABoatFunctionality::RemoveDockInReach()
 
 	DockInReach = nullptr;
 }
+
+// ------------------------------------------------------------------- UI -------------------------------------------------------------------
 
 void ABoatFunctionality::ShowEnterBoatPrompt()
 {
@@ -566,6 +406,8 @@ void ABoatFunctionality::PossessedBy(AController* NewController)
 		DockInReach->HideEnterDockPrompt();
 	}
 }
+
+// ---------------------------------------------------------------- PROGRESSION ----------------------------------------------------------------
 
 bool ABoatFunctionality::CanPlayerEnterBoat() const
 {
