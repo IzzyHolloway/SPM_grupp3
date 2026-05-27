@@ -47,6 +47,7 @@ void ANoteInteractable::Interact()
 	Widget->OnNoteClosed.AddDynamic(this, &ANoteInteractable::OnWidgetClosed);
 }
 
+//OBS REMOVE LOCKPLAYERCONTROLS
 void ANoteInteractable::LockPlayerControls(UNoteWidgetBase* Widget)
 {
 	APlayerController* PC = GetWorld()->GetFirstPlayerController();
