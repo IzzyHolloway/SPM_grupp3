@@ -37,9 +37,7 @@ FText ACraftingStation::LookAtActor_Implementation() const
 
 void ACraftingStation::InteractWith_Implementation(AActor* Interactor)
 {
-    //Izzy: X (Interact) ska bara öppna — close hanteras av separat B-input.
-    // Annars triggrar både X (Interact) och B (Close) close, vilket ger ofrivilliga stängningar
-    // när spelaren försöker crafta med X.
+   
     if (!IsCraftingOpen())
     {
         OpenCrafting(Interactor);
@@ -58,7 +56,6 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
         ActiveInventory->OnCraftSuccess.AddDynamic(this, &ACraftingStation::HandleCraftSuccess);
     }
 
-    //Izzy lagt till för ritpussel
     if (!ActiveInventory->OnPuzzleCraftRequested.IsAlreadyBound(this, &ACraftingStation::HandlePuzzleCraftRequested))
     {
         ActiveInventory->OnPuzzleCraftRequested.AddDynamic(this, &ACraftingStation::HandlePuzzleCraftRequested);
@@ -86,7 +83,7 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
     }
 
     UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
-        PC, nullptr, EMouseLockMode::DoNotLock, /*bHideCursorDuringCapture=*/true);
+        PC, nullptr, EMouseLockMode::DoNotLock, true);
     PC->bShowMouseCursor = false;
 }
 
@@ -126,10 +123,10 @@ void ACraftingStation::CloseCrafting()
     ActiveInteractor = nullptr;
 }
 
-void ACraftingStation::OnSphereEndOverlap(UPrimitiveComponent* /*OverlappedComponent*/,
+void ACraftingStation::OnSphereEndOverlap(UPrimitiveComponent* ,
                                           AActor* OtherActor,
-                                          UPrimitiveComponent* /*OtherComp*/,
-                                          int32 /*OtherBodyIndex*/)
+                                          UPrimitiveComponent* ,
+                                          int32)
 {
     if (!IsCraftingOpen()) return;
     if (OtherActor == ActiveInteractor.Get())
@@ -147,13 +144,11 @@ void ACraftingStation::HandleCraftSuccess()
         FMath::Max(0.f, CloseDelayAfterCraft), false);
 }
 
-// //Izzy lagt till för ritpussel
-void ACraftingStation::HandlePuzzleCraftRequested(FName /*ResultItemID*/,
-                                                  TSubclassOf<UUserWidget> /*PuzzleWidgetClass*/)
+void ACraftingStation::HandlePuzzleCraftRequested(FName ,
+                                                  TSubclassOf<UUserWidget> )
 {
     if (!IsCraftingOpen()) return;
-
-    // Cancel the regular post-craft close delay; the puzzle widget needs input now.
+    
     GetWorld()->GetTimerManager().ClearTimer(CloseAfterCraftTimer);
     CloseCrafting();
 }
