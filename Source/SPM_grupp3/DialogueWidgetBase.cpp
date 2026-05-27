@@ -20,9 +20,10 @@ void UDialogueWidgetBase::SetDialogueData(const FText& SpeakerName, const FText&
 	const FDialogueSpeakerStyle* FoundStyle = SpeakerStyles.Find(SpeakerKey);
 	
 	//Zoey start
+	
 	USoundBase* SoundToPlay = nullptr;
-
-	if (SpeakerName.ToString() != "Lumi")
+	
+	if (!SpeakersWithoutSound.Contains(SpeakerKey))
 	{
 		if (FoundStyle && FoundStyle->SpeakerSound)
 		{
