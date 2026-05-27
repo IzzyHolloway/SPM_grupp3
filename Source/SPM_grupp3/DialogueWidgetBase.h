@@ -50,10 +50,13 @@ public:
 
 	//Zoey start
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
-    TObjectPtr<USoundBase> DefaultDialogueSound = nullptr;
-	
+	TObjectPtr<USoundBase> DefaultDialogueSound = nullptr;
+    
 	UPROPERTY()
 	TObjectPtr<UAudioComponent> DialogueAudioComponent = nullptr;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
+	TSet<FName> SpeakersWithoutSound;
 	//Zoey end
 	
 protected:
