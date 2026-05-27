@@ -292,6 +292,12 @@ void UDrawingPuzzleWidget::DrawSegment(FVector2D FromUV, FVector2D ToUV)
 		return;
 	}
 
+	const float MaxSegmentLength = 0.1f;
+	if (FVector2D::Distance(FromUV, ToUV) > MaxSegmentLength)
+	{
+		return;
+	}
+
 	UCanvas* Canvas = nullptr;
 	FVector2D Size(0, 0);
 	FDrawToRenderTargetContext Context;

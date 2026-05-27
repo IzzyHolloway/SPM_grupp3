@@ -26,11 +26,9 @@ public:
     UFUNCTION(BlueprintPure, Category = "Crafting")
     bool IsCraftingOpen() const { return CraftingViewWidget != nullptr; }
 
-    /** Opens the crafting view bound to the given interactor's inventory. */
     UFUNCTION(BlueprintCallable, Category = "Crafting")
     void OpenCrafting(AActor* Interactor);
 
-    /** Closes the crafting view if it is open. Safe to call when closed. */
     UFUNCTION(BlueprintCallable, Category = "Crafting")
     void CloseCrafting();
 
@@ -44,9 +42,7 @@ protected:
     UFUNCTION()
     void HandleCraftSuccess();
 
-    // //Izzy lagt till för ritpussel
-    // Fires when a puzzle craft happens. Closes the station immediately so the
-    // puzzle widget owns input.
+    
     UFUNCTION()
     void HandlePuzzleCraftRequested(FName ResultItemID, TSubclassOf<UUserWidget> PuzzleWidgetClass);
 
@@ -63,7 +59,6 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Crafting")
     TSubclassOf<UCraftingViewWidget> CraftingViewClass;
 
-    /** Seconds to wait after a successful craft before closing the station. */
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
     float CloseDelayAfterCraft = 1.5f;
 
