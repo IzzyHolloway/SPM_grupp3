@@ -182,7 +182,6 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	//Izzy lagt till för inventoryrensning
 	TryClearHomeItemsFromInventory(ProgressionManager);
 
 	if (ProgressionManager->HasFlag(TalkedToListenerAfterPuzzleFlag))
@@ -252,7 +251,6 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	//Izzy lagt till för inventoryrensning
 	TryClearIsland1ItemsFromInventory(ProgressionManager);
 
 	const bool bTalkedToNPCIntro = ProgressionManager->HasFlag(Island2NPCIntroTalkedFlag);
@@ -352,7 +350,6 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	//Izzy lagt till för inventoryrensning
 	TryClearIsland2ItemsFromInventory(ProgressionManager);
 
 	const bool bTalkedToNPC = ProgressionManager->HasFlag(Island3NPCIntroTalkedFlag);
@@ -807,7 +804,6 @@ void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionMan
 	}
 }
 
-//Izzy lagt till för inventoryrensning
 void AStoryFlowManager::TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager)
 {
 	if (!ProgressionManager) return;
@@ -841,7 +837,6 @@ void AStoryFlowManager::TryClearIsland1ItemsFromInventory(AProgressionManager* P
 	ProgressionManager->AddFlag(Island1ItemsClearedFlag);
 }
 
-//Izzy lagt till för inventoryrensning
 void AStoryFlowManager::TryClearHomeItemsFromInventory(AProgressionManager* ProgressionManager)
 {
 	if (!ProgressionManager) return;
@@ -874,7 +869,6 @@ void AStoryFlowManager::TryClearHomeItemsFromInventory(AProgressionManager* Prog
 	ProgressionManager->AddFlag(HomeItemsClearedFlag);
 }
 
-//Izzy lagt till för inventoryrensning
 void AStoryFlowManager::TryClearIsland2ItemsFromInventory(AProgressionManager* ProgressionManager)
 {
 	if (!ProgressionManager) return;
