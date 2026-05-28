@@ -6,6 +6,7 @@
 #include "Components/Image.h"
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
+#include "Components/SizeBox.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Engine/Texture2D.h"
@@ -69,9 +70,14 @@ void UWardrobeViewWidget::RefreshSlots()
     const FName EquippedID = Wardrobe->EquippedCoatID;
     const int32 HighlightIndex = Wardrobe->SelectedSlotIndex;
 
+    int32 VisibleIndex = 0;
     for (int32 i = 0; i < Wardrobe->Slots.Num(); ++i)
     {
         const FWardrobeSlot& WardrobeSlot = Wardrobe->Slots[i];
+
+        // Skip locked coats entirely unless the widget is configured to show them.
+        if (!WardrobeSlot.bUnlocked && !bShowLockedSlots) continue;
+
         const FCoatDetail* Row = DT
             ? DT->FindRow<FCoatDetail>(WardrobeSlot.CoatID, TEXT("Wardrobe Refresh"))
             : nullptr;
@@ -92,11 +98,16 @@ void UWardrobeViewWidget::RefreshSlots()
 
         UOverlay* Overlay = NewObject<UOverlay>(SlotBtn);
 
-        // Coat icon.
+        // Coat icon. Force the brush size so the icon fills SlotSize regardless of
+        // the underlying texture's import resolution.
         UImage* IconImg = NewObject<UImage>(Overlay);
         if (Row && Row->CoatIcon)
         {
-            IconImg->SetBrushFromTexture(Row->CoatIcon);
+            FSlateBrush IconBrush;
+            IconBrush.SetResourceObject(Row->CoatIcon);
+            IconBrush.ImageSize = SlotSize;
+            IconBrush.DrawAs = ESlateBrushDrawType::Image;
+            IconImg->SetBrush(IconBrush);
         }
         IconImg->SetColorAndOpacity(WardrobeSlot.bUnlocked ? FLinearColor::White : LockedTint);
         if (UOverlaySlot* IconSlot = Overlay->AddChildToOverlay(IconImg))
@@ -131,10 +142,19 @@ void UWardrobeViewWidget::RefreshSlots()
 
         SlotBtn->SetContent(Overlay);
 
-        if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SlotBtn, i / Cols, i % Cols))
+        // Wrap in SizeBox so each cell renders at the intended pixel size, regardless
+        // of how the UniformGridPanel would otherwise distribute available space.
+        USizeBox* SizeWrapper = NewObject<USizeBox>(this);
+        SizeWrapper->SetWidthOverride(SlotSize.X);
+        SizeWrapper->SetHeightOverride(SlotSize.Y);
+        SizeWrapper->SetContent(SlotBtn);
+
+        // Pack unlocked coats sequentially using VisibleIndex so the grid has no gaps.
+        if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SizeWrapper, VisibleIndex / Cols, VisibleIndex % Cols))
         {
             GridSlot->SetHorizontalAlignment(HAlign_Center);
             GridSlot->SetVerticalAlignment(VAlign_Center);
         }
+        ++VisibleIndex;
     }
 }

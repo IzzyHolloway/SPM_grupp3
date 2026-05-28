@@ -50,13 +50,24 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     TObjectPtr<UTexture2D> HoverFrameTexture;
 
-    // Outline shown on the currently equipped coat. Assign in WBP defaults.
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
-    TObjectPtr<UTexture2D> SelectedFrameTexture;
+    // Opacity multiplier applied to the icon of the currently equipped coat (0-1).
+    // 1.0 = full brightness, 0.5 = half dim. Lets the equipped coat read as "you have this one on".
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals", meta=(ClampMin="0.0", ClampMax="1.0"))
+    float EquippedOpacity = 0.5f;
 
-    // Tint applied to a coat icon when its slot is still locked.
+    // Tint applied to a coat icon when its slot is still locked (only used when bShowLockedSlots = true).
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     FLinearColor LockedTint = FLinearColor(0.2f, 0.2f, 0.2f, 1.0f);
+
+    // Forced size of each slot in the grid. Lets icons render at intended pixel size
+    // even if the UniformGridPanel cells would otherwise shrink them.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    FVector2D SlotSize = FVector2D(150.f, 150.f);
+
+    // If false, locked coats are hidden entirely and unlocked coats pack together
+    // into the grid. If true, every coat is shown (locked ones tinted grey).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    bool bShowLockedSlots = false;
 
     UFUNCTION(BlueprintCallable, Category = "Wardrobe")
     void RefreshSlots();

@@ -1,8 +1,5 @@
-  #include "CoatPickup.h"
-
-#include "DialogueManager.h"
+#include "CoatPickup.h"
 #include "WardrobeComponent.h"
-
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 
@@ -12,24 +9,7 @@ void ACoatPickup::Interact()
 
     if (!bUnlocked && bRequireUnlockSuccess)
     {
-        if (ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-            UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())))
-        {
-            if (!WardrobeFailedMessage.IsEmpty())
-            {
-                DialogueManager->ShowMessage(WardrobeFailedMessage);
-            }
-        }
         return;
-    }
-
-    if (ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-        UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())))
-    {
-        if (!PickupMessage.IsEmpty())
-        {
-            DialogueManager->ShowMessage(PickupMessage);
-        }
     }
 
     if (PickupSound)

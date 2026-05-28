@@ -26,14 +26,6 @@ protected:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Wardrobe")
     bool bRequireUnlockSuccess = true;
 
-    // Optional message shown when the coat is collected.
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Dialogue")
-    FText PickupMessage = FText::FromString("A new coat for the wardrobe.");
-
-    // Optional message shown if UnlockCoat fails (e.g. coat already unlocked).
-    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Dialogue")
-    FText WardrobeFailedMessage = FText::FromString("I already have this one.");
-
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
     USoundBase* PickupSound = nullptr;
 
