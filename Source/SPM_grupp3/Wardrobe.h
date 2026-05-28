@@ -47,6 +47,17 @@ protected:
     void HandleEquipInput(const FInputActionValue& Value);
     void HandleCloseInput(const FInputActionValue& Value);
 
+    // Forwards the wardrobe component's OnEquippedCoatChanged into the BP event below.
+    UFUNCTION()
+    void HandleEquippedCoatChanged(FName NewCoatID);
+
+public:
+    // Override this in BP_Wardrobe to react to an equip — typically by looking up
+    // the CoatMaterial in DT_Coats and applying it to Wearer's mesh.
+    // Wearer is the actor that opened the wardrobe (the player character).
+    UFUNCTION(BlueprintImplementableEvent, Category = "Wardrobe")
+    void OnCoatEquipped(FName CoatID, AActor* Wearer);
+
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UStaticMeshComponent> Mesh;
