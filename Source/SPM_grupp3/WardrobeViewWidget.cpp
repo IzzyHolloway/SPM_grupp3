@@ -15,6 +15,10 @@ void UWardrobeSlotButton::HandleHovered()
 {
     if (WardrobeRef.IsValid() && SlotIndex != INDEX_NONE)
     {
+        // Ignore mouse hover for a short window after gamepad navigation, so the
+        // cursor doesn't snap back to wherever the mouse happens to sit when the
+        // grid rebuilds after a navigate.
+        if (!WardrobeRef->CanMouseHoverChangeSelection()) return;
         WardrobeRef->SetSelectedSlot(SlotIndex);
     }
 }
@@ -70,57 +74,90 @@ void UWardrobeViewWidget::RefreshSlots()
     const FName EquippedID = Wardrobe->EquippedCoatID;
     const int32 HighlightIndex = Wardrobe->SelectedSlotIndex;
 
-    int32 VisibleIndex = 0;
+    // Compute the cell size once. Big enough to contain the hover frame even when it's
+    // larger than the icon (so 190 outline isn't clipped around a 150 icon).
+    const FVector2D EffectiveHoverSize = HoverFrameSize.IsNearlyZero() ? SlotSize : HoverFrameSize;
+    const FVector2D WrapperSize(
+        FMath::Max(SlotSize.X, EffectiveHoverSize.X),
+        FMath::Max(SlotSize.Y, EffectiveHoverSize.Y));
+
+    // Collect unlocked slot indices in DT order. They fill the grid sequentially
+    // starting at position 0, so the visible layout is "stable" — picking up a new
+    // coat appends it to the next empty cell instead of slotting it into a fixed gap.
+    TArray<int32> Unlocked;
     for (int32 i = 0; i < Wardrobe->Slots.Num(); ++i)
     {
-        const FWardrobeSlot& WardrobeSlot = Wardrobe->Slots[i];
+        if (Wardrobe->Slots[i].bUnlocked) Unlocked.Add(i);
+    }
 
-        // Skip locked coats entirely unless the widget is configured to show them.
-        if (!WardrobeSlot.bUnlocked && !bShowLockedSlots) continue;
-
-        const FCoatDetail* Row = DT
-            ? DT->FindRow<FCoatDetail>(WardrobeSlot.CoatID, TEXT("Wardrobe Refresh"))
+    // Render Slots.Num() total cells: first N hold unlocked coats, rest are empty.
+    for (int32 Pos = 0; Pos < Wardrobe->Slots.Num(); ++Pos)
+    {
+        const bool bHasCoat = Pos < Unlocked.Num();
+        const int32 SlotIdx = bHasCoat ? Unlocked[Pos] : INDEX_NONE;
+        const FCoatDetail* Row = (bHasCoat && DT)
+            ? DT->FindRow<FCoatDetail>(Wardrobe->Slots[SlotIdx].CoatID, TEXT("Wardrobe Refresh"))
             : nullptr;
 
         UWardrobeSlotButton* SlotBtn = NewObject<UWardrobeSlotButton>(this);
-        SlotBtn->SlotIndex = i;
+        SlotBtn->SlotIndex = SlotIdx;
         SlotBtn->WardrobeRef = Wardrobe;
-        SlotBtn->OnHovered.AddDynamic(SlotBtn, &UWardrobeSlotButton::HandleHovered);
-        SlotBtn->OnClicked.AddDynamic(SlotBtn, &UWardrobeSlotButton::HandleClicked);
 
-        // Hide the button's own background; visuals are entirely the overlay.
+        // Only filled cells are interactive — empty trailing cells can't be hovered or equipped.
+        if (bHasCoat)
+        {
+            SlotBtn->OnHovered.AddDynamic(SlotBtn, &UWardrobeSlotButton::HandleHovered);
+            SlotBtn->OnClicked.AddDynamic(SlotBtn, &UWardrobeSlotButton::HandleClicked);
+        }
+        else
+        {
+            SlotBtn->SetIsEnabled(false);
+        }
+
+        // Hide the button's own background entirely; only the overlay content renders.
         FButtonStyle Style = SlotBtn->GetStyle();
-        Style.Normal.TintColor   = FSlateColor(FLinearColor::Transparent);
-        Style.Hovered.TintColor  = FSlateColor(FLinearColor::Transparent);
-        Style.Pressed.TintColor  = FSlateColor(FLinearColor::Transparent);
-        Style.Disabled.TintColor = FSlateColor(FLinearColor::Transparent);
+        Style.Normal.DrawAs   = ESlateBrushDrawType::NoDrawType;
+        Style.Hovered.DrawAs  = ESlateBrushDrawType::NoDrawType;
+        Style.Pressed.DrawAs  = ESlateBrushDrawType::NoDrawType;
+        Style.Disabled.DrawAs = ESlateBrushDrawType::NoDrawType;
         SlotBtn->SetStyle(Style);
 
         UOverlay* Overlay = NewObject<UOverlay>(SlotBtn);
 
-        // Coat icon. Force the brush size so the icon fills SlotSize regardless of
-        // the underlying texture's import resolution.
-        UImage* IconImg = NewObject<UImage>(Overlay);
-        if (Row && Row->CoatIcon)
+        // Coat icon — only on cells that hold a coat.
+        if (bHasCoat && Row && Row->CoatIcon)
         {
+            UImage* IconImg = NewObject<UImage>(Overlay);
             FSlateBrush IconBrush;
             IconBrush.SetResourceObject(Row->CoatIcon);
             IconBrush.ImageSize = SlotSize;
             IconBrush.DrawAs = ESlateBrushDrawType::Image;
             IconImg->SetBrush(IconBrush);
-        }
-        IconImg->SetColorAndOpacity(WardrobeSlot.bUnlocked ? FLinearColor::White : LockedTint);
-        if (UOverlaySlot* IconSlot = Overlay->AddChildToOverlay(IconImg))
-        {
-            IconSlot->SetHorizontalAlignment(HAlign_Center);
-            IconSlot->SetVerticalAlignment(VAlign_Center);
+
+            FLinearColor IconColor = FLinearColor::White;
+            const FName CoatID = Wardrobe->Slots[SlotIdx].CoatID;
+            if (!CoatID.IsNone() && CoatID == EquippedID)
+            {
+                IconColor.A *= EquippedOpacity;
+            }
+            IconImg->SetColorAndOpacity(IconColor);
+
+            if (UOverlaySlot* IconSlot = Overlay->AddChildToOverlay(IconImg))
+            {
+                IconSlot->SetHorizontalAlignment(HAlign_Center);
+                IconSlot->SetVerticalAlignment(VAlign_Center);
+            }
         }
 
-        // Hover frame on top of the highlighted slot.
-        if (HoverFrameTexture && i == HighlightIndex)
+        // Hover frame on top of the cell that holds the currently highlighted coat.
+        if (bHasCoat && HoverFrameTexture && SlotIdx == HighlightIndex)
         {
             UImage* HoverImg = NewObject<UImage>(Overlay);
-            HoverImg->SetBrushFromTexture(HoverFrameTexture);
+            FSlateBrush HoverBrush;
+            HoverBrush.SetResourceObject(HoverFrameTexture);
+            HoverBrush.ImageSize = EffectiveHoverSize;
+            HoverBrush.DrawAs = ESlateBrushDrawType::Image;
+            HoverImg->SetBrush(HoverBrush);
             if (UOverlaySlot* HoverSlot = Overlay->AddChildToOverlay(HoverImg))
             {
                 HoverSlot->SetHorizontalAlignment(HAlign_Center);
@@ -128,33 +165,18 @@ void UWardrobeViewWidget::RefreshSlots()
             }
         }
 
-        // Selected frame on top of the equipped coat.
-        if (SelectedFrameTexture && !WardrobeSlot.CoatID.IsNone() && WardrobeSlot.CoatID == EquippedID)
-        {
-            UImage* SelectedImg = NewObject<UImage>(Overlay);
-            SelectedImg->SetBrushFromTexture(SelectedFrameTexture);
-            if (UOverlaySlot* SelectedSlot = Overlay->AddChildToOverlay(SelectedImg))
-            {
-                SelectedSlot->SetHorizontalAlignment(HAlign_Center);
-                SelectedSlot->SetVerticalAlignment(VAlign_Center);
-            }
-        }
-
         SlotBtn->SetContent(Overlay);
 
-        // Wrap in SizeBox so each cell renders at the intended pixel size, regardless
-        // of how the UniformGridPanel would otherwise distribute available space.
         USizeBox* SizeWrapper = NewObject<USizeBox>(this);
-        SizeWrapper->SetWidthOverride(SlotSize.X);
-        SizeWrapper->SetHeightOverride(SlotSize.Y);
+        SizeWrapper->SetWidthOverride(WrapperSize.X);
+        SizeWrapper->SetHeightOverride(WrapperSize.Y);
         SizeWrapper->SetContent(SlotBtn);
 
-        // Pack unlocked coats sequentially using VisibleIndex so the grid has no gaps.
-        if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SizeWrapper, VisibleIndex / Cols, VisibleIndex % Cols))
+        // Visible position drives the grid cell. Always Slots.Num() total cells.
+        if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SizeWrapper, Pos / Cols, Pos % Cols))
         {
             GridSlot->SetHorizontalAlignment(HAlign_Center);
             GridSlot->SetVerticalAlignment(VAlign_Center);
         }
-        ++VisibleIndex;
     }
 }

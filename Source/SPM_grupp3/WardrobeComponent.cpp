@@ -94,9 +94,9 @@ bool UWardrobeComponent::EquipCoat(FName CoatID)
     return true;
 }
 
-// Moves the selection cursor across a 2D grid of slots, skipping locked ones.
-// Same shape as UInventoryComponent::MoveSelectionGrid so the WBP can navigate the
-// same way it does for the inventory.
+// Navigates the cursor over the visible packed positions. The widget packs unlocked
+// coats into the first N grid cells and leaves the rest empty, so navigation must
+// operate on the packed position (0..Unlocked.Num()-1), not the raw slot index.
 void UWardrobeComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
 {
     if (!bIsWardrobeOpen) return;
@@ -108,8 +108,8 @@ void UWardrobeComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
     }
     if (Unlocked.Num() == 0) return;
 
-    // If the cursor sits on a locked slot, jump to the first unlocked one.
-    if (!Unlocked.Contains(SelectedSlotIndex))
+    int32 CurPos = Unlocked.IndexOfByKey(SelectedSlotIndex);
+    if (CurPos == INDEX_NONE)
     {
         SelectedSlotIndex = Unlocked[0];
         OnWardrobeUpdated.Broadcast();
@@ -118,58 +118,42 @@ void UWardrobeComponent::MoveSelectionGrid(int32 DeltaX, int32 DeltaY)
     if (Unlocked.Num() == 1) return;
 
     const int32 Cols = FMath::Max(1, GridColumns);
-    const int32 Rows = FMath::DivideAndRoundUp(Slots.Num(), Cols);
-    const int32 CurRow = SelectedSlotIndex / Cols;
-    const int32 CurCol = SelectedSlotIndex % Cols;
+    const int32 Rows = FMath::DivideAndRoundUp(Unlocked.Num(), Cols);
+    const int32 CurRow = CurPos / Cols;
+    const int32 CurCol = CurPos % Cols;
 
-    int32 Best = SelectedSlotIndex;
+    int32 BestPos = CurPos;
 
     if (DeltaX != 0 && DeltaY == 0)
     {
-        for (int32 Step = 1; Step < Cols; ++Step)
+        const int32 TargetCol = CurCol + DeltaX;
+        if (TargetCol >= 0 && TargetCol < Cols)
         {
-            const int32 TargetCol = CurCol + DeltaX * Step;
-            if (TargetCol < 0 || TargetCol >= Cols) break;
-
             const int32 Candidate = CurRow * Cols + TargetCol;
-            if (Candidate >= Slots.Num()) break;
-            if (Slots[Candidate].bUnlocked)
+            if (Candidate < Unlocked.Num())
             {
-                Best = Candidate; break;
+                BestPos = Candidate;
             }
         }
     }
     else if (DeltaY != 0 && DeltaX == 0)
     {
-        for (int32 Step = 1; Step < Rows; ++Step)
+        const int32 TargetRow = CurRow + DeltaY;
+        if (TargetRow >= 0 && TargetRow < Rows)
         {
-            const int32 TargetRow = CurRow + DeltaY * Step;
-            if (TargetRow < 0 || TargetRow >= Rows) break;
-
-            const int32 SameCol = TargetRow * Cols + CurCol;
-            if (SameCol < Slots.Num() && Slots[SameCol].bUnlocked)
+            int32 Candidate = TargetRow * Cols + CurCol;
+            // Last row may be partially filled — snap to the last filled position.
+            if (Candidate >= Unlocked.Num())
             {
-                Best = SameCol; break;
+                Candidate = Unlocked.Num() - 1;
             }
-
-            bool bFound = false;
-            for (int32 Col = 0; Col < Cols; ++Col)
-            {
-                const int32 Candidate = TargetRow * Cols + Col;
-                if (Candidate < Slots.Num()
-                    && Slots[Candidate].bUnlocked
-                    && Candidate != SelectedSlotIndex)
-                {
-                    Best = Candidate; bFound = true; break;
-                }
-            }
-            if (bFound) break;
+            BestPos = Candidate;
         }
     }
 
-    if (Best != SelectedSlotIndex)
+    if (BestPos != CurPos)
     {
-        SelectedSlotIndex = Best;
+        SelectedSlotIndex = Unlocked[BestPos];
         OnWardrobeUpdated.Broadcast();
     }
 }
@@ -240,4 +224,14 @@ int32 UWardrobeComponent::FindSlotIndexForCoat(FName CoatID) const
         if (Slots[i].CoatID == CoatID) return i;
     }
     return INDEX_NONE;
+}
+
+void UWardrobeComponent::MarkGamepadNavInput()
+{
+    LastGamepadNavTime = FPlatformTime::Seconds();
+}
+
+bool UWardrobeComponent::CanMouseHoverChangeSelection() const
+{
+    return (FPlatformTime::Seconds() - LastGamepadNavTime) >= MouseHoverGamepadCooldown;
 }

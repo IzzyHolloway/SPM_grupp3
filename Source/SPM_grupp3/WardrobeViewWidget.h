@@ -55,19 +55,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals", meta=(ClampMin="0.0", ClampMax="1.0"))
     float EquippedOpacity = 0.5f;
 
-    // Tint applied to a coat icon when its slot is still locked (only used when bShowLockedSlots = true).
-    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
-    FLinearColor LockedTint = FLinearColor(0.2f, 0.2f, 0.2f, 1.0f);
-
     // Forced size of each slot in the grid. Lets icons render at intended pixel size
     // even if the UniformGridPanel cells would otherwise shrink them.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     FVector2D SlotSize = FVector2D(150.f, 150.f);
 
-    // If false, locked coats are hidden entirely and unlocked coats pack together
-    // into the grid. If true, every coat is shown (locked ones tinted grey).
+    // Size of the hover outline. Usually slightly larger than SlotSize so the frame
+    // surrounds the icon. Set to (0,0) to fall back to SlotSize.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
-    bool bShowLockedSlots = false;
+    FVector2D HoverFrameSize = FVector2D(190.f, 190.f);
 
     UFUNCTION(BlueprintCallable, Category = "Wardrobe")
     void RefreshSlots();

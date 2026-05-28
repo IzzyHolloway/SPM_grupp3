@@ -202,6 +202,7 @@ void AWardrobe::HandleNavigateInput(const FInputActionValue& Value)
 
     if (DeltaX != 0 || DeltaY != 0)
     {
+        ActiveWardrobe->MarkGamepadNavInput();
         ActiveWardrobe->MoveSelectionGrid(DeltaX, DeltaY);
     }
 }

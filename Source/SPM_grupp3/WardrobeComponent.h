@@ -109,6 +109,15 @@ public:
     UFUNCTION(BlueprintPure, Category = "Wardrobe")
     int32 FindSlotIndexForCoat(FName CoatID) const;
 
+    // Called by AWardrobe whenever a gamepad navigation input fires. Mouse hover
+    // checks this to avoid stealing the cursor right after a navigate press.
+    void MarkGamepadNavInput();
+
+    bool CanMouseHoverChangeSelection() const;
+
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Input")
+    float MouseHoverGamepadCooldown = 0.3f;
+
 private:
     UPROPERTY(BlueprintReadOnly, Category = "Wardrobe|State",
               meta=(AllowPrivateAccess="true"))
@@ -117,4 +126,6 @@ private:
     UPROPERTY(BlueprintReadOnly, Category = "Wardrobe|State",
               meta=(AllowPrivateAccess="true"))
     bool bHasEverUnlockedCoat = false;
+
+    double LastGamepadNavTime = 0.0;
 };
