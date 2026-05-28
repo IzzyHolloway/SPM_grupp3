@@ -65,6 +65,13 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
     WardrobeViewWidget->AddToViewport();
 
     ActiveWardrobe->ActiveWardrobeActor = this;
+
+    // Listen for equip changes so BP_Wardrobe can react via OnCoatEquipped.
+    if (!ActiveWardrobe->OnEquippedCoatChanged.IsAlreadyBound(this, &AWardrobe::HandleEquippedCoatChanged))
+    {
+        ActiveWardrobe->OnEquippedCoatChanged.AddDynamic(this, &AWardrobe::HandleEquippedCoatChanged);
+    }
+
     ActiveWardrobe->SetWardrobeOpen(true);
     // Start with the cursor on the currently equipped coat so the "Selected" frame
     // sits where the player expects it on first open.
@@ -154,6 +161,7 @@ void AWardrobe::CloseWardrobe()
 
     if (ActiveWardrobe)
     {
+        ActiveWardrobe->OnEquippedCoatChanged.RemoveDynamic(this, &AWardrobe::HandleEquippedCoatChanged);
         ActiveWardrobe->SetWardrobeOpen(false);
         if (ActiveWardrobe->ActiveWardrobeActor.Get() == this)
         {
@@ -209,6 +217,10 @@ void AWardrobe::HandleNavigateInput(const FInputActionValue& Value)
 
 void AWardrobe::HandleEquipInput(const FInputActionValue&)
 {
+    UE_LOG(LogTemp, Warning, TEXT("AWardrobe::HandleEquipInput fired. SelectedSlot=%d, EquippedID=%s"),
+        ActiveWardrobe ? ActiveWardrobe->SelectedSlotIndex : -1,
+        ActiveWardrobe ? *ActiveWardrobe->EquippedCoatID.ToString() : TEXT("(no wardrobe)"));
+
     if (ActiveWardrobe)
     {
         ActiveWardrobe->EquipSelected();
@@ -218,4 +230,15 @@ void AWardrobe::HandleEquipInput(const FInputActionValue&)
 void AWardrobe::HandleCloseInput(const FInputActionValue&)
 {
     CloseWardrobe();
+}
+
+void AWardrobe::HandleEquippedCoatChanged(FName NewCoatID)
+{
+    AActor* Wearer = ActiveInteractor.Get();
+    UE_LOG(LogTemp, Warning, TEXT("AWardrobe::HandleEquippedCoatChanged: CoatID=%s, Wearer=%s"),
+        *NewCoatID.ToString(),
+        Wearer ? *Wearer->GetName() : TEXT("NULL"));
+
+    // Forward to the BP-overridable event so designers can swap Lumi's material there.
+    OnCoatEquipped(NewCoatID, Wearer);
 }
