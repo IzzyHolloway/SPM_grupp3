@@ -5,6 +5,8 @@
 #include "WardrobeDataTypes.h"
 #include "WardrobeComponent.generated.h"
 
+class AWardrobe;
+
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWardrobeUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedCoatChanged, FName, NewCoatID);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnCoatUnlocked, FName, CoatID, bool, bFirstCoatEver);
@@ -50,6 +52,12 @@ public:
 
     UPROPERTY(BlueprintReadOnly, Category = "Wardrobe|Selection")
     int32 SelectedSlotIndex = 0;                     // Slot currently highlighted in the UI (hover/cursor).
+
+    // The AWardrobe actor that is currently driving the UI, or null if closed.
+    // Set by AWardrobe::OpenWardrobe, cleared by CloseWardrobe.
+    // Lets external systems (e.g. character input) call ActiveWardrobeActor->CloseWardrobe().
+    UPROPERTY(BlueprintReadOnly, Category = "Wardrobe|State")
+    TWeakObjectPtr<AWardrobe> ActiveWardrobeActor;
 
     // API
 

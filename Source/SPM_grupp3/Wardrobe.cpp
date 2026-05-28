@@ -9,6 +9,12 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 
+#include "EnhancedInputComponent.h"
+#include "EnhancedInputSubsystems.h"
+#include "InputAction.h"
+#include "InputMappingContext.h"
+#include "InputActionValue.h"
+
 AWardrobe::AWardrobe()
 {
     PrimaryActorTick.bCanEverTick = false;
@@ -58,6 +64,7 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
     WardrobeViewWidget->WardrobeActor = this;
     WardrobeViewWidget->AddToViewport();
 
+    ActiveWardrobe->ActiveWardrobeActor = this;
     ActiveWardrobe->SetWardrobeOpen(true);
     // Start with the cursor on the currently equipped coat so the "Selected" frame
     // sits where the player expects it on first open.
@@ -74,6 +81,38 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
     UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
         PC, nullptr, EMouseLockMode::DoNotLock, true);
     PC->bShowMouseCursor = true;
+
+    // --- Enhanced Input: push wardrobe IMC + bind actions so they only fire while open ---
+    if (ULocalPlayer* LP = PC->GetLocalPlayer())
+    {
+        if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+            LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+        {
+            if (WardrobeMappingContext)
+            {
+                Subsystem->AddMappingContext(WardrobeMappingContext, WardrobeMappingPriority);
+            }
+        }
+    }
+
+    if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent))
+    {
+        if (NavigateAction)
+        {
+            NavigateBindingHandle = EIC->BindAction(
+                NavigateAction, ETriggerEvent::Started, this, &AWardrobe::HandleNavigateInput).GetHandle();
+        }
+        if (EquipAction)
+        {
+            EquipBindingHandle = EIC->BindAction(
+                EquipAction, ETriggerEvent::Started, this, &AWardrobe::HandleEquipInput).GetHandle();
+        }
+        if (CloseAction)
+        {
+            CloseBindingHandle = EIC->BindAction(
+                CloseAction, ETriggerEvent::Started, this, &AWardrobe::HandleCloseInput).GetHandle();
+        }
+    }
 }
 
 void AWardrobe::CloseWardrobe()
@@ -84,12 +123,45 @@ void AWardrobe::CloseWardrobe()
         WardrobeViewWidget = nullptr;
     }
 
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+
+    // --- Enhanced Input: unbind + pop IMC ---
+    if (PC)
+    {
+        if (UEnhancedInputComponent* EIC = Cast<UEnhancedInputComponent>(PC->InputComponent))
+        {
+            if (NavigateBindingHandle != 0) { EIC->RemoveBindingByHandle(NavigateBindingHandle); }
+            if (EquipBindingHandle    != 0) { EIC->RemoveBindingByHandle(EquipBindingHandle); }
+            if (CloseBindingHandle    != 0) { EIC->RemoveBindingByHandle(CloseBindingHandle); }
+        }
+
+        if (ULocalPlayer* LP = PC->GetLocalPlayer())
+        {
+            if (UEnhancedInputLocalPlayerSubsystem* Subsystem =
+                LP->GetSubsystem<UEnhancedInputLocalPlayerSubsystem>())
+            {
+                if (WardrobeMappingContext)
+                {
+                    Subsystem->RemoveMappingContext(WardrobeMappingContext);
+                }
+            }
+        }
+    }
+
+    NavigateBindingHandle = 0;
+    EquipBindingHandle = 0;
+    CloseBindingHandle = 0;
+
     if (ActiveWardrobe)
     {
         ActiveWardrobe->SetWardrobeOpen(false);
+        if (ActiveWardrobe->ActiveWardrobeActor.Get() == this)
+        {
+            ActiveWardrobe->ActiveWardrobeActor = nullptr;
+        }
     }
 
-    if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+    if (PC)
     {
         UWidgetBlueprintLibrary::SetInputMode_GameOnly(PC);
         PC->bShowMouseCursor = false;
@@ -117,4 +189,32 @@ void AWardrobe::OnSphereEndOverlap(UPrimitiveComponent*,
     {
         CloseWardrobe();
     }
+}
+
+void AWardrobe::HandleNavigateInput(const FInputActionValue& Value)
+{
+    if (!ActiveWardrobe) return;
+
+    const FVector2D Axis = Value.Get<FVector2D>();
+    const int32 DeltaX = FMath::TruncToInt(Axis.X);
+    // Invert Y so up on the stick moves "up" in the grid (lower row index).
+    const int32 DeltaY = -FMath::TruncToInt(Axis.Y);
+
+    if (DeltaX != 0 || DeltaY != 0)
+    {
+        ActiveWardrobe->MoveSelectionGrid(DeltaX, DeltaY);
+    }
+}
+
+void AWardrobe::HandleEquipInput(const FInputActionValue&)
+{
+    if (ActiveWardrobe)
+    {
+        ActiveWardrobe->EquipSelected();
+    }
+}
+
+void AWardrobe::HandleCloseInput(const FInputActionValue&)
+{
+    CloseWardrobe();
 }
