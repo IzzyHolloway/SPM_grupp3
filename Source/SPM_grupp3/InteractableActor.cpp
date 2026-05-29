@@ -86,6 +86,15 @@ void AInteractableActor::Interact()
 
 void AInteractableActor::SetPromptVisible(bool bVisible)
 {
+	UE_LOG(LogTemp, Warning, TEXT("SetPromptVisible on %s: %s"),
+	*GetName(),
+	bVisible ? TEXT("TRUE") : TEXT("FALSE"));
+
+	if (bVisible && !InteractPromptWidgetClass)
+	{
+		UE_LOG(LogTemp, Error, TEXT("InteractPromptWidgetClass is NULL on %s"), *GetName());
+	}
+	
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (!PlayerController)
