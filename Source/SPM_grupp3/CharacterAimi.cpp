@@ -248,7 +248,15 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	{
 		return;
 	}
-	
+
+	// Suppressed by an open UI (crafting bench, wardrobe, etc). Clear current so the
+	// prompt disappears and doesn't come back via Tick while the UI is up.
+	if (!bInteractionDetectionEnabled)
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
@@ -510,7 +518,18 @@ void ACharacterAimi::DebugCraftLantern()
 	}
 }
 
-//Lock or unlock the movement of the charaacter. Do nothing if we do not have CharcterMovement. 
+void ACharacterAimi::SetInteractionDetectionEnabled(bool bEnabled)
+{
+	bInteractionDetectionEnabled = bEnabled;
+
+	// On disable, immediately drop the current prompt so it disappears the same frame the UI opens.
+	if (!bEnabled)
+	{
+		SetCurrentInteractable(nullptr);
+	}
+}
+
+//Lock or unlock the movement of the charaacter. Do nothing if we do not have CharcterMovement.
 void ACharacterAimi::SetMovementLocked(bool bLock)
 {
 	if (!GetCharacterMovement())
