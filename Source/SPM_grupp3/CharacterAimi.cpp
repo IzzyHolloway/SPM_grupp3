@@ -1,4 +1,5 @@
 #include "CharacterAimi.h"
+#include "DrawDebugHelpers.h"
 #include "InteractableActor.h"
 #include "DialogueManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,6 +24,8 @@
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	InteractionBlockCount = 0;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -211,18 +214,27 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
-	// Remove the Dialogue part from the Interact
-	/*
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (PC && PC->bShowMouseCursor)
+	{
+		return;
+	}
+	
+	if (IsInteractionBlocked())
+	{
+		return;
+	}
+	
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	if (DialogueManager && DialogueManager->IsDialogueActive())
+	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
 	{
-		DialogueManager->AdvanceDialogue();
+		SetCurrentInteractable(nullptr);
 		return;
 	}
-	*/
 
 	if (CurrentInteractable)
 	{
@@ -256,12 +268,34 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		SetCurrentInteractable(nullptr);
 		return;
 	}
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
+	if (PC && PC->bShowMouseCursor)
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+
+	if (IsInteractionBlocked())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
+	/*
 	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	*/
+	
+	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
 	{
 		SetCurrentInteractable(nullptr);
 		return;
@@ -274,6 +308,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	TArray<AActor*> OverlappingActors;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 
 	TArray<AActor*> ActorsToIgnore;
@@ -331,18 +366,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		}
 	}
 	
-	/*
-	// Drawing the interaction spehere around the player. Generous for cozy gameplay
-	DrawDebugSphere(
-	GetWorld(),
-	Center,
-	InteractionRadius,
-	16,
-	CurrentInteractable ? FColor::Green : FColor::Red,
-	false,
-	0.0f
-);
-*/
+
 	
 	SetCurrentInteractable(BestCandidate);
 }
@@ -365,6 +389,24 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	{
 		CurrentInteractable->SetPromptVisible(true);
 	}
+}
+
+void ACharacterAimi::PushInteractionBlock()
+{
+	InteractionBlockCount++;
+
+	// Hide current prompt immediately
+	SetCurrentInteractable(nullptr);
+}
+
+void ACharacterAimi::PopInteractionBlock()
+{
+	InteractionBlockCount = FMath::Max(0, InteractionBlockCount - 1);
+}
+
+bool ACharacterAimi::IsInteractionBlocked() const
+{
+	return InteractionBlockCount > 0;
 }
 
 void ACharacterAimi::AdvanceDialoguePressed(const FInputActionValue& Value)

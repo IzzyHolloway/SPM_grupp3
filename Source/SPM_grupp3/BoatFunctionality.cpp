@@ -367,6 +367,20 @@ void ABoatFunctionality::RemoveDockInReach()
 
 void ABoatFunctionality::ShowInteractPrompt()
 {
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+	UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+);
+
+	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
+	{
+		return;
+	}
+
+	if (InteractPromptWidget || !InteractPromptWidgetClass)
+	{
+		return;
+	}
+	
 	if (InteractPromptWidget || !InteractPromptWidgetClass)
 	{
 		return;
@@ -446,8 +460,15 @@ bool ABoatFunctionality::CanPlayerEnterBoat() const
 	return true;
 }
 
-void ABoatFunctionality::ShowCannotEnterBoatMessage() const
+void ABoatFunctionality::ShowCannotEnterBoatMessage()
 {
+	HideInteractPrompt();
+
+	if (DockInReach)
+	{
+		DockInReach->HideEnterDockPrompt();
+	}
+	
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
