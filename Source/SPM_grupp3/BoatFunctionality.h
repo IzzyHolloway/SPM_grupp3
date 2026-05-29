@@ -28,6 +28,9 @@ class UBoxComponent;
 class ACharacterAimi;
 class ADock;
 
+// Wardrobe
+class ACoatPickup;
+
 UCLASS()
 class SPM_GRUPP3_API ABoatFunctionality : public APawn
 {
@@ -180,15 +183,15 @@ protected:
 	
 	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
-	TSubclassOf<UUserWidget> EnterBoatPromptWidgetClass;
+	TSubclassOf<UUserWidget> InteractPromptWidgetClass;
 
 	UPROPERTY()
-	UUserWidget* EnterBoatPromptWidget;
+	UUserWidget* InteractPromptWidget;
 	
 	virtual void PossessedBy(AController* NewController) override;
 
-	void ShowEnterBoatPrompt();
-	void HideEnterBoatPrompt();
+	void ShowInteractPrompt();
+	void HideInteractPrompt();
 	
 	// --------------------------- PROGRESSION ---------------------------
 	
@@ -223,5 +226,9 @@ private:
 	
 	// The speed the MovementComponent has when sprint is inactive
 	float DefaultMovementSpeed;
-
+	
+	// --------------------------- WARDROBE ---------------------------
+	
+	// If in reach of a coat pickup, reference to the corresponding coat pickup, otherwise null
+	ACoatPickup* CoatPickupInReach;
 };
