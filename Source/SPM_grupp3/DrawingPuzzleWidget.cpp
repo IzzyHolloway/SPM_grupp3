@@ -144,6 +144,27 @@ bool UDrawingPuzzleWidget::PollMouseDrawing()
 	// Gets the global screen position of the mouse
 	const FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
 
+	//Izzy lagt till för bug-fix: ignorera musen om den inte faktiskt rört sig.
+	// First frame: just record the cursor position without drawing. Otherwise we'd
+	// draw a stray line from the center (0.5, 0.5) to wherever the mouse happens
+	// to be sitting when the puzzle opens.
+	if (!bHasInitialMousePos)
+	{
+		LastMouseScreenPos = ScreenPos;
+		bHasInitialMousePos = true;
+		return false;
+	}
+
+	// If the cursor is sitting still, do nothing and let the gamepad logic take
+	// over. Without this check the mouse would keep snapping CurrentUV back to
+	// its position every frame, fighting the joystick and producing a tiny
+	// vibrating circle around the cursor.
+	if (ScreenPos.Equals(LastMouseScreenPos, 0.5f))
+	{
+		return false;
+	}
+	LastMouseScreenPos = ScreenPos;
+
 	//and translate it into local widget coordinates for the Paper widget
 	const FGeometry  PaperGeom  = PaperBackground->GetCachedGeometry();
 	const FVector2D  LocalMouse = PaperGeom.AbsoluteToLocal(ScreenPos);
