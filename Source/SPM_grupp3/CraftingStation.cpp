@@ -1,6 +1,7 @@
 #include "CraftingStation.h"
 #include "CraftingViewWidget.h"
 #include "InventoryComponent.h"
+#include "CharacterAimi.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Components/PanelWidget.h"
@@ -82,6 +83,13 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
         Character->GetCharacterMovement()->DisableMovement();
     }
 
+    // Stop the player from running interactable detection while crafting is open.
+    // Without this the "Press E" prompt re-spawns every tick on top of the crafting UI.
+    if (ACharacterAimi* Player = Cast<ACharacterAimi>(Interactor))
+    {
+        Player->SetInteractionDetectionEnabled(false);
+    }
+
     UWidgetBlueprintLibrary::SetInputMode_GameAndUIEx(
         PC, nullptr, EMouseLockMode::DoNotLock, true);
     PC->bShowMouseCursor = false;
@@ -116,6 +124,12 @@ void ACraftingStation::CloseCrafting()
         if (ACharacter* Character = Cast<ACharacter>(ActiveInteractor.Get()))
         {
             Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        }
+
+        // Re-enable interactable detection so prompts work again after crafting closes.
+        if (ACharacterAimi* Player = Cast<ACharacterAimi>(ActiveInteractor.Get()))
+        {
+            Player->SetInteractionDetectionEnabled(true);
         }
     }
 
