@@ -98,7 +98,7 @@ public:
 	bool CanPlayerEnterBoat() const;
 
 	UFUNCTION(BlueprintCallable)
-	void ShowCannotEnterBoatMessage() const;
+	void ShowCannotEnterBoatMessage();
 	
 	// ----------------------------- CAMERA -----------------------------
 

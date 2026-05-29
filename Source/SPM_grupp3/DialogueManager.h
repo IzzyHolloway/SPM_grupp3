@@ -129,4 +129,7 @@ protected:
 	// Current index inside ActiveDialogueLines
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	int32 CurrentDialogueIndex = 0;
+	
+private:
+	bool bMessageVisible = false;
 };

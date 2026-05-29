@@ -35,6 +35,7 @@ void ADialogueManager::ShowMessage(const FText& Message)
 
 	// Short gameplay messages are not considered "active dialogue".
 	bDialogueActive = false;
+	bMessageVisible = true;
 
 	if (DialogueWidgetInstance)
 	{
@@ -58,6 +59,8 @@ void ADialogueManager::ShowMessage(const FText& Message)
 
 void ADialogueManager::HideMessage()
 {
+	bMessageVisible = false;
+	
 	if (DialogueWidgetInstance)
 	{
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
@@ -278,9 +281,5 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 
 bool ADialogueManager::IsDialogueOrMessageVisible() const
 {
-	const bool bShortMessageVisible =
-		GetWorld() &&
-		GetWorld()->GetTimerManager().IsTimerActive(MessageHideTimerHandle);
-
-	return bDialogueActive || bShortMessageVisible;
+	return bDialogueActive || bMessageVisible;
 }
