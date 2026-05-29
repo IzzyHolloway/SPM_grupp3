@@ -12,7 +12,9 @@
 #include "DialogueManager.h"
 
 #include "CharacterAimi.h"
+#include "CoatPickup.h"
 #include "Dock.h"
+#include "WardrobeComponent.h"
 
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/MovementComponent.h"
@@ -180,31 +182,59 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 
 void ABoatFunctionality::Interact(const FInputActionValue& Value)
 {
-	HideEnterBoatPrompt();
+	HideInteractPrompt();
 
+	// If there is a dock to interact with, start exiting the boat
 	if (DockInReach != nullptr)
 	{
-		if (DockInReach)
-		{
-			DockInReach->HideEnterDockPrompt();
-		}
-
+		DockInReach->HideEnterDockPrompt();
 		ExitBoat();
 	}
+	
+	// If there is a coat to pick up, notify the wardrobe
+	if (CoatPickupInReach != nullptr)
+	{
+		CoatPickupInReach->Interact();
+	}
 }
-
-// ------------------------------------------------------------------ ENTER ------------------------------------------------------------------
 
 // Reacts to the OnComponentBeginOverlap event of the EnterTrigger (for the player to enter the boat) - calls EnableEnteringBoat()
 void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {	
 	// Check if the overlapping object is the player character
-	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
+	if (ACharacterAimi* PlayerCharacterFound = Cast<ACharacterAimi>(OtherActor))
 	{
+		
 		// Enable entering the boat for the player
-		EnableEnteringBoat(PlayerCharacter);
+		EnableEnteringBoat(PlayerCharacterFound);
+	}
+	
+	// If the overlapping object is a coat pickup, enable picking it up
+	if (ACoatPickup* CoatPickup = Cast<ACoatPickup>(OtherActor))
+	{
+		CoatPickupInReach = CoatPickup;
+		ShowInteractPrompt();
 	}
 }
+
+void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
+{
+	// Check if the overlapping object is the player character
+	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
+	{
+		// Disable entering the boat for the player
+		DisableEnteringBoat(PlayerCharacter);
+	}
+	
+	// If the overlapping object is a coat pickup, disable picking it up
+	if (Cast<ACoatPickup>(OtherActor))
+	{
+		CoatPickupInReach = nullptr;
+		HideInteractPrompt();
+	}
+}
+
+// ------------------------------------------------------------------ ENTER ------------------------------------------------------------------
 
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
@@ -225,17 +255,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	}
 
 	// Show "Press X/E" UI
-	ShowEnterBoatPrompt();
-}
-
-void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
-{
-	// Check if the overlapping object is the player character
-	if (ACharacterAimi* PlayerCharacter = Cast<ACharacterAimi>(OtherActor))
-	{
-		// Disable entering the boat for the player
-		DisableEnteringBoat(PlayerCharacter);
-	}
+	ShowInteractPrompt();
 }
 
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
@@ -246,7 +266,7 @@ void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	
 	// ------------------------------ UI ------------------------------
 	
-	HideEnterBoatPrompt();
+	HideInteractPrompt();
 }
 
 // Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
@@ -261,7 +281,7 @@ void ABoatFunctionality::ExitBoat()
 {
 	// ------------------------------ UI ------------------------------
 	
-	HideEnterBoatPrompt();
+	HideInteractPrompt();
 	
 	if (DockInReach)
 	{
@@ -345,9 +365,9 @@ void ABoatFunctionality::RemoveDockInReach()
 
 // ------------------------------------------------------------------- UI -------------------------------------------------------------------
 
-void ABoatFunctionality::ShowEnterBoatPrompt()
+void ABoatFunctionality::ShowInteractPrompt()
 {
-	if (EnterBoatPromptWidget || !EnterBoatPromptWidgetClass)
+	if (InteractPromptWidget || !InteractPromptWidgetClass)
 	{
 		return;
 	}
@@ -358,20 +378,20 @@ void ABoatFunctionality::ShowEnterBoatPrompt()
 		return;
 	}
 
-	EnterBoatPromptWidget = CreateWidget<UUserWidget>(PlayerController, EnterBoatPromptWidgetClass);
+	InteractPromptWidget = CreateWidget<UUserWidget>(PlayerController, InteractPromptWidgetClass);
 
-	if (EnterBoatPromptWidget)
+	if (InteractPromptWidget)
 	{
-		EnterBoatPromptWidget->AddToViewport();
+		InteractPromptWidget->AddToViewport();
 	}
 }
 
-void ABoatFunctionality::HideEnterBoatPrompt()
+void ABoatFunctionality::HideInteractPrompt()
 {
-	if (EnterBoatPromptWidget)
+	if (InteractPromptWidget)
 	{
-		EnterBoatPromptWidget->RemoveFromParent();
-		EnterBoatPromptWidget = nullptr;
+		InteractPromptWidget->RemoveFromParent();
+		InteractPromptWidget = nullptr;
 	}
 }
 
@@ -380,7 +400,7 @@ void ABoatFunctionality::PossessedBy(AController* NewController)
 	Super::PossessedBy(NewController);
 
 	// When the player enters the boat, remove the "enter boat" prompt immediately.
-	HideEnterBoatPrompt();
+	HideInteractPrompt();
 
 	// Also hide dock prompt if the boat is still near a dock.
 	if (DockInReach)
