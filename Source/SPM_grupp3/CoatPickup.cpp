@@ -22,6 +22,11 @@ void ACoatPickup::Interact()
         );
     }
 
+    // Clean up the on-screen prompt before destroying the actor — otherwise the
+    // widget stays in the viewport because the player has no reference to call
+    // SetPromptVisible(false) on after we're gone.
+    SetPromptVisible(false);
+
     Destroy();
 }
 
