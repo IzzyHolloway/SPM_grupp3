@@ -35,6 +35,7 @@ void ADialogueManager::ShowMessage(const FText& Message)
 
 	// Short gameplay messages are not considered "active dialogue".
 	bDialogueActive = false;
+	bMessageVisible = true;
 
 	if (DialogueWidgetInstance)
 	{
@@ -58,6 +59,8 @@ void ADialogueManager::ShowMessage(const FText& Message)
 
 void ADialogueManager::HideMessage()
 {
+	bMessageVisible = false;
+	
 	if (DialogueWidgetInstance)
 	{
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Hidden);
@@ -200,6 +203,8 @@ void ADialogueManager::EndDialogue()
 	// Clear pending progression state after use.
 	bSetFlagOnDialogueEnd = false;
 	PendingFlagToSetOnDialogueEnd = NAME_None;
+	
+	OnDialogueEnded.Broadcast();
 }
 
 bool ADialogueManager::IsDialogueActive() const
@@ -274,4 +279,9 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 
 	SetPlayerMovementEnabled(false);
 	ShowCurrentDialogueLine();
+}
+
+bool ADialogueManager::IsDialogueOrMessageVisible() const
+{
+	return bDialogueActive || bMessageVisible;
 }
