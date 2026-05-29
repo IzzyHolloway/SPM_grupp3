@@ -203,6 +203,8 @@ void ADialogueManager::EndDialogue()
 	// Clear pending progression state after use.
 	bSetFlagOnDialogueEnd = false;
 	PendingFlagToSetOnDialogueEnd = NAME_None;
+	
+	OnDialogueEnded.Broadcast();
 }
 
 bool ADialogueManager::IsDialogueActive() const

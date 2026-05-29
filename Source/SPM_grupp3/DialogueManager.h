@@ -21,6 +21,7 @@ class UDialogueWidgetBase;
  * 
  */
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueEnded);
 
 UCLASS()
 class SPM_GRUPP3_API ADialogueManager : public AActor
@@ -73,6 +74,9 @@ public:
 	// Ends current dialogue, restores movement and applied pending progression if needed
 	UFUNCTION(BlueprintCallable)
 	void EndDialogue();
+	
+	UPROPERTY(BlueprintAssignable, Category = "Dialogue")
+	FOnDialogueEnded OnDialogueEnded;
 
 	// Return true if a multi-line dialogue is currently active
 	UFUNCTION(BlueprintCallable)
