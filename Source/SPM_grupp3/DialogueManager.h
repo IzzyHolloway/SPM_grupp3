@@ -85,6 +85,9 @@ public:
 	// Progression flag add when current dialogue ends
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	FName PendingFlagToSetOnDialogueEnd;
+	
+	UFUNCTION(BlueprintCallable)
+	bool IsDialogueOrMessageVisible() const;
 
 protected:
 	virtual void BeginPlay() override;

@@ -275,3 +275,8 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 	SetPlayerMovementEnabled(false);
 	ShowCurrentDialogueLine();
 }
+
+bool ADialogueManager::IsDialogueOrMessageVisible() const
+{
+	return bDialogueActive || GetWorldTimerManager().IsTimerActive(MessageHideTimerHandle);
+}

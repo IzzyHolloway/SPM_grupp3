@@ -108,6 +108,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	float MaxInteractionDistance = 350.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	int32 InteractionBlockCount = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void PushInteractionBlock();
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void PopInteractionBlock();
+
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool IsInteractionBlocked() const;
 
 	UPROPERTY()
 	TObjectPtr<AInteractableActor> CurrentInteractable;

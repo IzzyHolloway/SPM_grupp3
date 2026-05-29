@@ -211,18 +211,19 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
-	// Remove the Dialogue part from the Interact
-	/*
+	if (IsInteractionBlocked())
+	{
+		return;
+	}
+	
 	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
-	if (DialogueManager && DialogueManager->IsDialogueActive())
+	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
 	{
-		DialogueManager->AdvanceDialogue();
 		return;
 	}
-	*/
 
 	if (CurrentInteractable)
 	{
@@ -244,6 +245,13 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 
 void ACharacterAimi::UpdateInteractableCandidate()
 {
+	
+	if (IsInteractionBlocked())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	
 	if (!GetWorld())
 	{
 		return;
@@ -253,7 +261,15 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 	);
 
+	/*
 	if (DialogueManager && DialogueManager->IsDialogueActive())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+	*/
+	
+	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
 	{
 		SetCurrentInteractable(nullptr);
 		return;
@@ -357,6 +373,24 @@ void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
 	{
 		CurrentInteractable->SetPromptVisible(true);
 	}
+}
+
+void ACharacterAimi::PushInteractionBlock()
+{
+	InteractionBlockCount++;
+
+	// Hide current prompt immediately
+	SetCurrentInteractable(nullptr);
+}
+
+void ACharacterAimi::PopInteractionBlock()
+{
+	InteractionBlockCount = FMath::Max(0, InteractionBlockCount - 1);
+}
+
+bool ACharacterAimi::IsInteractionBlocked() const
+{
+	return InteractionBlockCount > 0;
 }
 
 void ACharacterAimi::AdvanceDialoguePressed(const FInputActionValue& Value)
