@@ -1,6 +1,7 @@
 #include "Wardrobe.h"
 #include "WardrobeViewWidget.h"
 #include "WardrobeComponent.h"
+#include "CharacterAimi.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
@@ -82,6 +83,13 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
     if (ACharacter* Character = Cast<ACharacter>(Interactor))
     {
         Character->GetCharacterMovement()->DisableMovement();
+    }
+
+    // Stop interactable detection while wardrobe is open so the "Press E" prompt
+    // doesn't re-appear under the wardrobe UI every tick.
+    if (ACharacterAimi* Player = Cast<ACharacterAimi>(Interactor))
+    {
+        Player->SetInteractionDetectionEnabled(false);
     }
 
     // Mouse-driven navigation per the user flow (PC: hover + LMB).
@@ -180,6 +188,12 @@ void AWardrobe::CloseWardrobe()
         if (ACharacter* Character = Cast<ACharacter>(ActiveInteractor.Get()))
         {
             Character->GetCharacterMovement()->SetMovementMode(MOVE_Walking);
+        }
+
+        // Re-enable interactable detection so prompts work again after wardrobe closes.
+        if (ACharacterAimi* Player = Cast<ACharacterAimi>(ActiveInteractor.Get()))
+        {
+            Player->SetInteractionDetectionEnabled(true);
         }
     }
 
