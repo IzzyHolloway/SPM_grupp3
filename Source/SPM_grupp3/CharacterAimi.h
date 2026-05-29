@@ -46,6 +46,13 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SetMovementLocked(bool bLock);
 
+	// Enable / disable the per-tick "what am I looking at" interactable detection.
+	// While disabled, no prompt widgets get created and CurrentInteractable is force-nulled.
+	// Crafting / wardrobe call this with false on open and true on close, so the interact
+	// prompt doesn't pop back up under the open UI.
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void SetInteractionDetectionEnabled(bool bEnabled);
+
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
@@ -108,10 +115,26 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
 	float MaxInteractionDistance = 350.f;
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
+	int32 InteractionBlockCount = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void PushInteractionBlock();
+
+	UFUNCTION(BlueprintCallable, Category = "Interaction")
+	void PopInteractionBlock();
+
+	UFUNCTION(BlueprintPure, Category = "Interaction")
+	bool IsInteractionBlocked() const;
 
 	UPROPERTY()
 	TObjectPtr<AInteractableActor> CurrentInteractable;
-	
+
+	// When false, Tick skips UpdateInteractableCandidate so prompts don't show up
+	// behind an open UI (crafting, wardrobe, etc).
+	bool bInteractionDetectionEnabled = true;
+
 	void UpdateInteractableCandidate();
 	void SetCurrentInteractable(AInteractableActor* NewInteractable);
 	
