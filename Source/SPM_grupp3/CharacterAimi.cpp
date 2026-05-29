@@ -1,4 +1,5 @@
 #include "CharacterAimi.h"
+#include "DrawDebugHelpers.h"
 #include "InteractableActor.h"
 #include "DialogueManager.h"
 #include "Kismet/GameplayStatics.h"
@@ -23,6 +24,8 @@
 ACharacterAimi::ACharacterAimi()
 {
 	PrimaryActorTick.bCanEverTick = true;
+	
+	InteractionBlockCount = 0;
 
 	SpringArm = CreateDefaultSubobject<USpringArmComponent>(TEXT("SpringArm"));
 	SpringArm->SetupAttachment(RootComponent);
@@ -49,6 +52,7 @@ ACharacterAimi::ACharacterAimi()
 	
 	GetCharacterMovement()->JumpZVelocity = 420.f;
 	GetCharacterMovement()->AirControl = 0.3f;
+	
 }
 
 void ACharacterAimi::BeginPlay()
@@ -211,6 +215,13 @@ void ACharacterAimi::Look(const FInputActionValue& Value)
 
 void ACharacterAimi::Interact(const FInputActionValue& Value)
 {
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (PC && PC->bShowMouseCursor)
+	{
+		return;
+	}
+	
 	if (IsInteractionBlocked())
 	{
 		return;
@@ -222,6 +233,7 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 
 	if (DialogueManager && DialogueManager->IsDialogueOrMessageVisible())
 	{
+		SetCurrentInteractable(nullptr);
 		return;
 	}
 
@@ -246,6 +258,30 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 void ACharacterAimi::UpdateInteractableCandidate()
 {
 	
+	const FVector DebugCenter = GetActorLocation() + FVector(0.f, 0.f, 80.f);
+
+	
+	// Drawing the interaction spehere around the player. Generous for cozy gameplay
+	DrawDebugSphere(
+	GetWorld(),
+	DebugCenter,
+	InteractionRadius,
+	16,
+	CurrentInteractable ? FColor::Green : FColor::Red,
+	false,
+	0.0f
+	);
+	
+	if (GEngine)
+	{
+		GEngine->AddOnScreenDebugMessage(
+			-1,
+			0.0f,
+			FColor::Yellow,
+			FString::Printf(TEXT("Tick interaction. BlockCount: %d"), InteractionBlockCount)
+		);
+	}
+	
 	if (IsInteractionBlocked())
 	{
 		SetCurrentInteractable(nullptr);
@@ -254,6 +290,20 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	
 	if (!GetWorld())
 	{
+		return;
+	}
+	
+	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
+
+	if (PC && PC->bShowMouseCursor)
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+
+	if (IsInteractionBlocked())
+	{
+		SetCurrentInteractable(nullptr);
 		return;
 	}
 	
@@ -282,6 +332,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 	TArray<AActor*> OverlappingActors;
 	TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldDynamic));
+	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_WorldStatic));
 	ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECC_Pawn));
 
 	TArray<AActor*> ActorsToIgnore;
@@ -339,18 +390,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		}
 	}
 	
-	/*
-	// Drawing the interaction spehere around the player. Generous for cozy gameplay
-	DrawDebugSphere(
-	GetWorld(),
-	Center,
-	InteractionRadius,
-	16,
-	CurrentInteractable ? FColor::Green : FColor::Red,
-	false,
-	0.0f
-);
-*/
+
 	
 	SetCurrentInteractable(BestCandidate);
 }

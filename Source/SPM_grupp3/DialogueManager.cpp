@@ -278,5 +278,9 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 
 bool ADialogueManager::IsDialogueOrMessageVisible() const
 {
-	return bDialogueActive || GetWorldTimerManager().IsTimerActive(MessageHideTimerHandle);
+	const bool bShortMessageVisible =
+		GetWorld() &&
+		GetWorld()->GetTimerManager().IsTimerActive(MessageHideTimerHandle);
+
+	return bDialogueActive || bShortMessageVisible;
 }
