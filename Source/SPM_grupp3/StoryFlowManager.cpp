@@ -1,5 +1,6 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "StoryFlowManager.h"
+#include "DialogueManager.h"
 #include "ProgressionManager.h"
 #include "InventoryComponent.h"
 #include "GameFramework/Character.h"
@@ -65,6 +66,16 @@ void AStoryFlowManager::BeginPlay()
 		SetStoryState(EStoryState::Home_Explore);
 	}
 	*/
+	
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (PlayerCharacter)
+	{
+		UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+		if (InventoryComponent)
+		{
+			InventoryComponent->OnItemPickedUp.AddDynamic(this, &AStoryFlowManager::HandleItemPickedUp);
+		}
+	}
 
 	UpdateStoryFlow();
 }
@@ -162,6 +173,19 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 
 	if (bHasLantern && bHasMatches)
 	{
+		if (!ProgressionManager->HasFlag(HomeCraftLanternDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			{
+				ProgressionManager->AddFlag(HomeCraftLanternDialogueShownFlag);
+				DialogueManager->ShowMessage(HomeCraftLanternMessage);
+			}
+		}
+
 		SetStoryState(EStoryState::Home_CraftLantern);
 		return;
 	}
@@ -899,4 +923,90 @@ void AStoryFlowManager::TryClearIsland2ItemsFromInventory(AProgressionManager* P
 	}
 
 	ProgressionManager->AddFlag(Island2ItemsClearedFlag);
+}
+
+void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)
+{
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	TryShowAllItemsFoundDialogue(ProgressionManager, ItemID);
+}
+
+void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* ProgressionManager, FName PickedUpItemID)
+{
+	if (!ProgressionManager)
+	{
+		return;
+	}
+
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (!DialogueManager)
+	{
+		return;
+	}
+
+	if (DialogueManager->IsDialogueOrMessageVisible())
+	{
+		return;
+	}
+
+	// Island 1: only check this when the picked up item was actually a melody piece.
+	const bool bPickedUpMelodyPiece =
+		MelodyPieceFlags.Contains(PickedUpItemID);
+
+	if (bPickedUpMelodyPiece &&
+		ProgressionManager->HasFlag(ArrivedIsland1Flag) &&
+		AreAllMelodyPiecesFound(ProgressionManager) &&
+		!ProgressionManager->HasFlag(Island1PuzzleSolvedFlag) &&
+		!ProgressionManager->HasFlag(TalkedToListenerAfterPuzzleFlag) &&
+		!ProgressionManager->HasFlag(Island1AllItemsDialogueShownFlag))
+	{
+		ProgressionManager->AddFlag(Island1AllItemsDialogueShownFlag);
+		DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
+		return;
+	}
+
+	// Island 2
+	const bool bPickedUpGramophonePart =
+		PickedUpItemID == RustyCrankPickedUpFlag ||
+		PickedUpItemID == SmallGearPickedUpFlag ||
+		PickedUpItemID == ShellItemID;
+
+	if (bPickedUpGramophonePart &&
+		ProgressionManager->HasFlag(ArrivedIsland2Flag) &&
+		AreAllGramophonePartsFound(ProgressionManager) &&
+		!ProgressionManager->HasFlag(GramophoneMechanismCraftedFlag) &&
+		!ProgressionManager->HasFlag(Island2AllItemsDialogueShownFlag))
+	{
+		ProgressionManager->AddFlag(Island2AllItemsDialogueShownFlag);
+		DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
+		return;
+	}
+
+	// Island 3
+	const bool bPickedUpIsland3Item =
+		PickedUpItemID == Island3PaperPickedUpFlag ||
+		PickedUpItemID == PenItemID;
+
+	if (bPickedUpIsland3Item &&
+		ProgressionManager->HasFlag(ArrivedIsland3Flag) &&
+		ProgressionManager->HasFlag(Island3PaperPickedUpFlag) &&
+		ProgressionManager->HasFlag(PenItemAddedToInventoryFlag) &&
+		!ProgressionManager->HasFlag(Island3NoteCraftedFlag) &&
+		!ProgressionManager->HasFlag(Island3AllItemsDialogueShownFlag))
+	{
+		ProgressionManager->AddFlag(Island3AllItemsDialogueShownFlag);
+		DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
+		return;
+	}
 }

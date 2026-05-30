@@ -351,7 +351,33 @@ protected:
 	FName GameEndingStartedFlag = "GameEndingStarted";
 	
 	
-	/*** Look more into these ones. See if there is flexible way ***/
+	/*** Item Found Flags for dialogue ***/
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Home|Dialogue")
+	FName HomeCraftLanternDialogueShownFlag = "HomeCraftLanternDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Home|Dialogue")
+	FText HomeCraftLanternMessage = FText::FromString("I have everything I need. I should craft the lantern.");
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FName Island1AllItemsDialogueShownFlag = "Island1AllItemsDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FName Island2AllItemsDialogueShownFlag = "Island2AllItemsDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FName Island3AllItemsDialogueShownFlag = "Island3AllItemsDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FText Island1AllItemsFoundMessage = FText::FromString("I think I found all the melody pieces. I should return to the Listener.");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FText Island2AllItemsFoundMessage = FText::FromString("I think I have everything I need for the gramophone mechanism.");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FText Island3AllItemsFoundMessage = FText::FromString("I think I found what I need to draw The Gatekeeper.");
+	
+	
+	/*** Helpers ***/
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1")
 	FName ShellItemAddedToInventoryFlag = "ShellItemAddedToInventory";
 
@@ -363,6 +389,11 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 2")
 	FName PenItemID = "Pen";
+	
+	UFUNCTION()
+	void HandleItemPickedUp(FName ItemID, bool bFirstPickupEver);
+	
+	void TryShowAllItemsFoundDialogue(AProgressionManager* ProgressionManager, FName PickedUpItemID);
 	
 	void TryAddShellToInventory(AProgressionManager* ProgressionManager);
 	
