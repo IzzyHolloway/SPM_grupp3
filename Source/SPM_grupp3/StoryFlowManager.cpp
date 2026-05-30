@@ -367,6 +367,19 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(AllGramophonePartsFoundFlag);
 		}
 
+		if (!ProgressionManager->HasFlag(Island2AllItemsDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			{
+				ProgressionManager->AddFlag(Island2AllItemsDialogueShownFlag);
+				DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
+			}
+		}
+
 		SetStoryState(EStoryState::Island2_CraftMechanism);
 		return;
 	}
@@ -989,7 +1002,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
 		return;
 	}
-	*/
+	
 
 	// Island 2
 	const bool bPickedUpGramophonePart =
@@ -1007,6 +1020,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
 		return;
 	}
+	*/
 
 	// Island 3
 	const bool bPickedUpIsland3Item =
