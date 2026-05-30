@@ -244,6 +244,19 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(SomeMelodyPiecesFoundFlag);
 		}
 
+		if (!ProgressionManager->HasFlag(Island1AllItemsDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			{
+				ProgressionManager->AddFlag(Island1AllItemsDialogueShownFlag);
+				DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
+			}
+		}
+
 		SetStoryState(EStoryState::Island1_ReturnToListener);
 		return;
 	}
@@ -960,6 +973,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		return;
 	}
 
+	/*
 	// Island 1: only check this when the picked up item was actually a melody piece.
 	const bool bPickedUpMelodyPiece =
 		MelodyPieceFlags.Contains(PickedUpItemID);
@@ -975,6 +989,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
 		return;
 	}
+	*/
 
 	// Island 2
 	const bool bPickedUpGramophonePart =
