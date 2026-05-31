@@ -6,6 +6,7 @@
 #include "WardrobeComponent.generated.h"
 
 class AWardrobe;
+class UUserWidget;
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnWardrobeUpdated);
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnEquippedCoatChanged, FName, NewCoatID);
@@ -41,6 +42,19 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|Layout")
     int32 GridColumns = 2;                           // Columns used for grid based stick navigation.
+
+    // --- Pickup notification widgets ---
+    // Shown the FIRST time any coat is ever unlocked (e.g. a tutorial: "Open the wardrobe to change outfits").
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|UI")
+    TSubclassOf<UUserWidget> FirstCoatUnlockedWidgetClass;
+
+    // Shown every OTHER time a coat is unlocked (e.g. "New outfit unlocked!").
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|UI")
+    TSubclassOf<UUserWidget> CoatUnlockedWidgetClass;
+
+    // Seconds before the notification auto-removes. 0 = leave it (the widget removes itself in BP).
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|UI")
+    float PickupNotifyDuration = 3.0f;
 
     // State
 
@@ -119,6 +133,17 @@ public:
     float MouseHoverGamepadCooldown = 0.3f;
 
 private:
+    // Shows the right pickup-notification widget when a coat is unlocked (bound to OnCoatUnlocked).
+    UFUNCTION()
+    void HandleCoatUnlockedNotify(FName CoatID, bool bFirstCoatEver);
+
+    void RemoveNotifyWidget();
+
+    UPROPERTY(Transient)
+    TObjectPtr<UUserWidget> ActiveNotifyWidget;
+
+    FTimerHandle NotifyTimerHandle;
+
     UPROPERTY(BlueprintReadOnly, Category = "Wardrobe|State",
               meta=(AllowPrivateAccess="true"))
     bool bIsWardrobeOpen = false;

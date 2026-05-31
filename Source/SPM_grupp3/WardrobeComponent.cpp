@@ -1,4 +1,8 @@
 #include "WardrobeComponent.h"
+#include "Blueprint/UserWidget.h"
+#include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 
 UWardrobeComponent::UWardrobeComponent()
 {
@@ -41,6 +45,52 @@ void UWardrobeComponent::BeginPlay()
     if (!EquippedCoatID.IsNone())
     {
         OnEquippedCoatChanged.Broadcast(EquippedCoatID);
+    }
+
+    // Show a pickup notification (first-time vs subsequent) whenever a coat is unlocked.
+    if (!OnCoatUnlocked.IsAlreadyBound(this, &UWardrobeComponent::HandleCoatUnlockedNotify))
+    {
+        OnCoatUnlocked.AddDynamic(this, &UWardrobeComponent::HandleCoatUnlockedNotify);
+    }
+}
+
+void UWardrobeComponent::HandleCoatUnlockedNotify(FName CoatID, bool bFirstCoatEver)
+{
+    const TSubclassOf<UUserWidget> WidgetClass =
+        bFirstCoatEver ? FirstCoatUnlockedWidgetClass : CoatUnlockedWidgetClass;
+    if (!WidgetClass) return;
+
+    APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
+    if (!PC) return;
+
+    // Replace any notification still on screen so they don't stack.
+    RemoveNotifyWidget();
+
+    ActiveNotifyWidget = CreateWidget<UUserWidget>(PC, WidgetClass);
+    if (!ActiveNotifyWidget) return;
+
+    ActiveNotifyWidget->AddToViewport();
+
+    if (PickupNotifyDuration > 0.f)
+    {
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().SetTimer(
+                NotifyTimerHandle, this, &UWardrobeComponent::RemoveNotifyWidget, PickupNotifyDuration, false);
+        }
+    }
+}
+
+void UWardrobeComponent::RemoveNotifyWidget()
+{
+    if (UWorld* World = GetWorld())
+    {
+        World->GetTimerManager().ClearTimer(NotifyTimerHandle);
+    }
+    if (ActiveNotifyWidget)
+    {
+        ActiveNotifyWidget->RemoveFromParent();
+        ActiveNotifyWidget = nullptr;
     }
 }
 
