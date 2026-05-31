@@ -75,8 +75,17 @@ void ALumiStudio::BeginPlay()
     Capture->SetRelativeLocation(FVector(CaptureDistance, 0.f, CaptureHeight));
     Capture->FOVAngle = CaptureFOV;
 
+    // Capture every mesh on this actor -- PreviewMesh plus anything added in the BP (e.g. a
+    // backdrop plane behind Lumi). Lights and the capture itself aren't primitives, so they're
+    // excluded automatically. This lets designers add background/props in BP_LumiStudio without
+    // touching C++.
     Capture->ShowOnlyComponents.Empty();
-    Capture->ShowOnlyComponents.Add(PreviewMesh);
+    TArray<UPrimitiveComponent*> Primitives;
+    GetComponents<UPrimitiveComponent>(Primitives);
+    for (UPrimitiveComponent* Primitive : Primitives)
+    {
+        Capture->ShowOnlyComponents.Add(Primitive);
+    }
 
     if (RenderTarget)
     {
