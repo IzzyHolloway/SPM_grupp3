@@ -65,6 +65,12 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     FVector2D HoverFrameSize = FVector2D(190.f, 190.f);
 
+    // Total height of each grid cell. Make this taller than the hover frame to add empty space
+    // BELOW each coat so it rests on the shelf (the coat + its outline sit at the bottom of the
+    // cell together). Set to match your shelf spacing. 0 = just hug the hover frame (old behavior).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    float SlotCellHeight = 0.f;
+
     UFUNCTION(BlueprintCallable, Category = "Wardrobe")
     void RefreshSlots();
 

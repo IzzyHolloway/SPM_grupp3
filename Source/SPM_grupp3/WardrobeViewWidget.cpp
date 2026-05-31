@@ -7,6 +7,7 @@
 #include "Components/Overlay.h"
 #include "Components/OverlaySlot.h"
 #include "Components/SizeBox.h"
+#include "Components/SizeBoxSlot.h"
 #include "Components/UniformGridPanel.h"
 #include "Components/UniformGridSlot.h"
 #include "Engine/Texture2D.h"
@@ -74,12 +75,10 @@ void UWardrobeViewWidget::RefreshSlots()
     const FName EquippedID = Wardrobe->EquippedCoatID;
     const int32 HighlightIndex = Wardrobe->SelectedSlotIndex;
 
-    // Compute the cell size once. Big enough to contain the hover frame even when it's
-    // larger than the icon (so 190 outline isn't clipped around a 150 icon).
+    // The hover frame can be larger than the icon -- it OVERFLOWS the cell (Overlay doesn't clip)
+    // instead of enlarging it. That keeps the outline size independent of the cell footprint and row
+    // spacing, so you can make the outline big without spreading the coats off their shelves.
     const FVector2D EffectiveHoverSize = HoverFrameSize.IsNearlyZero() ? SlotSize : HoverFrameSize;
-    const FVector2D WrapperSize(
-        FMath::Max(SlotSize.X, EffectiveHoverSize.X),
-        FMath::Max(SlotSize.Y, EffectiveHoverSize.Y));
 
     // Collect unlocked slot indices in DT order. They fill the grid sequentially
     // starting at position 0, so the visible layout is "stable" — picking up a new
@@ -167,16 +166,34 @@ void UWardrobeViewWidget::RefreshSlots()
 
         SlotBtn->SetContent(Overlay);
 
+        // Fixed icon-sized box so the coat's footprint stays constant (= SlotSize) regardless of the
+        // hover frame. The frame just overflows this box when selected, so the icon never shifts.
+        USizeBox* IconBox = NewObject<USizeBox>(this);
+        IconBox->SetWidthOverride(SlotSize.X);
+        IconBox->SetHeightOverride(SlotSize.Y);
+        IconBox->SetContent(SlotBtn);
+
         USizeBox* SizeWrapper = NewObject<USizeBox>(this);
-        SizeWrapper->SetWidthOverride(WrapperSize.X);
-        SizeWrapper->SetHeightOverride(WrapperSize.Y);
-        SizeWrapper->SetContent(SlotBtn);
+        SizeWrapper->SetWidthOverride(SlotSize.X);
+        // Cell can be taller than the icon; the extra height is empty space BELOW the coat, so the
+        // coat rests on the shelf instead of floating. This drives row spacing, independent of the
+        // outline size.
+        const float CellHeight = FMath::Max(SlotCellHeight, SlotSize.Y);
+        SizeWrapper->SetHeightOverride(CellHeight);
+        if (USizeBoxSlot* WrapperSlot = Cast<USizeBoxSlot>(SizeWrapper->SetContent(IconBox)))
+        {
+            WrapperSlot->SetHorizontalAlignment(HAlign_Center);
+            WrapperSlot->SetVerticalAlignment(VAlign_Bottom);
+        }
 
         // Visible position drives the grid cell. Always Slots.Num() total cells.
         if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SizeWrapper, Pos / Cols, Pos % Cols))
         {
             GridSlot->SetHorizontalAlignment(HAlign_Center);
-            GridSlot->SetVerticalAlignment(VAlign_Center);
+            // Bottom-align so each coat rests on the shelf beneath it instead of floating in the
+            // middle of its cell. Fine-tune the resting height with the SlotGrid's SlotPadding
+            // (Bottom) in the WBP, or by moving/resizing the grid over the shelf image.
+            GridSlot->SetVerticalAlignment(VAlign_Bottom);
         }
     }
 }
