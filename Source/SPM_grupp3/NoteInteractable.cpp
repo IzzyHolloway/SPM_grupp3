@@ -6,6 +6,7 @@
 //Zoey start
 #include "Kismet/GameplayStatics.h"
 //Zoey end
+#include "OutlineComponent.h"
 
 ANoteInteractable::ANoteInteractable()
 {
@@ -41,7 +42,13 @@ void ANoteInteractable::Interact()
 	Widget->AddToViewport();
     
 	NoteWidget = Widget;
-    
+
+	// Note is now open -- stop the interactable outline from glowing while you read it.
+	if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
+	{
+		Outline->SetOutlineSuppressed(true);
+	}
+
 	LockPlayerControls(NoteWidget);
     
 	Widget->OnNoteClosed.AddDynamic(this, &ANoteInteractable::OnWidgetClosed);
@@ -62,4 +69,10 @@ void ANoteInteractable::OnWidgetClosed()
 	PC->SetShowMouseCursor(false);
 	PC->SetInputMode(FInputModeGameOnly());
 	NoteWidget = nullptr;
+
+	// Note closed -- let the outline light up again if the player is still nearby.
+	if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
+	{
+		Outline->SetOutlineSuppressed(false);
+	}
 }

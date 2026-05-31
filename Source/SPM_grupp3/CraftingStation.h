@@ -39,6 +39,13 @@ protected:
     void OnSphereEndOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
                             UPrimitiveComponent* OtherComp, int32 OtherBodyIndex);
 
+    // Turns the Custom Depth outline on/off as the player enters/leaves the sphere (the post-process
+    // M_outline material draws the edge). Same effect as the stone, but driven from code.
+    UFUNCTION()
+    void OnSphereBeginOverlap(UPrimitiveComponent* OverlappedComponent, AActor* OtherActor,
+                              UPrimitiveComponent* OtherComp, int32 OtherBodyIndex,
+                              bool bFromSweep, const FHitResult& SweepResult);
+
     UFUNCTION()
     void HandleCraftSuccess();
 
@@ -61,6 +68,14 @@ public:
 
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Crafting")
     float CloseDelayAfterCraft = 1.5f;
+
+    // Show the interactable outline (Custom Depth) while the player is within the sphere.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Outline")
+    bool bShowOutlineWhenNear = true;
+
+    // Stencil value written to Custom Depth -- must match what the M_outline post-process expects.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Outline")
+    int32 OutlineStencilValue = 1;
 
 protected:
     UPROPERTY(Transient)

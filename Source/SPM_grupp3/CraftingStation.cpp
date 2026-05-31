@@ -29,6 +29,24 @@ void ACraftingStation::BeginPlay()
 {
     Super::BeginPlay();
     SphereCollision->OnComponentEndOverlap.AddDynamic(this, &ACraftingStation::OnSphereEndOverlap);
+    SphereCollision->OnComponentBeginOverlap.AddDynamic(this, &ACraftingStation::OnSphereBeginOverlap);
+
+    // Outline starts off; the stencil value just needs to match the M_outline post-process material.
+    if (Mesh)
+    {
+        Mesh->SetCustomDepthStencilValue(OutlineStencilValue);
+        Mesh->SetRenderCustomDepth(false);
+    }
+}
+
+void ACraftingStation::OnSphereBeginOverlap(UPrimitiveComponent*, AActor* OtherActor,
+                                            UPrimitiveComponent*, int32, bool, const FHitResult&)
+{
+    // Only the player should light up the outline.
+    if (bShowOutlineWhenNear && Mesh && Cast<ACharacterAimi>(OtherActor))
+    {
+        Mesh->SetRenderCustomDepth(true);
+    }
 }
 
 FText ACraftingStation::LookAtActor_Implementation() const
@@ -142,6 +160,12 @@ void ACraftingStation::OnSphereEndOverlap(UPrimitiveComponent* ,
                                           UPrimitiveComponent* ,
                                           int32)
 {
+    // Turn the outline off when the player leaves (runs even if crafting isn't open).
+    if (bShowOutlineWhenNear && Mesh && Cast<ACharacterAimi>(OtherActor))
+    {
+        Mesh->SetRenderCustomDepth(false);
+    }
+
     if (!IsCraftingOpen()) return;
     if (OtherActor == ActiveInteractor.Get())
     {

@@ -15,6 +15,7 @@
 #include "CoatPickup.h"
 #include "Dock.h"
 #include "WardrobeComponent.h"
+#include "OutlineComponent.h"
 
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/MovementComponent.h"
@@ -341,7 +342,13 @@ void ABoatFunctionality::ExitBoat()
 			
 			// Fix camera after repossessing player
 			FixCameraAfterRepossessingPlayer();
-			
+
+			// Boat is no longer in use -- allow the outline to light up again if the player is still near.
+			if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
+			{
+				Outline->SetOutlineSuppressed(false);
+			}
+
 			// Player character found, no need to go through the rest of the attached actors
 			return;
 		}
@@ -412,6 +419,16 @@ void ABoatFunctionality::HideInteractPrompt()
 void ABoatFunctionality::PossessedBy(AController* NewController)
 {
 	Super::PossessedBy(NewController);
+
+	// Only the PLAYER riding the boat should suppress the outline. The boat is auto-possessed by an
+	// AIController at startup, and that must NOT kill the outline -- otherwise it never lights up.
+	if (NewController && NewController->IsPlayerController())
+	{
+		if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
+		{
+			Outline->SetOutlineSuppressed(true);
+		}
+	}
 
 	// When the player enters the boat, remove the "enter boat" prompt immediately.
 	HideInteractPrompt();
