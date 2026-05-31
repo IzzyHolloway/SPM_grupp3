@@ -65,11 +65,26 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     FVector2D HoverFrameSize = FVector2D(190.f, 190.f);
 
-    // Total height of each grid cell. Make this taller than the hover frame to add empty space
-    // BELOW each coat so it rests on the shelf (the coat + its outline sit at the bottom of the
-    // cell together). Set to match your shelf spacing. 0 = just hug the hover frame (old behavior).
+    // Total height of each grid cell = the spacing between shelf rows (the coat's feet sit at the
+    // cell bottom). Set this to your shelf pitch in image pixels. 0 = hug the hover frame.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
     float SlotCellHeight = 0.f;
+
+    // Width of each grid cell = the spacing between the two columns. Set this to your column spacing
+    // in image pixels. 0 = hug the icon (SlotSize.X).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    float SlotCellWidth = 0.f;
+
+    // Extra nudge for the hover frame, in pixels, if the coat art isn't centered in its icon texture.
+    // +X = right, +Y = DOWN. Use Y to drop the outline onto the visible coat.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    FVector2D HoverFrameOffset = FVector2D(0.f, 0.f);
+
+    // Pixels from the top of the closet image down to where the FIRST row's coat feet should rest
+    // (i.e. top of the grid). With SlotCellHeight as the pitch, this places every row on its shelf,
+    // entirely from code -- no need to tweak the grid's padding/alignment in the designer.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Visuals")
+    float GridTopOffset = 0.f;
 
     UFUNCTION(BlueprintCallable, Category = "Wardrobe")
     void RefreshSlots();

@@ -70,14 +70,24 @@ void UWardrobeViewWidget::RefreshSlots()
 
     SlotGrid->ClearChildren();
 
+    // Position the grid from code so coats land on the shelves: no gap between cells (pitch is driven
+    // by SlotCellHeight), grid pinned to the top of its container, and pushed down by GridTopOffset so
+    // the first row's feet sit on the top shelf. Works as long as SlotGrid sits inside a SizeBox.
+    SlotGrid->SetSlotPadding(FMargin(0.f));
+    if (USizeBoxSlot* GridBoxSlot = Cast<USizeBoxSlot>(SlotGrid->Slot))
+    {
+        GridBoxSlot->SetHorizontalAlignment(HAlign_Center);
+        GridBoxSlot->SetVerticalAlignment(VAlign_Top);
+        GridBoxSlot->SetPadding(FMargin(0.f, GridTopOffset, 0.f, 0.f));
+    }
+
     UDataTable* DT = Wardrobe->CoatDataTable;
     const int32 Cols = FMath::Max(1, Wardrobe->GridColumns);
     const FName EquippedID = Wardrobe->EquippedCoatID;
     const int32 HighlightIndex = Wardrobe->SelectedSlotIndex;
 
-    // The hover frame can be larger than the icon -- it OVERFLOWS the cell (Overlay doesn't clip)
-    // instead of enlarging it. That keeps the outline size independent of the cell footprint and row
-    // spacing, so you can make the outline big without spreading the coats off their shelves.
+    // Outline size is independent of the cell: the frame overflows freely. Cell footprint = SlotSize,
+    // row spacing = SlotCellHeight.
     const FVector2D EffectiveHoverSize = HoverFrameSize.IsNearlyZero() ? SlotSize : HoverFrameSize;
 
     // Collect unlocked slot indices in DT order. They fill the grid sequentially
@@ -121,12 +131,11 @@ void UWardrobeViewWidget::RefreshSlots()
         Style.Disabled.DrawAs = ESlateBrushDrawType::NoDrawType;
         SlotBtn->SetStyle(Style);
 
-        UOverlay* Overlay = NewObject<UOverlay>(SlotBtn);
-
-        // Coat icon — only on cells that hold a coat.
+        // The interactive button holds only the coat icon (sized to SlotSize).
+        UImage* IconImg = nullptr;
         if (bHasCoat && Row && Row->CoatIcon)
         {
-            UImage* IconImg = NewObject<UImage>(Overlay);
+            IconImg = NewObject<UImage>(SlotBtn);
             FSlateBrush IconBrush;
             IconBrush.SetResourceObject(Row->CoatIcon);
             IconBrush.ImageSize = SlotSize;
@@ -140,59 +149,59 @@ void UWardrobeViewWidget::RefreshSlots()
                 IconColor.A *= EquippedOpacity;
             }
             IconImg->SetColorAndOpacity(IconColor);
-
-            if (UOverlaySlot* IconSlot = Overlay->AddChildToOverlay(IconImg))
-            {
-                IconSlot->SetHorizontalAlignment(HAlign_Center);
-                IconSlot->SetVerticalAlignment(VAlign_Center);
-            }
+            SlotBtn->SetContent(IconImg);
         }
 
-        // Hover frame on top of the cell that holds the currently highlighted coat.
-        if (bHasCoat && HoverFrameTexture && SlotIdx == HighlightIndex)
-        {
-            UImage* HoverImg = NewObject<UImage>(Overlay);
-            FSlateBrush HoverBrush;
-            HoverBrush.SetResourceObject(HoverFrameTexture);
-            HoverBrush.ImageSize = EffectiveHoverSize;
-            HoverBrush.DrawAs = ESlateBrushDrawType::Image;
-            HoverImg->SetBrush(HoverBrush);
-            if (UOverlaySlot* HoverSlot = Overlay->AddChildToOverlay(HoverImg))
-            {
-                HoverSlot->SetHorizontalAlignment(HAlign_Center);
-                HoverSlot->SetVerticalAlignment(VAlign_Center);
-            }
-        }
-
-        SlotBtn->SetContent(Overlay);
-
-        // Fixed icon-sized box so the coat's footprint stays constant (= SlotSize) regardless of the
-        // hover frame. The frame just overflows this box when selected, so the icon never shifts.
+        // Force the button (and thus the coat's footprint) to exactly SlotSize so it never changes.
         USizeBox* IconBox = NewObject<USizeBox>(this);
         IconBox->SetWidthOverride(SlotSize.X);
         IconBox->SetHeightOverride(SlotSize.Y);
         IconBox->SetContent(SlotBtn);
 
-        USizeBox* SizeWrapper = NewObject<USizeBox>(this);
-        SizeWrapper->SetWidthOverride(SlotSize.X);
-        // Cell can be taller than the icon; the extra height is empty space BELOW the coat, so the
-        // coat rests on the shelf instead of floating. This drives row spacing, independent of the
-        // outline size.
-        const float CellHeight = FMath::Max(SlotCellHeight, SlotSize.Y);
-        SizeWrapper->SetHeightOverride(CellHeight);
-        if (USizeBoxSlot* WrapperSlot = Cast<USizeBoxSlot>(SizeWrapper->SetContent(IconBox)))
+        // Cell content: icon and (optional) hover frame are SIBLINGS, both bottom-aligned. The icon's
+        // position depends only on its own alignment -- showing/hiding the frame never moves it (no
+        // jump). The frame overflows upward to surround the coat.
+        UOverlay* CellOverlay = NewObject<UOverlay>(this);
+        if (UOverlaySlot* IconBoxSlot = CellOverlay->AddChildToOverlay(IconBox))
         {
-            WrapperSlot->SetHorizontalAlignment(HAlign_Center);
-            WrapperSlot->SetVerticalAlignment(VAlign_Bottom);
+            IconBoxSlot->SetHorizontalAlignment(HAlign_Center);
+            IconBoxSlot->SetVerticalAlignment(VAlign_Bottom);
+        }
+        if (bHasCoat && HoverFrameTexture && SlotIdx == HighlightIndex)
+        {
+            UImage* HoverImg = NewObject<UImage>(CellOverlay);
+            FSlateBrush HoverBrush;
+            HoverBrush.SetResourceObject(HoverFrameTexture);
+            HoverBrush.ImageSize = EffectiveHoverSize;
+            HoverBrush.DrawAs = ESlateBrushDrawType::Image;
+            HoverImg->SetBrush(HoverBrush);
+            HoverImg->SetVisibility(ESlateVisibility::HitTestInvisible);
+            // Center the frame on the COAT. It's bottom-aligned (bottom at the cell bottom = the coat's
+            // feet); a render translation pushes it DOWN by half the size difference so its center lands
+            // on the icon's center and it grows symmetrically around the coat as you enlarge it.
+            // (Render translation isn't clamped the way negative slot padding is.)
+            HoverImg->SetRenderTranslation(FVector2D(
+                HoverFrameOffset.X,
+                (EffectiveHoverSize.Y - SlotSize.Y) * 0.5f + HoverFrameOffset.Y));
+            if (UOverlaySlot* HoverSlot = CellOverlay->AddChildToOverlay(HoverImg))
+            {
+                HoverSlot->SetHorizontalAlignment(HAlign_Center);
+                HoverSlot->SetVerticalAlignment(VAlign_Bottom);
+            }
         }
 
-        // Visible position drives the grid cell. Always Slots.Num() total cells.
+        // Cell = SlotSize wide x SlotCellHeight tall. Row spacing is SlotCellHeight, independent of the
+        // outline size, and the coat rests at the cell bottom.
+        USizeBox* SizeWrapper = NewObject<USizeBox>(this);
+        const float CellWidth = FMath::Max(SlotCellWidth, SlotSize.X);
+        SizeWrapper->SetWidthOverride(CellWidth);
+        const float CellHeight = FMath::Max(SlotCellHeight, SlotSize.Y);
+        SizeWrapper->SetHeightOverride(CellHeight);
+        SizeWrapper->SetContent(CellOverlay);
+
         if (UUniformGridSlot* GridSlot = SlotGrid->AddChildToUniformGrid(SizeWrapper, Pos / Cols, Pos % Cols))
         {
             GridSlot->SetHorizontalAlignment(HAlign_Center);
-            // Bottom-align so each coat rests on the shelf beneath it instead of floating in the
-            // middle of its cell. Fine-tune the resting height with the SlotGrid's SlotPadding
-            // (Bottom) in the WBP, or by moving/resizing the grid over the shelf image.
             GridSlot->SetVerticalAlignment(VAlign_Bottom);
         }
     }
