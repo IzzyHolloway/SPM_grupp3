@@ -113,14 +113,9 @@ void ALumiStudio::SetStudioActive(bool bActive)
     // Pause the skeletal animation while hidden so we don't pay for it when the wardrobe is closed.
     PreviewMesh->SetComponentTickEnabled(bActive);
 
+    // bCaptureEveryFrame already re-renders on the next frame, so don't also call CaptureScene()
+    // here -- doing both logs a "major inefficiency" warning.
     Capture->bCaptureEveryFrame = bActive;
-
-    if (bActive && RenderTarget)
-    {
-        // Render one frame immediately so the preview is filled the instant the wardrobe opens,
-        // instead of showing a stale/black target for a frame.
-        Capture->CaptureScene();
-    }
 }
 
 void ALumiStudio::SetPreviewCoatMaterial(UMaterialInterface* Material, int32 MaterialSlot)
@@ -131,10 +126,34 @@ void ALumiStudio::SetPreviewCoatMaterial(UMaterialInterface* Material, int32 Mat
 
 void ALumiStudio::ApplyCoat(FName CoatID)
 {
-    if (CoatID.IsNone() || !CoatDataTable) return;
+    if (CoatID.IsNone())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ALumiStudio::ApplyCoat: CoatID is None, ignoring."));
+        return;
+    }
+    if (!CoatDataTable)
+    {
+        UE_LOG(LogTemp, Warning,
+            TEXT("ALumiStudio::ApplyCoat: CoatDataTable is NULL -- assign DT_Coats on BP_LumiStudio. Preview won't change coat."));
+        return;
+    }
 
     const FCoatDetail* Row = CoatDataTable->FindRow<FCoatDetail>(CoatID, TEXT("LumiStudio ApplyCoat"));
-    if (!Row || !Row->CoatMaterial) return;
+    if (!Row)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ALumiStudio::ApplyCoat: no row '%s' in CoatDataTable."), *CoatID.ToString());
+        return;
+    }
+    if (!Row->CoatMaterial)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ALumiStudio::ApplyCoat: row '%s' has no CoatMaterial."), *CoatID.ToString());
+        return;
+    }
 
-    SetPreviewCoatMaterial(Row->CoatMaterial, Row->CoatMaterialSlot);
+    UE_LOG(LogTemp, Warning, TEXT("ALumiStudio::ApplyCoat: '%s' -> material '%s' on slot %d"),
+        *CoatID.ToString(), *Row->CoatMaterial->GetName(), PreviewCoatSlot);
+
+    // Use the studio's PreviewCoatSlot, not the DataTable's CoatMaterialSlot -- the gameplay
+    // character applies coats to element 0 and that's the slot that actually shows on this mesh.
+    SetPreviewCoatMaterial(Row->CoatMaterial, PreviewCoatSlot);
 }

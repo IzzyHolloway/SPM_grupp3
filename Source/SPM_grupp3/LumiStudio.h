@@ -41,10 +41,16 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lumi Studio")
     TObjectPtr<UTextureRenderTarget2D> RenderTarget;
 
-    // Optional DT_Coats. If set, ApplyCoat(CoatID) reads CoatMaterial / CoatMaterialSlot from the
-    // matching FCoatDetail row and applies it. Leave null and use SetPreviewCoatMaterial instead.
+    // Optional DT_Coats. If set, ApplyCoat(CoatID) reads CoatMaterial from the matching FCoatDetail
+    // row and applies it. Leave null and use SetPreviewCoatMaterial instead.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lumi Studio")
     TObjectPtr<UDataTable> CoatDataTable;
+
+    // Which material element on the preview mesh the coat lives on. The gameplay character swaps the
+    // coat on element 0, so default to 0 here too (the DataTable's per-coat CoatMaterialSlot is the
+    // wrong slot for this mesh). Change this only if your preview mesh puts the coat on another slot.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Lumi Studio")
+    int32 PreviewCoatSlot = 0;
 
     // Turn capturing on/off. Only renders while active, so there's no cost when the wardrobe is shut.
     // Call with true from OpenWardrobe and false from CloseWardrobe.
