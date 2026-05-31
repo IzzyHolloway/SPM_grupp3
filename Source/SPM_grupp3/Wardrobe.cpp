@@ -1,6 +1,7 @@
 #include "Wardrobe.h"
 #include "WardrobeViewWidget.h"
 #include "WardrobeComponent.h"
+#include "LumiStudio.h"
 #include "CharacterAimi.h"
 #include "Components/SphereComponent.h"
 #include "Components/StaticMeshComponent.h"
@@ -78,6 +79,34 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
     // sits where the player expects it on first open.
     ActiveWardrobe->SelectEquippedSlot();
 
+    // Spin up the live 3D preview of Lumi and show whatever coat she's already wearing.
+    // (SelectEquippedSlot doesn't broadcast OnEquippedCoatChanged, so push the coat explicitly here.)
+    // If the PreviewStudio field wasn't wired in the editor, auto-find the first one in the level.
+    if (!PreviewStudio)
+    {
+        PreviewStudio = Cast<ALumiStudio>(
+            UGameplayStatics::GetActorOfClass(this, ALumiStudio::StaticClass()));
+    }
+
+    // Still none? Spawn one far below the world from the configured class so the preview works in
+    // any level without placing a studio (or setting up a sublevel) by hand.
+    if (!PreviewStudio && PreviewStudioClass)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        PreviewStudio = GetWorld()->SpawnActor<ALumiStudio>(
+            PreviewStudioClass, FVector(0.f, 0.f, -50000.f), FRotator::ZeroRotator, SpawnParams);
+    }
+
+    UE_LOG(LogTemp, Warning, TEXT("AWardrobe::OpenWardrobe: PreviewStudio=%s"),
+        PreviewStudio ? *PreviewStudio->GetName() : TEXT("NULL (no studio found and PreviewStudioClass not set)"));
+
+    if (PreviewStudio)
+    {
+        PreviewStudio->SetStudioActive(true);
+        PreviewStudio->ApplyCoat(ActiveWardrobe->EquippedCoatID);
+    }
+
     ActiveInteractor = Interactor;
 
     if (ACharacter* Character = Cast<ACharacter>(Interactor))
@@ -136,6 +165,12 @@ void AWardrobe::CloseWardrobe()
     {
         WardrobeViewWidget->RemoveFromParent();
         WardrobeViewWidget = nullptr;
+    }
+
+    // Stop the preview rendering while the wardrobe is closed (no idle capture cost).
+    if (PreviewStudio)
+    {
+        PreviewStudio->SetStudioActive(false);
     }
 
     APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0);
@@ -255,4 +290,10 @@ void AWardrobe::HandleEquippedCoatChanged(FName NewCoatID)
 
     // Forward to the BP-overridable event so designers can swap Lumi's material there.
     OnCoatEquipped(NewCoatID, Wearer);
+
+    // Keep the 3D preview in sync with whatever Lumi now wears.
+    if (PreviewStudio)
+    {
+        PreviewStudio->ApplyCoat(NewCoatID);
+    }
 }

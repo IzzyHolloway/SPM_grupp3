@@ -2,6 +2,7 @@
 #include "WardrobeComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
+#include "EngineUtils.h"
 
 void ACoatPickup::Interact()
 {
@@ -38,17 +39,32 @@ bool ACoatPickup::TryUnlockInWardrobe() const
         return false;
     }
 
-    APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0);
-    if (!PlayerPawn)
+    // The wardrobe lives on the player character. Usually that's the possessed pawn, but while the
+    // player is in the boat the possessed pawn is the boat (which has no wardrobe). In that case fall
+    // back to searching the world for the character that actually owns the UWardrobeComponent -- it
+    // still exists, attached to the boat.
+    UWardrobeComponent* WardrobeComp = nullptr;
+
+    if (APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(GetWorld(), 0))
     {
-        UE_LOG(LogTemp, Warning, TEXT("Coat pickup failed: no player pawn."));
-        return false;
+        WardrobeComp = PlayerPawn->FindComponentByClass<UWardrobeComponent>();
     }
 
-    UWardrobeComponent* WardrobeComp = PlayerPawn->FindComponentByClass<UWardrobeComponent>();
     if (!WardrobeComp)
     {
-        UE_LOG(LogTemp, Warning, TEXT("Coat pickup failed: no UWardrobeComponent on player."));
+        for (TActorIterator<AActor> It(GetWorld()); It; ++It)
+        {
+            if (UWardrobeComponent* Found = It->FindComponentByClass<UWardrobeComponent>())
+            {
+                WardrobeComp = Found;
+                break;
+            }
+        }
+    }
+
+    if (!WardrobeComp)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("Coat pickup failed: no UWardrobeComponent found in the world."));
         return false;
     }
 
