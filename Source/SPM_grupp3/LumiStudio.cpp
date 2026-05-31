@@ -20,6 +20,9 @@ ALumiStudio::ALumiStudio()
     PreviewMesh->SetCollisionEnabled(ECollisionEnabled::NoCollision);
     PreviewMesh->VisibilityBasedAnimTickOption = EVisibilityBasedAnimTickOption::AlwaysTickPoseAndRefreshBones;
     PreviewMesh->bComponentUseFixedSkelBounds = true; // avoid bounds recompute culling it out of the capture
+    // The idle plays even though Lumi is off-screen (only seen via the capture). URO throttles the
+    // animation rate for distant/off-screen meshes, which freezes the idle here -- turn it off.
+    PreviewMesh->bEnableUpdateRateOptimizations = false;
 
     // --- Local lights. Bright by default so the preview is never black; dim them in the BP if needed. ---
     KeyLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("KeyLight"));
@@ -52,19 +55,35 @@ ALumiStudio::ALumiStudio()
     // Only render the preview mesh -- not the surrounding world. We add PreviewMesh in BeginPlay.
     Capture->PrimitiveRenderMode = ESceneCapturePrimitiveRenderMode::PRM_UseShowOnlyList;
 
+    // Trim expensive render passes the character preview doesn't need, so capturing every frame
+    // stays cheap. (Geometry is already tiny -- only Lumi + backdrop render via the ShowOnly list.)
+    Capture->ShowFlags.SetMotionBlur(false);
+    Capture->ShowFlags.SetScreenSpaceReflections(false);
+    Capture->ShowFlags.SetAmbientOcclusion(false);
+    Capture->ShowFlags.SetBloom(false);
+    Capture->ShowFlags.SetLensFlares(false);
+    Capture->ShowFlags.SetSceneColorFringe(false);
+
     // Start idle; SetStudioActive(true) flips this on when the wardrobe opens.
     Capture->bCaptureEveryFrame = false;
     Capture->bCaptureOnMovement = false;
 
-    // Lock exposure so the capture can't auto-adapt itself down to black. Pinning Min == Max forces
-    // the eye-adaptation multiplier to a constant regardless of the auto-exposure method, which is the
-    // reliable way to get a consistently-lit scene capture (plain Manual mode often renders near-black).
+    // Lock exposure so the capture is lit consistently in EVERY level, regardless of any
+    // PostProcessVolume the surrounding level uses. We must override the exposure METHOD too:
+    // Min/MaxBrightness only apply to auto-exposure, so if a level's PPV sets Manual exposure our
+    // clamp would be ignored and the capture renders black. Forcing Histogram + Min==Max pins the
+    // exposure multiplier to a constant no matter what the world does.
+    Capture->PostProcessSettings.bOverride_AutoExposureMethod = true;
+    Capture->PostProcessSettings.AutoExposureMethod = EAutoExposureMethod::AEM_Histogram;
     Capture->PostProcessSettings.bOverride_AutoExposureMinBrightness = true;
     Capture->PostProcessSettings.AutoExposureMinBrightness = 1.f;
     Capture->PostProcessSettings.bOverride_AutoExposureMaxBrightness = true;
     Capture->PostProcessSettings.AutoExposureMaxBrightness = 1.f;
     Capture->PostProcessSettings.bOverride_AutoExposureBias = true;
     Capture->PostProcessSettings.AutoExposureBias = 1.f;
+
+    // Also fully apply the capture's own post-process (so a level's unbound PPV can't dilute it).
+    Capture->PostProcessBlendWeight = 1.f;
 }
 
 void ALumiStudio::BeginPlay()

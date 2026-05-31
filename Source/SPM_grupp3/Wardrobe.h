@@ -93,10 +93,15 @@ public:
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|Input")
     TObjectPtr<UInputAction> CloseAction;
 
-    // The Lumi preview studio in the level. Drag the BP_LumiStudio actor here in the editor.
-    // When set, the wardrobe activates it on open, deactivates on close, and keeps its coat in sync.
+    // The Lumi preview studio. Optional: drag a placed BP_LumiStudio actor here. If left empty, the
+    // wardrobe auto-finds one in the level, and if none exists it spawns one from PreviewStudioClass.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Preview")
     TObjectPtr<ALumiStudio> PreviewStudio;
+
+    // Studio class to spawn if no ALumiStudio exists in the played level. Set this to BP_LumiStudio
+    // in the editor (a class reference works in BP defaults, so no per-level placement is needed).
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Preview")
+    TSubclassOf<ALumiStudio> PreviewStudioClass;
 
 protected:
     UPROPERTY(Transient)

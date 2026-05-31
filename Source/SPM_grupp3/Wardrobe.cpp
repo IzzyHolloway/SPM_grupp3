@@ -88,8 +88,18 @@ void AWardrobe::OpenWardrobe(AActor* Interactor)
             UGameplayStatics::GetActorOfClass(this, ALumiStudio::StaticClass()));
     }
 
+    // Still none? Spawn one far below the world from the configured class so the preview works in
+    // any level without placing a studio (or setting up a sublevel) by hand.
+    if (!PreviewStudio && PreviewStudioClass)
+    {
+        FActorSpawnParameters SpawnParams;
+        SpawnParams.SpawnCollisionHandlingOverride = ESpawnActorCollisionHandlingMethod::AlwaysSpawn;
+        PreviewStudio = GetWorld()->SpawnActor<ALumiStudio>(
+            PreviewStudioClass, FVector(0.f, 0.f, -50000.f), FRotator::ZeroRotator, SpawnParams);
+    }
+
     UE_LOG(LogTemp, Warning, TEXT("AWardrobe::OpenWardrobe: PreviewStudio=%s"),
-        PreviewStudio ? *PreviewStudio->GetName() : TEXT("NULL (no ALumiStudio found in this level)"));
+        PreviewStudio ? *PreviewStudio->GetName() : TEXT("NULL (no studio found and PreviewStudioClass not set)"));
 
     if (PreviewStudio)
     {
