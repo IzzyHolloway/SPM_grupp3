@@ -455,6 +455,19 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 
 	if (bTalkedToNPC && bHasPaper && bHasPen)
 	{
+		if (!ProgressionManager->HasFlag(Island3AllItemsDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			{
+				ProgressionManager->AddFlag(Island3AllItemsDialogueShownFlag);
+				DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
+			}
+		}
+
 		SetStoryState(EStoryState::Island3_CraftNote);
 		return;
 	}
@@ -601,11 +614,13 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		return;
 	}
 
+	/*
 	if (bFinalItemCrafted)
 	{
 		SetStoryState(EStoryState::Level2_FinalItemCrafted);
 		return;
 	}
+	*/
 
 	// -------------------------------
 	// Two Level 2 islands solved
@@ -613,7 +628,12 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bMotorIslandSolved && bLeverIslandSolved)
 	{
-		SetStoryState(EStoryState::Level2_FinalCraftAvailable);
+		if (!ProgressionManager->HasFlag(CompassBearerSpawnedFlag))
+		{
+			ProgressionManager->AddFlag(CompassBearerSpawnedFlag);
+		}
+
+		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
 		return;
 	}
 
@@ -1022,6 +1042,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 	}
 	*/
 
+	/*
 	// Island 3
 	const bool bPickedUpIsland3Item =
 		PickedUpItemID == Island3PaperPickedUpFlag ||
@@ -1038,4 +1059,5 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
 		return;
 	}
+	*/
 }
