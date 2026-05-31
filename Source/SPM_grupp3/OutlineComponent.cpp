@@ -31,11 +31,17 @@ void UOutlineComponent::SetOutline(bool bEnabled)
     // Outline every mesh on the owner (static + skeletal). Lights/cameras/the sphere aren't meshes.
     TArray<UMeshComponent*> Meshes;
     Owner->GetComponents<UMeshComponent>(Meshes);
+
+    UE_LOG(LogTemp, Warning, TEXT("[Outline] SetOutline(%s) on %s -- found %d mesh(es)"),
+           bEnabled ? TEXT("ON") : TEXT("off"), *Owner->GetName(), Meshes.Num());
+
     for (UMeshComponent* MeshComp : Meshes)
     {
         if (!MeshComp) continue;
         MeshComp->SetCustomDepthStencilValue(OutlineStencilValue);
         MeshComp->SetRenderCustomDepth(bEnabled);
+        UE_LOG(LogTemp, Warning, TEXT("[Outline]   -> %s (%s), stencil=%d"),
+               *MeshComp->GetName(), *MeshComp->GetClass()->GetName(), OutlineStencilValue);
     }
 }
 
@@ -54,12 +60,22 @@ void UOutlineComponent::SetOutlineSuppressed(bool bSuppressed)
     // the boat), so query the actual overlap instead.
     APawn* PlayerPawn = UGameplayStatics::GetPlayerPawn(this, 0);
     bPlayerInside = (PlayerPawn != nullptr) && IsOverlappingActor(PlayerPawn);
+
+    UE_LOG(LogTemp, Warning, TEXT("[Outline] Unsuppress on %s -- player=%s, stillInside=%s"),
+           GetOwner() ? *GetOwner()->GetName() : TEXT("?"),
+           *GetNameSafe(PlayerPawn), bPlayerInside ? TEXT("YES") : TEXT("NO"));
+
     SetOutline(bPlayerInside);
 }
 
 void UOutlineComponent::HandleBeginOverlap(UPrimitiveComponent*, AActor* OtherActor,
                                            UPrimitiveComponent*, int32, bool, const FHitResult&)
 {
+    UE_LOG(LogTemp, Warning, TEXT("[Outline] BeginOverlap on %s by %s (player=%s)"),
+           GetOwner() ? *GetOwner()->GetName() : TEXT("?"),
+           OtherActor ? *OtherActor->GetName() : TEXT("null"),
+           *GetNameSafe(UGameplayStatics::GetPlayerPawn(this, 0)));
+
     // Only the player lights the outline.
     if (OtherActor && OtherActor == UGameplayStatics::GetPlayerPawn(this, 0))
     {
