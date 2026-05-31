@@ -11,6 +11,7 @@ class UWardrobeViewWidget;
 class UWardrobeComponent;
 class UInputMappingContext;
 class UInputAction;
+class ALumiStudio;
 struct FInputActionValue;
 
 UCLASS()
@@ -91,6 +92,11 @@ public:
     // Digital action (B / Esc). Calls CloseWardrobe.
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|Input")
     TObjectPtr<UInputAction> CloseAction;
+
+    // The Lumi preview studio in the level. Drag the BP_LumiStudio actor here in the editor.
+    // When set, the wardrobe activates it on open, deactivates on close, and keeps its coat in sync.
+    UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Wardrobe|Preview")
+    TObjectPtr<ALumiStudio> PreviewStudio;
 
 protected:
     UPROPERTY(Transient)
