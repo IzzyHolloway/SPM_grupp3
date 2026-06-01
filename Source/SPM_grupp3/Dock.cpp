@@ -53,6 +53,8 @@ void ADock::BeginPlay()
 	{
 		TArray<AActor*> OverlappingBoats;
 		ExitBoatTriggerRight->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
+		// Check left side also, not only right -- Aimi
+		ExitBoatTriggerLeft->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
 		
 		for (AActor* Actor : OverlappingBoats)
 		{
@@ -93,7 +95,9 @@ void ADock::OnExitBoatTriggerLeftBeginOverlap(UPrimitiveComponent* OverlappedCom
 	{		
 		// Safe the docking spot corresponding to the trigger box
 		CurrentDockingSpotPosition = &LeftDockingSpotPosition;
-		CurrentDockingSpotRotation = &RightDockingSpotRotation;
+		//CurrentDockingSpotRotation = &RightDockingSpotRotation; this is the old one. New one is the one line under --Aimi
+		CurrentDockingSpotRotation = &LeftDockingSpotRotation;
+
 		
 		// Enable exiting the boat
 		EnableExitingBoat(Boat);
@@ -104,7 +108,13 @@ void ADock::OnExitBoatTriggerRightEndOverlap(UPrimitiveComponent* OverlappedComp
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
-	{		
+	{
+		// Added this check --Aimi
+		if (ExitBoatTriggerLeft && ExitBoatTriggerLeft->IsOverlappingActor(Boat))
+		{
+			return;
+		}
+		
 		DisableExitingBoat(Boat);
 	}
 }
@@ -113,7 +123,13 @@ void ADock::OnExitBoatTriggerLeftEndOverlap(UPrimitiveComponent* OverlappedComp,
 {
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
-	{		
+	{
+		// Added this check --Aimi
+		if (ExitBoatTriggerLeft && ExitBoatTriggerLeft->IsOverlappingActor(Boat))
+		{
+			return;
+		}
+		
 		DisableExitingBoat(Boat);
 	}
 }
