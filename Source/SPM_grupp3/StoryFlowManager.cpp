@@ -1112,7 +1112,7 @@ void AStoryFlowManager::TryScheduleMelodyOrderHint(AProgressionManager* Progress
 		MelodyOrderHintTimerHandle,
 		this,
 		&AStoryFlowManager::ShowMelodyOrderHint,
-		3.0f,
+		2.0f,
 		false
 	);
 }
