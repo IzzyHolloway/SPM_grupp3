@@ -225,6 +225,16 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 		SetStoryState(EStoryState::Island1_ReadyToLeave);
 		return;
 	}
+	
+	// Delayed hint about placing in order
+	if (ProgressionManager->HasFlag(TalkedToListenerAfterAllMelodyPiecesFlag) &&
+	!ProgressionManager->HasFlag(Island1PuzzleSolvedFlag))
+	{
+		TryScheduleMelodyOrderHint(ProgressionManager);
+
+		SetStoryState(EStoryState::Island1_ReturnToListener); // or better: add a new state later
+		return;
+	}
 
 	if (ProgressionManager->HasFlag(Island1PuzzleSolvedFlag))
 	{
@@ -1060,4 +1070,99 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		return;
 	}
 	*/
+}
+
+void AStoryFlowManager::TryScheduleMelodyOrderHint(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint failed: No ProgressionManager."));
+		return;
+	}
+
+	if (!ProgressionManager->HasFlag(TalkedToListenerAfterAllMelodyPiecesFlag))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint not scheduled: TalkedToListenerAfterAllMelodyPieces flag is missing."));
+		return;
+	}
+
+	if (ProgressionManager->HasFlag(Island1PuzzleSolvedFlag))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint not scheduled: Puzzle already solved."));
+		return;
+	}
+
+	if (ProgressionManager->HasFlag(MelodyOrderHintShownFlag))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint not scheduled: Already shown."));
+		return;
+	}
+
+	if (GetWorldTimerManager().IsTimerActive(MelodyOrderHintTimerHandle))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint not scheduled: Timer already active."));
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Melody hint scheduled. Lumi will speak in 3 seconds."));
+
+	ProgressionManager->AddFlag(MelodyOrderHintShownFlag);
+
+	GetWorldTimerManager().SetTimer(
+		MelodyOrderHintTimerHandle,
+		this,
+		&AStoryFlowManager::ShowMelodyOrderHint,
+		3.0f,
+		false
+	);
+}
+
+void AStoryFlowManager::ShowMelodyOrderHint()
+{
+	UE_LOG(LogTemp, Warning, TEXT("ShowMelodyOrderHint called."));
+
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (!ProgressionManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint failed: No ProgressionManager in ShowMelodyOrderHint."));
+		return;
+	}
+
+	if (ProgressionManager->HasFlag(Island1PuzzleSolvedFlag))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint cancelled: Puzzle already solved."));
+		return;
+	}
+
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (!DialogueManager)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint failed: No DialogueManager found."));
+		return;
+	}
+
+	if (DialogueManager->IsDialogueOrMessageVisible())
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Melody hint waiting: Dialogue/message still visible. Retrying in 1 second."));
+
+		GetWorldTimerManager().SetTimer(
+			MelodyOrderHintTimerHandle,
+			this,
+			&AStoryFlowManager::ShowMelodyOrderHint,
+			1.0f,
+			false
+		);
+
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Melody hint shown."));
+
+	DialogueManager->ShowMessage(MelodyOrderHintMessage);
 }
