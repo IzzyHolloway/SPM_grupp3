@@ -3,6 +3,7 @@
 
 #include "ObjectiveWidget.h"
 
+/*
 void UObjectiveWidget::UpdateObjectiveDescriptionText(const FText& DescriptionText)
 {
 	if (ObjectiveDescription)
@@ -10,6 +11,7 @@ void UObjectiveWidget::UpdateObjectiveDescriptionText(const FText& DescriptionTe
 		ObjectiveDescription->SetText(DescriptionText);
 	}
 }
+*/
 
 void UObjectiveWidget::UpdateProgressText(const FText& ProgressText)
 {
@@ -19,6 +21,7 @@ void UObjectiveWidget::UpdateProgressText(const FText& ProgressText)
 	}
 }
 
+/*
 void UObjectiveWidget::UpdateImage(UTexture2D* Image)
 {
 	if (ObjectiveImage)
@@ -26,3 +29,4 @@ void UObjectiveWidget::UpdateImage(UTexture2D* Image)
 		ObjectiveImage->SetBrushFromTexture(Image);
 	}
 }
+*/
