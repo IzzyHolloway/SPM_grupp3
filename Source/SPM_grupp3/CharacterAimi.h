@@ -108,13 +108,13 @@ protected:
 
 	// INTERACTION DISTANCES AND VALUES
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	float InteractionRadius = 400.f;
+	float InteractionRadius = 300.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	float InteractionForwardOffset = 150.f;
+	float InteractionForwardOffset = 120.f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interaction")
-	float MaxInteractionDistance = 350.f;
+	float MaxInteractionDistance = 250.f;
 	
 	UPROPERTY(BlueprintReadOnly, Category = "Interaction")
 	int32 InteractionBlockCount = 0;
