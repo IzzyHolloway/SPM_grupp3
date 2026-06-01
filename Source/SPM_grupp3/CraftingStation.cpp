@@ -43,10 +43,18 @@ void ACraftingStation::OnSphereBeginOverlap(UPrimitiveComponent*, AActor* OtherA
                                             UPrimitiveComponent*, int32, bool, const FHitResult&)
 {
     // Only the player should light up the outline.
-    if (bShowOutlineWhenNear && Mesh && Cast<ACharacterAimi>(OtherActor))
+    if (Cast<ACharacterAimi>(OtherActor))
     {
-        Mesh->SetRenderCustomDepth(true);
+        SetOutlineEnabled(true);
     }
+}
+
+void ACraftingStation::SetOutlineEnabled(bool bEnabled)
+{
+    if (!bShowOutlineWhenNear || !Mesh) return;
+
+    // While crafting is open we never glow, even though the player is standing inside the sphere.
+    Mesh->SetRenderCustomDepth(bEnabled && !bOutlineSuppressed);
 }
 
 FText ACraftingStation::LookAtActor_Implementation() const
@@ -96,6 +104,10 @@ void ACraftingStation::OpenCrafting(AActor* Interactor)
 
     ActiveInteractor = Interactor;
 
+    // Don't keep the workbench outlined the whole time it's open.
+    bOutlineSuppressed = true;
+    SetOutlineEnabled(false);
+
     if (ACharacter* Character = Cast<ACharacter>(Interactor))
     {
         Character->GetCharacterMovement()->DisableMovement();
@@ -120,6 +132,14 @@ void ACraftingStation::CloseCrafting()
         CraftingViewWidget->RemoveFromParent();
         CraftingViewWidget = nullptr;
     }
+
+    // Release the suppression and restore the real state: only glow again if the player is
+    // actually still standing in range (they may have walked away, which is what closed it).
+    bOutlineSuppressed = false;
+    const bool bPlayerStillNear =
+        ActiveInteractor.IsValid() && SphereCollision &&
+        SphereCollision->IsOverlappingActor(ActiveInteractor.Get());
+    SetOutlineEnabled(bPlayerStillNear);
 
     if (ActiveInventory)
     {
@@ -161,9 +181,9 @@ void ACraftingStation::OnSphereEndOverlap(UPrimitiveComponent* ,
                                           int32)
 {
     // Turn the outline off when the player leaves (runs even if crafting isn't open).
-    if (bShowOutlineWhenNear && Mesh && Cast<ACharacterAimi>(OtherActor))
+    if (Cast<ACharacterAimi>(OtherActor))
     {
-        Mesh->SetRenderCustomDepth(false);
+        SetOutlineEnabled(false);
     }
 
     if (!IsCraftingOpen()) return;

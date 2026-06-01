@@ -3,6 +3,7 @@
 #include "DialogueManager.h"
 #include "ProgressionManager.h"
 #include "DialogueDataAsset.h"
+#include "OutlineComponent.h"
 #include "Kismet/GameplayStatics.h"
 
 bool ANPCInteractable::DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const
@@ -72,6 +73,17 @@ void ANPCInteractable::Interact()
 			continue;
 		}
 
+		// Hide this NPC's proximity outline while we're talking, and restore it when the
+		// dialogue ends. SetOutlineSuppressed re-checks the real overlap state on release,
+		// so the outline only comes back if the player is still standing next to the NPC.
+		CachedOutline = FindComponentByClass<UOutlineComponent>();
+		if (CachedOutline)
+		{
+			CachedOutline->SetOutlineSuppressed(true);
+			BoundDialogueManager = DialogueManager;
+			DialogueManager->OnDialogueEnded.AddUniqueDynamic(this, &ANPCInteractable::HandleDialogueEnded);
+		}
+
 		// If this entry should set a flag after the dialogue ends
 		// Example. You talked with GuideNPC. After you talk with the GuideNPC, the flag 'TalkedWithGuide' should be active
 
@@ -85,5 +97,20 @@ void ANPCInteractable::Interact()
 		}
 
 		return;
+	}
+}
+
+void ANPCInteractable::HandleDialogueEnded()
+{
+	if (CachedOutline)
+	{
+		CachedOutline->SetOutlineSuppressed(false);
+		CachedOutline = nullptr;
+	}
+
+	if (BoundDialogueManager)
+	{
+		BoundDialogueManager->OnDialogueEnded.RemoveDynamic(this, &ANPCInteractable::HandleDialogueEnded);
+		BoundDialogueManager = nullptr;
 	}
 }
