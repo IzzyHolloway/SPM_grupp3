@@ -176,7 +176,20 @@ protected:
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
 	FName MelodyOrderHintShownFlag = "MelodyOrderHintShownFlag";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
+	FText MelodyOrderHintMessage = FText::FromString("I should place the melody pieces in the right order.");
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
+	FName TalkedToListenerAfterAllMelodyPiecesFlag = "TalkedToListenerAfterAllMelodyPieces";
+	
+	FTimerHandle MelodyOrderHintTimerHandle;
+	
+	void TryScheduleMelodyOrderHint(AProgressionManager* ProgressionManager);
+	
+	UFUNCTION()
+	void ShowMelodyOrderHint();
+	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
 	FName ShellReceivedFromIsland1Flag = "ShellReceivedFromIsland1";
 
