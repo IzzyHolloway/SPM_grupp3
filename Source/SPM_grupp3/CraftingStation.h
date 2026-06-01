@@ -23,6 +23,9 @@ public:
     virtual void InteractWith_Implementation(AActor* Interactor) override;
     virtual FText LookAtActor_Implementation() const override;
 
+    // Outline is enough for the workbench -- don't show the "X Interact" prompt.
+    virtual bool ShouldShowInteractPrompt_Implementation() const override { return false; }
+
     UFUNCTION(BlueprintPure, Category = "Crafting")
     bool IsCraftingOpen() const { return CraftingViewWidget != nullptr; }
 
@@ -52,6 +55,9 @@ protected:
     
     UFUNCTION()
     void HandlePuzzleCraftRequested(FName ResultItemID, TSubclassOf<UUserWidget> PuzzleWidgetClass);
+
+    // Turns the Custom Depth outline on/off, but stays off while crafting is open (suppressed).
+    void SetOutlineEnabled(bool bEnabled);
 
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
@@ -88,4 +94,7 @@ protected:
     TWeakObjectPtr<AActor> ActiveInteractor;
 
     FTimerHandle CloseAfterCraftTimer;
+
+    // While true the outline is forced off regardless of overlap (set while crafting is open).
+    bool bOutlineSuppressed = false;
 };

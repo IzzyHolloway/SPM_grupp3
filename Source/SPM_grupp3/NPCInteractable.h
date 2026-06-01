@@ -8,6 +8,8 @@
 
 class UDialogueDataAsset;
 class AProgressionManager;
+class UOutlineComponent;
+class ADialogueManager;
 
 /*
  * 
@@ -33,4 +35,16 @@ protected:
 	TObjectPtr<UDialogueDataAsset> DialogueData;
 
 	bool DoesEntryMatch(AProgressionManager* ProgressionManager, const FDialogueEntry& Entry) const;
+
+private:
+	// Outline suppressed while this NPC's dialogue is active, restored when it ends.
+	UPROPERTY()
+	TObjectPtr<UOutlineComponent> CachedOutline;
+
+	// Manager we bound OnDialogueEnded to, kept so we can unbind in the handler.
+	UPROPERTY()
+	TObjectPtr<ADialogueManager> BoundDialogueManager;
+
+	UFUNCTION()
+	void HandleDialogueEnded();
 };

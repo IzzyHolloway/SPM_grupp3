@@ -26,6 +26,9 @@ public:
     virtual void InteractWith_Implementation(AActor* Interactor) override;
     virtual FText LookAtActor_Implementation() const override;
 
+    // Outline is enough for the wardrobe -- don't show the "X Interact" prompt.
+    virtual bool ShouldShowInteractPrompt_Implementation() const override { return false; }
+
     UFUNCTION(BlueprintPure, Category = "Wardrobe")
     bool IsWardrobeOpen() const { return WardrobeViewWidget != nullptr; }
 
