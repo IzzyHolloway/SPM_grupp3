@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Interactable.h"
+#include "Sound/SoundBase.h" //Zoeys
 #include "Wardrobe.generated.h"
 
 class USphereComponent;
@@ -61,6 +62,11 @@ public:
     // Wearer is the actor that opened the wardrobe (the player character).
     UFUNCTION(BlueprintImplementableEvent, Category = "Wardrobe")
     void OnCoatEquipped(FName CoatID, AActor* Wearer);
+    
+    //Zoey start
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Wardrobe|Audio")
+    TObjectPtr<USoundBase> EquipSound;
+    //Zoey end
 
 public:
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")

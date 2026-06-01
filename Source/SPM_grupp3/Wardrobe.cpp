@@ -283,6 +283,14 @@ void AWardrobe::HandleCloseInput(const FInputActionValue&)
 
 void AWardrobe::HandleEquippedCoatChanged(FName NewCoatID)
 {
+    
+    //Zoey start
+    if (EquipSound)
+    {
+        UGameplayStatics::PlaySound2D(this, EquipSound);
+    }
+   //Zoey end 
+    
     AActor* Wearer = ActiveInteractor.Get();
     UE_LOG(LogTemp, Warning, TEXT("AWardrobe::HandleEquippedCoatChanged: CoatID=%s, Wearer=%s"),
         *NewCoatID.ToString(),
