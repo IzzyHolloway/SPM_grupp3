@@ -173,6 +173,9 @@ protected:
 		"NotePiece3",
 		"NotePiece4"
 	};
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
+	FName MelodyOrderHintShownFlag = "MelodyOrderHintShownFlag";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 1|Flags")
 	FName ShellReceivedFromIsland1Flag = "ShellReceivedFromIsland1";
