@@ -121,9 +121,10 @@ void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		// Bind Movement and Rotation Actions
 		EnhancedInputComponent->BindAction(MoveRotateAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::MoveRotate);
 		
+		// COMMENTATED BY MADDE TO MAKE THE WHOLE BOOST IMPLEMENTATION IN BLUEPRINTS
 		// Bind Sprint Actions
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ABoatFunctionality::StartSprint);
-		EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ABoatFunctionality::StopSprint);
+		//EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ABoatFunctionality::StartSprint);
+		//EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ABoatFunctionality::StopSprint);
 		
 		// Bind Look Actions
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::Look);
@@ -151,13 +152,13 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 	}
 }
 
-void ABoatFunctionality::StartSprint(const FInputActionValue& Value)
+void ABoatFunctionality::StartSprint()
 {
 	// Make movement faster
 	MovementComponent->MaxSpeed = SprintMovementSpeed;
 }
 
-void ABoatFunctionality::StopSprint(const FInputActionValue& Value)
+void ABoatFunctionality::StopSprint()
 {	
 	// Reset movement speed
 	MovementComponent->MaxSpeed = DefaultMovementSpeed;

@@ -47,10 +47,10 @@ public:
 	void MoveRotate(const FInputActionValue& Value);
 	
 	// Handle Sprint Input
-	UFUNCTION()
-	void StartSprint(const FInputActionValue& Value);
-	UFUNCTION()
-	void StopSprint(const FInputActionValue& Value);
+	UFUNCTION(BlueprintCallable, Category = "Boat Movement")
+	void StartSprint();
+	UFUNCTION(BlueprintCallable, Category = "Boat Movement")
+	void StopSprint();
 	
 	// Handles Mouse Input
 	UFUNCTION()
