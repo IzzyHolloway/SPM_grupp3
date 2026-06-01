@@ -1,8 +1,15 @@
 #include "CoatPickup.h"
 #include "WardrobeComponent.h"
+#include "OutlineComponent.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
+
+ACoatPickup::ACoatPickup()
+{
+    OutlineComponent = CreateDefaultSubobject<UOutlineComponent>(TEXT("Outline"));
+    OutlineComponent->SetupAttachment(RootComponent);
+}
 
 void ACoatPickup::Interact()
 {
