@@ -4,6 +4,9 @@
 
 #include "CoreMinimal.h"
 #include "InteractableActor.h"
+#include "Components/AudioComponent.h"//Zoeys
+#include "Sound/SoundBase.h"//Zoeys
+#include "Sound/SoundAttenuation.h"//Zoeys
 #include "EngineInteractable.generated.h"
 
 class AProgressionManager;
@@ -43,7 +46,31 @@ protected:
 	// Called when the player tries to use the engine before the required story flag exists.
 	UFUNCTION(BlueprintImplementableEvent, Category = "Engine")
 	void OnEngineInteractionBlocked();
-
+	
 	UFUNCTION(BlueprintImplementableEvent, Category = "Engine")
 	void OnEngineInstalled();
+	
+	//Zoey strat
+	
+	// One-shot ljud som spelas när motorn installeras
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine|Sound")
+	USoundBase* EngineInstalledOneShot = nullptr;
+
+	// Loopande ljud  efter one-shot-ljudet är klart
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine|Sound")
+	USoundBase* EngineLoopSound = nullptr;
+
+	// Attenuation-inställningar för det loopande ljudet
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine|Sound")
+	USoundAttenuation* EngineLoopAttenuation = nullptr;
+
+private:
+	// Referens till spawnad audio component för det loopande ljudet
+	UPROPERTY()
+	UAudioComponent* EngineLoopAudioComponent = nullptr;
+
+	void OnOneShotFinished();
+	//Zoey end
+
+	
 };
