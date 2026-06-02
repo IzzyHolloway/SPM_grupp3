@@ -14,8 +14,19 @@ UInventoryComponent::UInventoryComponent()
 void UInventoryComponent::BeginPlay()
 {
     Super::BeginPlay();
-    // Allocates the fixed number of slots so the array index can be used as the UI slot index
-    InventorySlots.Init(FInventorySlot(), FMath::Max(1, SlotCount));
+
+    // Allocate the fixed number of slots so the array index can be used as the UI slot index.
+    //
+    // IMPORTANT: only initialise when the array isn't already the expected size. On a level
+    // transition the GameInstance (ApplyToWorld) restores the saved InventorySlots, and that
+    // restore can run BEFORE this BeginPlay. A saved/restored inventory always has exactly
+    // SlotCount entries, so if we see the right size we leave it alone -- re-initialising here
+    // would wipe the carried-over items and we'd lose the inventory between levels.
+    const int32 DesiredSize = FMath::Max(1, SlotCount);
+    if (InventorySlots.Num() != DesiredSize)
+    {
+        InventorySlots.Init(FInventorySlot(), DesiredSize);
+    }
 }
 
 bool UInventoryComponent::IsSlotOccupied(int32 SlotIndex) const

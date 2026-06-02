@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "ItemDataTypes.h"
+#include "WardrobeDataTypes.h"
 #include "StoryFlowManager.h"
 #include "LittleLost_SaveGame.generated.h"
 
@@ -28,6 +29,15 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     FRotator PlayerRotation = FRotator::ZeroRotator;
 
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    bool bWasInBoat = false;                // True if the player was riding the boat when saved.
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    FVector BoatLocation = FVector::ZeroVector;   // Boat transform, used to respawn the player in the boat.
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    FRotator BoatRotation = FRotator::ZeroRotator;
+
     // Inventory
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
     TArray<FInventorySlot> InventorySlots;  // Snapshot of the inventory slots.
@@ -37,6 +47,13 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
     bool bHasEverPickedUpItem = false;      // Used for one-time tutorials.
+
+    // Wardrobe
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
+    TArray<FWardrobeSlot> WardrobeSlots;    // Which coats are unlocked (and their IDs).
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
+    FName EquippedCoatID;                   // The coat Lumi is currently wearing.
 
     // Progression
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")

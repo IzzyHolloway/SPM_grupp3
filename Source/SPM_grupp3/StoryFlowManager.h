@@ -298,6 +298,14 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3GateOpenedFlag = "Island3GateOpened";
 
+	// One-shot guard for the gate transition. Set this BEFORE playing the gate cutscene and
+	// before calling TravelToLevel. Because the flag is saved and restored by ApplyToWorld, the
+	// identical gate in the duplicated Level 2 will see it already set and stay quiet instead of
+	// replaying the cutscene / travelling again. Gate condition should be:
+	//   Island3PadlockSolved == true  AND  Island3GateTraveled == false
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
+	FName Island3GateTraveledFlag = "Island3GateTraveled";
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3PuzzleSolvedFlag = "Island3PuzzleSolved";
 	
