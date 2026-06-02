@@ -7,6 +7,8 @@
 #include "CharacterAimi.h"
 #include "BoatFunctionality.h"
 #include "Kismet/GameplayStatics.h"
+#include "TimerManager.h"
+#include "Engine/World.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -190,6 +192,7 @@ void ULittleLost_GameInstance::CaptureFromWorld()
         {
             PendingSave->WardrobeSlots = Wardrobe->Slots;
             PendingSave->EquippedCoatID = Wardrobe->EquippedCoatID;
+            PendingSave->bHasEverUnlockedCoat = Wardrobe->HasEverUnlockedCoat();
         }
     }
 
@@ -310,10 +313,28 @@ void ULittleLost_GameInstance::ApplyToWorld()
             {
                 Wardrobe->EquippedCoatID = PendingSave->EquippedCoatID;
             }
+            // Restore the "has ever unlocked a coat" flag so the first-coat tutorial doesn't
+            // re-trigger when the player picks up a coat in the duplicated level.
+            Wardrobe->SetHasEverUnlockedCoat(PendingSave->bHasEverUnlockedCoat);
+
             Wardrobe->OnWardrobeUpdated.Broadcast();
             if (!Wardrobe->EquippedCoatID.IsNone())
             {
+                // Broadcast now for listeners already bound...
                 Wardrobe->OnEquippedCoatChanged.Broadcast(Wardrobe->EquippedCoatID);
+
+                // ...and again next tick. The character's coat material is swapped by a Blueprint
+                // that binds to OnEquippedCoatChanged in its own BeginPlay, which may run AFTER this
+                // restore. Re-broadcasting next tick (once every actor's BeginPlay has run) guarantees
+                // the material actually applies after a level transition.
+                TWeakObjectPtr<UWardrobeComponent> WeakWardrobe = Wardrobe;
+                World->GetTimerManager().SetTimerForNextTick([WeakWardrobe]()
+                {
+                    if (WeakWardrobe.IsValid())
+                    {
+                        WeakWardrobe->BroadcastEquippedCoat();
+                    }
+                });
             }
         }
     }

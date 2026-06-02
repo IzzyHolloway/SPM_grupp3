@@ -93,6 +93,25 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Wardrobe")
     bool EquipCoat(FName CoatID);
 
+    // Whether the player has ever unlocked any coat. Persisted across levels so the first-coat
+    // tutorial notification only ever shows once (read/written by the save system).
+    UFUNCTION(BlueprintPure, Category = "Wardrobe|State")
+    bool HasEverUnlockedCoat() const { return bHasEverUnlockedCoat; }
+
+    void SetHasEverUnlockedCoat(bool bValue) { bHasEverUnlockedCoat = bValue; }
+
+    // Re-fire OnEquippedCoatChanged for the currently equipped coat. Used after a level
+    // transition so the character's coat material updates even if the listener (the character
+    // Blueprint) bound to the event after the initial restore broadcast.
+    UFUNCTION(BlueprintCallable, Category = "Wardrobe")
+    void BroadcastEquippedCoat();
+
+    // Apply the equipped coat's material straight onto the owning character's mesh (material
+    // element 0). This does NOT rely on any Blueprint event binding, so the coat shows correctly
+    // after a level transition regardless of BeginPlay ordering.
+    UFUNCTION(BlueprintCallable, Category = "Wardrobe")
+    void ApplyEquippedCoatToOwner();
+
     // Move the cursor in a 2D grid, skipping locked slots.
     UFUNCTION(BlueprintCallable, Category = "Wardrobe|Input")
     void MoveSelectionGrid(int32 DeltaX, int32 DeltaY);

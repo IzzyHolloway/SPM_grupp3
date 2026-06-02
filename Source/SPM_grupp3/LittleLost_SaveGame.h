@@ -55,6 +55,9 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
     FName EquippedCoatID;                   // The coat Lumi is currently wearing.
 
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
+    bool bHasEverUnlockedCoat = false;      // Persisted so the first-coat tutorial only shows once ever.
+
     // Progression
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")
     TSet<FName> ProgressFlags;              // All story flags set so far.
