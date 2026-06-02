@@ -3,6 +3,8 @@
 #include "Kismet/GameplayStatics.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "GameFramework/Character.h"
+#include "Components/SkeletalMeshComponent.h"
 
 UWardrobeComponent::UWardrobeComponent()
 {
@@ -49,6 +51,7 @@ void UWardrobeComponent::BeginPlay()
     if (!EquippedCoatID.IsNone())
     {
         OnEquippedCoatChanged.Broadcast(EquippedCoatID);
+        ApplyEquippedCoatToOwner();
     }
 
     // Show a pickup notification (first-time vs subsequent) whenever a coat is unlocked.
@@ -133,6 +136,34 @@ void UWardrobeComponent::EquipSelected()
     EquipCoat(Slot.CoatID);
 }
 
+void UWardrobeComponent::BroadcastEquippedCoat()
+{
+    if (!EquippedCoatID.IsNone())
+    {
+        OnEquippedCoatChanged.Broadcast(EquippedCoatID);
+    }
+    // Also push the material straight onto the mesh, so the coat shows even if no Blueprint
+    // listener is bound yet (e.g. right after a level transition).
+    ApplyEquippedCoatToOwner();
+}
+
+void UWardrobeComponent::ApplyEquippedCoatToOwner()
+{
+    if (EquippedCoatID.IsNone() || !CoatDataTable) return;
+
+    const FCoatDetail* Row = CoatDataTable->FindRow<FCoatDetail>(EquippedCoatID, TEXT("ApplyEquippedCoatToOwner"));
+    if (!Row || !Row->CoatMaterial) return;
+
+    if (ACharacter* OwnerChar = Cast<ACharacter>(GetOwner()))
+    {
+        if (USkeletalMeshComponent* MeshComp = OwnerChar->GetMesh())
+        {
+            // Coats are applied to material element 0 of the character mesh.
+            MeshComp->SetMaterial(0, Row->CoatMaterial);
+        }
+    }
+}
+
 bool UWardrobeComponent::EquipCoat(FName CoatID)
 {
     if (CoatID.IsNone()) return false;
@@ -144,6 +175,7 @@ bool UWardrobeComponent::EquipCoat(FName CoatID)
 
     EquippedCoatID = CoatID;
     OnEquippedCoatChanged.Broadcast(EquippedCoatID);
+    ApplyEquippedCoatToOwner();
     OnWardrobeUpdated.Broadcast();
     return true;
 }

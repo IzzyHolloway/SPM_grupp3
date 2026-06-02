@@ -42,6 +42,11 @@ public:
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
     void CaptureFromWorld();                    // Read the current world state into PendingSave.
 
+    // True if the carried-over save already has this coat unlocked. Used by coat pickups in a
+    // duplicated level (e.g. Level 2) to remove themselves if the player already collected them.
+    UFUNCTION(BlueprintPure, Category = "SaveGame")
+    bool IsCoatUnlockedInSave(FName CoatID) const;
+
 protected:
     virtual void Init() override;
 

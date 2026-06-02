@@ -22,6 +22,8 @@ public:
     virtual void Interact() override;
 
 protected:
+    virtual void BeginPlay() override;
+
     // Proximity outline -- lights up while the player is within range.
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UOutlineComponent> OutlineComponent;
