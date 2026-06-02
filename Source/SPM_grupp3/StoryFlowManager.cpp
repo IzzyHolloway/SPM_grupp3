@@ -383,7 +383,7 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 			);
 
-			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			if (DialogueManager && !DialogueManager->IsDialogueActive())
 			{
 				ProgressionManager->AddFlag(Island2AllItemsDialogueShownFlag);
 				DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
@@ -1011,7 +1011,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		return;
 	}
 
-	if (DialogueManager->IsDialogueOrMessageVisible())
+	if (DialogueManager->IsDialogueActive())
 	{
 		return;
 	}
@@ -1032,16 +1032,11 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
 		return;
 	}
+	*/
 	
 
 	// Island 2
-	const bool bPickedUpGramophonePart =
-		PickedUpItemID == RustyCrankPickedUpFlag ||
-		PickedUpItemID == SmallGearPickedUpFlag ||
-		PickedUpItemID == ShellItemID;
-
-	if (bPickedUpGramophonePart &&
-		ProgressionManager->HasFlag(ArrivedIsland2Flag) &&
+	if (ProgressionManager->HasFlag(ArrivedIsland2Flag) &&
 		AreAllGramophonePartsFound(ProgressionManager) &&
 		!ProgressionManager->HasFlag(GramophoneMechanismCraftedFlag) &&
 		!ProgressionManager->HasFlag(Island2AllItemsDialogueShownFlag))
@@ -1050,9 +1045,9 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
 		return;
 	}
-	*/
+	
 
-	/*
+	
 	// Island 3
 	const bool bPickedUpIsland3Item =
 		PickedUpItemID == Island3PaperPickedUpFlag ||
@@ -1069,7 +1064,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
 		return;
 	}
-	*/
+	
 }
 
 void AStoryFlowManager::TryScheduleMelodyOrderHint(AProgressionManager* ProgressionManager)

@@ -395,7 +395,7 @@ protected:
 	FText Island1AllItemsFoundMessage = FText::FromString("I think I found all the melody pieces. I should return to the Listener.");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
-	FText Island2AllItemsFoundMessage = FText::FromString("I think I have everything I need for the gramophone mechanism.");
+	FText Island2AllItemsFoundMessage = FText::FromString("I think I have everything I need to fix the gramophone. The order shouldn't matter.");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
 	FText Island3AllItemsFoundMessage = FText::FromString("I think I found what I need to draw The Gatekeeper.");
