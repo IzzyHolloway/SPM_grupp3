@@ -31,6 +31,9 @@ public:
     void ContinueGame();                        // Load the saved file and open its level.
 
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
+    void TravelToLevel(FName LevelName, bool bSpawnInBoat = false);  // In-game level transition that preserves player/inventory/flags. If bSpawnInBoat is true, the player is seated in the destination level's boat even if they were on land when leaving.
+
+    UFUNCTION(BlueprintCallable, Category = "SaveGame")
     void SaveGameAsync();                       // Capture world state and write to disk in the background.
 
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
@@ -49,6 +52,10 @@ private:
 
     // Flag for ContinueGame -> ApplyToWorld: true while waiting for the new level to be ready.
     bool bShouldApplyOnNextWorldReady = false;
+
+    // Set by TravelToLevel(bSpawnInBoat=true): seat the player in the destination level's
+    // boat (at the boat's level-placed position) even though they were on land when leaving.
+    bool bForceSpawnInBoat = false;
 
     void OnAsyncSaveFinished(const FString& Slot, const int32 Index, bool bSuccess);
 };
