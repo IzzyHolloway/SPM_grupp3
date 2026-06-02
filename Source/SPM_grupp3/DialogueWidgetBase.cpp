@@ -91,3 +91,8 @@ void UDialogueWidgetBase::SetDialogueData(const FText& SpeakerName, const FText&
 		}
 	}
 }
+
+void UDialogueWidgetBase::NotifySkipPromptCompleted()
+{
+	OnSkipPromptCompleted.Broadcast();
+}

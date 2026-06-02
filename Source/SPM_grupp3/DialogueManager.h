@@ -8,6 +8,7 @@
 
 
 class UDialogueWidgetBase;
+class UDialogueDataAsset;
 
 /*
  * Runtime Controller for dialogue
@@ -55,6 +56,10 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void StartDialogueWithFlag(const TArray<FDialogueLines>& InLines, FName FlagToSetOnEnd);
 
+	// Starts the first matching dialogue entry from a data asset without needing a physical NPC actor.
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void StartDialogueFromDataAsset(UDialogueDataAsset* DialogueAsset);
+
 	// ADvance the dialogue to the next line
 	UFUNCTION(BlueprintCallable)
 	void AdvanceDialogue();
@@ -81,6 +86,10 @@ public:
 	// Return true if a multi-line dialogue is currently active
 	UFUNCTION(BlueprintCallable)
 	bool IsDialogueActive() const;
+
+	// Returns true when the current dialogue is long enough that hold-to-skip is meaningfully different from tapping once.
+	UFUNCTION(BlueprintCallable, Category = "Dialogue|Skip")
+	bool CanSkipCurrentDialogue() const;
 	
 	// If true progression flag will be added when current dialogue ends
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
@@ -98,9 +107,18 @@ protected:
 
 	// Displays the current active dialogue line in widget
 	void ShowCurrentDialogueLine();
+
+	// Returns true if the dialogue entry matches the current progression state.
+	bool DoesDialogueEntryMatch(class AProgressionManager* ProgressionManager, const struct FDialogueEntry& Entry) const;
 	
 	// Enables or disables player movement while dialogue is active
 	void SetPlayerMovementEnabled(bool bEnabled);
+
+	// Hides and resets the skip prompt so it does not linger between messages or dialogue lines.
+	void ResetDialogueSkipPrompt();
+
+	// Updates the passive conversation hint that should remain visible during multi-line dialogue.
+	void UpdateConversationSkipHint();
 
 	
 	// Widget class used to display dialogue and short messages
@@ -121,6 +139,9 @@ protected:
 	// True after the 3 second skip has happened.
 	// Prevents the button release from also advancing dialogue.
 	bool bDialogueSkipTriggered = false;
+
+	// True while the player is currently holding the dialogue advance button and the skip prompt is active.
+	bool bDialogueSkipHoldActive = false;
 
 	// ru only while multi-line dialogue is active
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")

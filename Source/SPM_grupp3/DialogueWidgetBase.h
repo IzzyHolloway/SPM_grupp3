@@ -18,6 +18,8 @@ class UTexture2D;
 class UAudioComponent;  
 //Zoey end
 
+DECLARE_DYNAMIC_MULTICAST_DELEGATE(FOnDialogueSkipPromptCompleted);
+
 USTRUCT(BlueprintType)
 struct FDialogueSpeakerStyle
 {	
@@ -47,6 +49,34 @@ class SPM_GRUPP3_API UDialogueWidgetBase : public UUserWidget
 public:
 	UFUNCTION(BlueprintCallable)
 	void SetDialogueData(const FText& SpeakerName, const FText& NewText);
+
+	// Called by the nested skip prompt widget when the hold-to-skip animation reaches 100%.
+	UFUNCTION(BlueprintCallable, Category = "Dialogue|Skip")
+	void NotifySkipPromptCompleted();
+
+	// Starts the dialogue skip prompt and lets Blueprint drive the visual hold animation.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue|Skip")
+	void StartSkipPromptHold(float HoldDuration);
+
+	// Cancels the current skip hold and hides or rewinds the prompt.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue|Skip")
+	void CancelSkipPromptHold();
+
+	// Lets Blueprint play a short "skip confirmed" animation before the dialogue closes.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue|Skip")
+	void CompleteSkipPromptHold();
+
+	// Resets the skip prompt to its hidden idle state.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue|Skip")
+	void ResetSkipPrompt();
+
+	// Shows or hides the passive "hold to skip" hint used during longer conversations.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue|Skip")
+	void SetConversationSkipHintVisible(bool bVisible);
+
+	// Dialogue manager listens to this instead of needing direct access to the nested skip prompt widget.
+	UPROPERTY(BlueprintAssignable, Category = "Dialogue|Skip")
+	FOnDialogueSkipPromptCompleted OnSkipPromptCompleted;
 
 	//Zoey start
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
