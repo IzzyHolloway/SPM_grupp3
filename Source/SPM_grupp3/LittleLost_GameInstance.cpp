@@ -133,7 +133,9 @@ void ULittleLost_GameInstance::CaptureFromWorld()
     }
 
     PendingSave->SavedAtUtc = FDateTime::UtcNow();
-    PendingSave->CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this));
+    // bRemovePrefix=true: strip the PIE prefix (e.g. "UEDPIE_0_Level1") so the saved name
+    // matches the real level and ContinueGame's OpenLevel works in both editor and packaged builds.
+    PendingSave->CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
 
     // Find the player character. While riding the boat the controller possesses the BOAT
     // (a Pawn, not a Character), so GetPlayerCharacter() returns null -- we then look the
