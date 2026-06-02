@@ -39,6 +39,23 @@ protected:
 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
     float PickupSoundVolume = 0.1f;
+    
+    //Zoey start
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
+    USoundBase* SuccessJingleSound = nullptr;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
+    float SuccessJingleVolume = 0.5f;
+
+    UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Audio")
+    float JingleDelay = 0.3f;
+    //Zoey end
 
     bool TryUnlockInWardrobe() const;
+    
+    //Zoey start
+private:
+    static void PlaySuccessJingle(UWorld* World, USoundBase* Sound, FVector Location, float Volume);
+    //zoey end
+    
 };
