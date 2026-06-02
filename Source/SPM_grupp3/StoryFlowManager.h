@@ -325,6 +325,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
 	FName ArrivedLighthouseIslandFlag = "ArrivedLighthouseIsland";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName CopperPipePickupFlag = "PickedUpCopperPipe";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName HandWheelPipePickupFlag = "PickedUpHandWheel";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName SparkPlugPickupFlag = "PickedUpSparkPlug";
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName IgnitionCapPickupFlag = "PickedUpIgnitionCap";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
 	FName Level2MotorIslandSolvedFlag = "Level2MotorIslandSolved";
