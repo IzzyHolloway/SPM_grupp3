@@ -1,6 +1,7 @@
 #include "CoatPickup.h"
 #include "WardrobeComponent.h"
 #include "OutlineComponent.h"
+#include "LittleLost_GameInstance.h"
 #include "GameFramework/Pawn.h"
 #include "Kismet/GameplayStatics.h"
 #include "EngineUtils.h"
@@ -9,6 +10,25 @@ ACoatPickup::ACoatPickup()
 {
     OutlineComponent = CreateDefaultSubobject<UOutlineComponent>(TEXT("Outline"));
     OutlineComponent->SetupAttachment(RootComponent);
+}
+
+void ACoatPickup::BeginPlay()
+{
+    Super::BeginPlay();
+
+    // Level 2 is a duplicate of Level 1, so it spawns every coat pickup again -- including the
+    // ones the player already collected. The GameInstance carries the saved wardrobe across the
+    // level load; if this coat is already unlocked there, remove this pickup so the player only
+    // sees the coats they still haven't found. On a fresh game there is no save yet, so nothing
+    // is removed and every coat is collectable as normal.
+    if (ULittleLost_GameInstance* GI =
+            Cast<ULittleLost_GameInstance>(UGameplayStatics::GetGameInstance(this)))
+    {
+        if (GI->IsCoatUnlockedInSave(CoatID))
+        {
+            Destroy();
+        }
+    }
 }
 
 void ACoatPickup::Interact()

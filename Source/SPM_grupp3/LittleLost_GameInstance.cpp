@@ -203,6 +203,27 @@ void ULittleLost_GameInstance::CaptureFromWorld()
     }
 }
 
+// True if the in-memory save (which survives the level load) already has this coat unlocked.
+// Returns false when there is no save yet (e.g. a fresh Level 1 playthrough) so every pickup
+// stays put. In Level 2 (a duplicate of Level 1) the save carries the wardrobe over, so coats
+// the player already found report true and their pickups remove themselves.
+bool ULittleLost_GameInstance::IsCoatUnlockedInSave(FName CoatID) const
+{
+    if (!PendingSave || CoatID.IsNone())
+    {
+        return false;
+    }
+
+    for (const FWardrobeSlot& Slot : PendingSave->WardrobeSlots)
+    {
+        if (Slot.CoatID == CoatID && Slot.bUnlocked)
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 // Restores world state from PendingSave. Call this after the loaded level is ready
 void ULittleLost_GameInstance::ApplyToWorld()
 {
