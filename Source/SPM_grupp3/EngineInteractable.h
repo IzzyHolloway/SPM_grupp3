@@ -18,6 +18,10 @@ public:
 	virtual void Interact() override;
 
 protected:
+	// Optional prerequisite flag. Leave as None if the engine should always be interactable.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
+	FName RequiredProgressFlag = "TalkedToLighthouseEntity";
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName EngineInstalledFlag = "LighthouseEngineInstalled";
 
@@ -29,8 +33,16 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine")
 	bool bAddLightCutsceneFlagImmediately = false;
 
+	// Shown when the player tries to repair the engine before the story has reached that step.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine")
+	FText NotReadyMessage = FText::FromString("I should understand this place better before trying to repair the engine.");
+
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine")
 	FText AlreadyInstalledMessage = FText::FromString("The engine is already installed.");
+
+	// Called when the player tries to use the engine before the required story flag exists.
+	UFUNCTION(BlueprintImplementableEvent, Category = "Engine")
+	void OnEngineInteractionBlocked();
 
 	UFUNCTION(BlueprintImplementableEvent, Category = "Engine")
 	void OnEngineInstalled();

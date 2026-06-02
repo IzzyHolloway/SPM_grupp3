@@ -20,12 +20,23 @@ void AEngineInteractable::Interact()
 		return;
 	}
 
+	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	if (!RequiredProgressFlag.IsNone() && !ProgressionManager->HasFlag(RequiredProgressFlag))
+	{
+		if (DialogueManager)
+		{
+			DialogueManager->ShowMessage(NotReadyMessage);
+		}
+
+		OnEngineInteractionBlocked();
+		return;
+	}
+
 	if (ProgressionManager->HasFlag(EngineInstalledFlag))
 	{
-		ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-			UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-		);
-
 		if (DialogueManager)
 		{
 			DialogueManager->ShowMessage(AlreadyInstalledMessage);
