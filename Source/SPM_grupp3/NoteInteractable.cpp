@@ -49,7 +49,7 @@ void ANoteInteractable::Interact()
 		Outline->SetOutlineSuppressed(true);
 	}
 
-	LockPlayerControls(NoteWidget);
+	//LockPlayerControls(NoteWidget);
     
 	Widget->OnNoteClosed.AddDynamic(this, &ANoteInteractable::OnWidgetClosed);
 }
