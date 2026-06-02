@@ -255,9 +255,6 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
-
-	// Show "Press X/E" UI
-	ShowInteractPrompt();
 }
 
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
@@ -265,10 +262,6 @@ void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {	
 	// Remove the reference to myself in the player character to disable entering the boat
 	PlayerCharacter->RemoveBoatInReach();
-	
-	// ------------------------------ UI ------------------------------
-	
-	HideInteractPrompt();
 }
 
 // Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
@@ -304,6 +297,10 @@ void ABoatFunctionality::ExitBoat()
 
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
+	
+	// Remove any forces added by impulse to make sure the boat stays at the docking spot
+	CollisionComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	CollisionComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
 	
 	// Move boat to docking spot
 	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
