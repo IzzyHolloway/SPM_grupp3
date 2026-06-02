@@ -305,6 +305,10 @@ void ABoatFunctionality::ExitBoat()
 	// Set camera position
 	SetCameraPositionWhenExiting(Camera);
 	
+	// Remove any forces added by impulse to make sure the boat stays at the docking spot
+	CollisionComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+	CollisionComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	
 	// Move boat to docking spot
 	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
 	SetActorRotation(CurrentDockInReach->GetDockingSpotRotation());
