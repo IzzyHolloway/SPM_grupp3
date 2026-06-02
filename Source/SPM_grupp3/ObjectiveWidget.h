@@ -18,19 +18,23 @@ class SPM_GRUPP3_API UObjectiveWidget : public UUserWidget
 	
 public:
 	
-	void UpdateObjectiveDescriptionText(const FText& DescriptionText);
+	// void UpdateObjectiveDescriptionText(const FText& DescriptionText);
 	void UpdateProgressText(const FText& ProgressText);
-	void UpdateImage(UTexture2D* Image);
+	// void UpdateImage(UTexture2D* Image);
 	
 protected:
 	
+	/*
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ObjectiveDescription;
+	*/
 
 	UPROPERTY(meta = (BindWidget))
 	UTextBlock* ObjectiveProgress;
 
+	/*
 	UPROPERTY(meta = (BindWidget))
 	UImage* ObjectiveImage;
+	*/
 	
 };
