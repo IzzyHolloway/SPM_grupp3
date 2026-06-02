@@ -76,11 +76,13 @@ void AGramophoneInteractable::Interact()
 
 		ProgressionManager->AddFlag(MechanismInstalledFlag);
 
+		/*
 		if (DialogueManager)
 		{
 			DialogueManager->ShowMessage(FText::FromString("I installed the gramophone mechanism."));
 		}
 		return;
+		*/
 	}
 
 	ProgressionManager->AddFlag(GramophonePlayedFlag);

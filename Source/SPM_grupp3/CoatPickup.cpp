@@ -29,7 +29,26 @@ void ACoatPickup::Interact()
             PickupSoundVolume
         );
     }
+    //Zoey start
+    if (SuccessJingleSound && GetWorld())
+    {
+        FTimerHandle JingleTimerHandle;
+        FVector SpawnLocation = GetActorLocation();
 
+        // Vi använder en lambda i timern eftersom denna aktör (this) kommer raderas strax
+        GetWorld()->GetTimerManager().SetTimer(
+            JingleTimerHandle,
+            [World = GetWorld(), Sound = SuccessJingleSound, SpawnLocation, Vol = SuccessJingleVolume]()
+            {
+                PlaySuccessJingle(World, Sound, SpawnLocation, Vol);
+            },
+            JingleDelay,
+            false
+        );
+    }
+    //Zoey end
+    
+    
     // Clean up the on-screen prompt before destroying the actor — otherwise the
     // widget stays in the viewport because the player has no reference to call
     // SetPromptVisible(false) on after we're gone.
@@ -81,4 +100,14 @@ bool ACoatPickup::TryUnlockInWardrobe() const
         bSuccess ? TEXT("true") : TEXT("false"));
 
     return bSuccess;
+  
 }
+  //Zoey start
+    void ACoatPickup::PlaySuccessJingle(UWorld* World, USoundBase* Sound, FVector Location, float Volume)
+    {
+        if (World && Sound)
+        {
+            UGameplayStatics::PlaySoundAtLocation(World, Sound, Location, Volume);
+        }
+    }
+    //Zoey end
