@@ -4,6 +4,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/SaveGame.h"
 #include "ItemDataTypes.h"
+#include "WardrobeDataTypes.h"
 #include "StoryFlowManager.h"
 #include "LittleLost_SaveGame.generated.h"
 
@@ -46,6 +47,13 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
     bool bHasEverPickedUpItem = false;      // Used for one-time tutorials.
+
+    // Wardrobe
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
+    TArray<FWardrobeSlot> WardrobeSlots;    // Which coats are unlocked (and their IDs).
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Wardrobe")
+    FName EquippedCoatID;                   // The coat Lumi is currently wearing.
 
     // Progression
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Progression")

@@ -16,8 +16,12 @@ void UWardrobeComponent::BeginPlay()
 
     // Seed slots from the data table. Slot order follows row iteration order so the UI is
     // stable as long as rows are not reordered in the editor.
-    Slots.Reset();
-    if (CoatDataTable)
+    //
+    // IMPORTANT: only seed when the slots haven't already been populated. On a level transition
+    // the GameInstance (ApplyToWorld) restores the saved wardrobe (unlocked coats + equipped coat),
+    // and that restore can run BEFORE this BeginPlay. Re-seeding here would wipe the carried-over
+    // unlocks and reset Lumi back to the default coat.
+    if (Slots.Num() == 0 && CoatDataTable)
     {
         TArray<FName> RowNames = CoatDataTable->GetRowNames();
         Slots.Reserve(RowNames.Num());

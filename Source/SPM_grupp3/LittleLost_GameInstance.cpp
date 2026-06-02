@@ -2,6 +2,7 @@
 #include "LittleLost_GameInstance.h"
 #include "LittleLost_SaveGame.h"
 #include "InventoryComponent.h"
+#include "WardrobeComponent.h"
 #include "ProgressionManager.h"
 #include "CharacterAimi.h"
 #include "BoatFunctionality.h"
@@ -183,6 +184,13 @@ void ULittleLost_GameInstance::CaptureFromWorld()
             PendingSave->SelectedSlotIndex = Inv->SelectedSlotIndex;
             PendingSave->bHasEverPickedUpItem = Inv->bHasEverPickedUpItem;
         }
+
+        // Wardrobe: which coats are unlocked + the one Lumi is wearing.
+        if (UWardrobeComponent* Wardrobe = Player->FindComponentByClass<UWardrobeComponent>())
+        {
+            PendingSave->WardrobeSlots = Wardrobe->Slots;
+            PendingSave->EquippedCoatID = Wardrobe->EquippedCoatID;
+        }
     }
 
     // Story / progression flags
@@ -266,6 +274,26 @@ void ULittleLost_GameInstance::ApplyToWorld()
             Inv->SelectedSlotIndex = PendingSave->SelectedSlotIndex;
             Inv->bHasEverPickedUpItem = PendingSave->bHasEverPickedUpItem;
             Inv->OnInventoryUpdated.Broadcast();
+        }
+
+        // Wardrobe: restore unlocked coats + re-equip the saved coat. Only overwrite the slot
+        // list when the save actually has one (avoids wiping a fresh game's defaults). Broadcasting
+        // OnEquippedCoatChanged makes the character visuals + preview update to the carried coat.
+        if (UWardrobeComponent* Wardrobe = Player->FindComponentByClass<UWardrobeComponent>())
+        {
+            if (PendingSave->WardrobeSlots.Num() > 0)
+            {
+                Wardrobe->Slots = PendingSave->WardrobeSlots;
+            }
+            if (!PendingSave->EquippedCoatID.IsNone())
+            {
+                Wardrobe->EquippedCoatID = PendingSave->EquippedCoatID;
+            }
+            Wardrobe->OnWardrobeUpdated.Broadcast();
+            if (!Wardrobe->EquippedCoatID.IsNone())
+            {
+                Wardrobe->OnEquippedCoatChanged.Broadcast(Wardrobe->EquippedCoatID);
+            }
         }
     }
 
