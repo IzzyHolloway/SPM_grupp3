@@ -36,6 +36,7 @@ void AEngineInteractable::Interact()
 		return;
 	}
 
+	/*
 	if (ProgressionManager->HasFlag(EngineInstalledFlag))
 	{
 		if (DialogueManager)
@@ -45,6 +46,7 @@ void AEngineInteractable::Interact()
 
 		return;
 	}
+	*/
 
 	ProgressionManager->AddFlag(EngineInstalledFlag);
 

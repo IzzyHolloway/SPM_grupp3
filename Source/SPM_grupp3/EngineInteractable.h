@@ -40,8 +40,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine")
 	FText NotReadyMessage = FText::FromString("I should understand this place better before trying to repair the engine.");
 
+	/*
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Engine")
 	FText AlreadyInstalledMessage = FText::FromString("The engine is already installed.");
+	*/
 
 	// Called when the player tries to use the engine before the required story flag exists.
 	UFUNCTION(BlueprintImplementableEvent, Category = "Engine")
