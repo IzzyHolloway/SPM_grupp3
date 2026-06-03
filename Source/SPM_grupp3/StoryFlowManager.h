@@ -402,6 +402,18 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Level 2")
 	TSubclassOf<AActor> CompassBearerActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Lighthouse|Cleanup")
+	TArray<FName> LighthouseItemsToClearOnInstall =
+	{
+		"PipeWithWheel",
+		"PlugWithCap"
+	};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Lighthouse|Cleanup")
+	FName LighthouseItemsClearedFlag = "LighthouseItemsCleared";
+
+	void TryClearLighthouseItemsFromInventory(AProgressionManager* ProgressionManager);
 	
 	
 	/*** Item Found Flags for dialogue ***/

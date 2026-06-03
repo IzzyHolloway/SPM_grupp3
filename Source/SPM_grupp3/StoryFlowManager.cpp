@@ -550,6 +550,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bEngineInstalled)
 	{
+		TryClearLighthouseItemsFromInventory(ProgressionManager);
 		SetStoryState(EStoryState::Lighthouse_LightCutscene);
 		return;
 	}
@@ -1058,6 +1059,38 @@ void AStoryFlowManager::TryClearIsland3ItemsFromInventory(AProgressionManager* P
 	}
 
 	ProgressionManager->AddFlag(Island3ItemsClearedFlag);
+}
+
+void AStoryFlowManager::TryClearLighthouseItemsFromInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager) return;
+
+	if (ProgressionManager->HasFlag(LighthouseItemsClearedFlag)) return;
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Lighthouse items: No player character."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Lighthouse items: No InventoryComponent."));
+		return;
+	}
+
+	for (const FName& ItemID : LighthouseItemsToClearOnInstall)
+	{
+		if (ItemID.IsNone()) continue;
+
+		const bool bRemoved = InventoryComponent->RemoveItemByID(ItemID);
+		UE_LOG(LogTemp, Warning, TEXT("Lighthouse cleanup: %s -> %s"),
+			*ItemID.ToString(), bRemoved ? TEXT("removed") : TEXT("not found"));
+	}
+
+	ProgressionManager->AddFlag(LighthouseItemsClearedFlag);
 }
 
 void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)
