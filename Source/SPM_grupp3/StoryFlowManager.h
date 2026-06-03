@@ -6,6 +6,7 @@
 #include "StoryFlowManager.generated.h"
 
 class AProgressionManager;
+class AActor;
 
 /*
  * Story States
@@ -398,6 +399,9 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Lighthouse")
 	FName GameEndingStartedFlag = "GameEndingStarted";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Level 2")
+	TSubclassOf<AActor> CompassBearerActorClass;
 	
 	
 	/*** Item Found Flags for dialogue ***/

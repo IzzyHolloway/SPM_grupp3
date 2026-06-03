@@ -643,6 +643,19 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		if (!ProgressionManager->HasFlag(CompassBearerSpawnedFlag))
 		{
 			ProgressionManager->AddFlag(CompassBearerSpawnedFlag);
+
+			if (CompassBearerActorClass)
+			{
+				AActor* CompassBearerActor = UGameplayStatics::GetActorOfClass(GetWorld(), CompassBearerActorClass);
+				if (CompassBearerActor)
+				{
+					static const FName TriggerEventName(TEXT("ApearAndSpeak"));
+					if (UFunction* TriggerFunction = CompassBearerActor->FindFunction(TriggerEventName))
+					{
+						CompassBearerActor->ProcessEvent(TriggerFunction, nullptr);
+					}
+				}
+			}
 		}
 
 		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
