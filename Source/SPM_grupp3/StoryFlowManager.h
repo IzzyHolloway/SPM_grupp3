@@ -417,13 +417,25 @@ protected:
 	FName Island3AllItemsDialogueShownFlag = "Island3AllItemsDialogueShown";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FName Level2MotorIslandAllItemsDialogueShownFlag = "Level2MotorIslandAllItemsDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FName Level2LeverIslandAllItemsDialogueShownFlag = "Level2LeverIslandAllItemsDialogueShown";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
 	FText Island1AllItemsFoundMessage = FText::FromString("I think I found all the melody pieces. I should return to the Listener.");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
 	FText Island2AllItemsFoundMessage = FText::FromString("I think I have everything I need to fix the gramophone. The order shouldn't matter.");
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
-	FText Island3AllItemsFoundMessage = FText::FromString("I think I found what I need to draw The Gatekeeper.");
+	FText Island3AllItemsFoundMessage = FText::FromString("I think I have what I need. I can draw the Gatekeeper now.");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FText Level2MotorIslandAllItemsFoundMessage = FText::FromString("I think I found what I need here. I should go back to the workbench.");
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Item Complete Dialogue")
+	FText Level2LeverIslandAllItemsFoundMessage = FText::FromString("I think I found what I need here. I should go back to the workbench.");
 	
 	
 	/*** Helpers ***/
