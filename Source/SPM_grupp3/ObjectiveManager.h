@@ -20,6 +20,10 @@ public:
 	// Sets default values for this actor's properties
 	AObjectiveManager();
 	
+	// Shows a simple current / total counter.
+	UFUNCTION(BlueprintCallable)
+	void ShowObjectiveProgress(int32 CurrentProgress, int32 TotalProgress);
+	
 	// Creates a new objective for the provided recipe and creates or updates the widget
 	UFUNCTION(BlueprintCallable)
 	void ShowObjectiveForRecipe(FName RecipeResultItemID);

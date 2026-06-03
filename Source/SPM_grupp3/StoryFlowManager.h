@@ -7,6 +7,7 @@
 
 class AProgressionManager;
 class AActor;
+class AObjectiveManager;
 
 /*
  * Story States
@@ -110,9 +111,30 @@ protected:
 
 	void UpdateStoryFlow();
 	void SetStoryState(EStoryState NewState);
+	void UpdateObjectiveSystems(EStoryState NewState);
+	FText GetObjectiveTextForState(EStoryState State) const;
+	int32 CountSatisfiedFlags(AProgressionManager* ProgressionManager, const TArray<FName>& Flags) const;
+
+	UPROPERTY()
+	TObjectPtr<AObjectiveManager> ObjectiveManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow")
 	EStoryState CurrentStoryState = EStoryState::Home_Explore;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName HomeLanternRecipeItemID = "Lantern";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Island2MechanismRecipeItemID = "GramophoneMechanism";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Island3DrawingRecipeItemID = "Drawing";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Level2MotorHalfRecipeItemID = "PipeWithWheel";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Level2LeverHalfRecipeItemID = "PlugWithCap";
 
 	/****************** HOME / INTRO ********************/
 
