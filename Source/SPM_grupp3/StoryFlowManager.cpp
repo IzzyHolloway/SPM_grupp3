@@ -463,7 +463,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 		return;
 	}
 
-	if (bTalkedToNPC && bHasPaper && bHasPen)
+	if (bHasPaper && bHasPen)
 	{
 		if (!ProgressionManager->HasFlag(Island3AllItemsDialogueShownFlag))
 		{
@@ -471,7 +471,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
 			);
 
-			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
+			if (DialogueManager && !DialogueManager->IsDialogueActive())
 			{
 				ProgressionManager->AddFlag(Island3AllItemsDialogueShownFlag);
 				DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
@@ -655,6 +655,22 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bArrivedMotorIsland)
 	{
+		if (!bMotorIslandSolved &&
+			ProgressionManager->HasFlag(CopperPipePickupFlag) &&
+			ProgressionManager->HasFlag(HandWheelPipePickupFlag) &&
+			!ProgressionManager->HasFlag(Level2MotorIslandAllItemsDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueActive())
+			{
+				ProgressionManager->AddFlag(Level2MotorIslandAllItemsDialogueShownFlag);
+				DialogueManager->ShowMessage(Level2MotorIslandAllItemsFoundMessage);
+			}
+		}
+
 		if (bMotorIslandSolved)
 		{
 			SetStoryState(EStoryState::Level2_MotorIslandSolved);
@@ -667,6 +683,22 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bArrivedLeverIsland)
 	{
+		if (!bLeverIslandSolved &&
+			ProgressionManager->HasFlag(SparkPlugPickupFlag) &&
+			ProgressionManager->HasFlag(IgnitionCapPickupFlag) &&
+			!ProgressionManager->HasFlag(Level2LeverIslandAllItemsDialogueShownFlag))
+		{
+			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+			);
+
+			if (DialogueManager && !DialogueManager->IsDialogueActive())
+			{
+				ProgressionManager->AddFlag(Level2LeverIslandAllItemsDialogueShownFlag);
+				DialogueManager->ShowMessage(Level2LeverIslandAllItemsFoundMessage);
+			}
+		}
+
 		if (bLeverIslandSolved)
 		{
 			SetStoryState(EStoryState::Level2_LeverIslandSolved);
@@ -1080,15 +1112,10 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		return;
 	}
 	
-
 	
-	// Island 3
-	const bool bPickedUpIsland3Item =
-		PickedUpItemID == Island3PaperPickedUpFlag ||
-		PickedUpItemID == PenItemID;
 
-	if (bPickedUpIsland3Item &&
-		ProgressionManager->HasFlag(ArrivedIsland3Flag) &&
+	// Island 3
+	if (ProgressionManager->HasFlag(ArrivedIsland3Flag) &&
 		ProgressionManager->HasFlag(Island3PaperPickedUpFlag) &&
 		ProgressionManager->HasFlag(PenItemAddedToInventoryFlag) &&
 		!ProgressionManager->HasFlag(Island3NoteCraftedFlag) &&
@@ -1096,6 +1123,30 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 	{
 		ProgressionManager->AddFlag(Island3AllItemsDialogueShownFlag);
 		DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
+		return;
+	}
+
+	// Level 2 - motor island
+	if (ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) &&
+		ProgressionManager->HasFlag(CopperPipePickupFlag) &&
+		ProgressionManager->HasFlag(HandWheelPipePickupFlag) &&
+		!ProgressionManager->HasFlag(Level2MotorIslandSolvedFlag) &&
+		!ProgressionManager->HasFlag(Level2MotorIslandAllItemsDialogueShownFlag))
+	{
+		ProgressionManager->AddFlag(Level2MotorIslandAllItemsDialogueShownFlag);
+		DialogueManager->ShowMessage(Level2MotorIslandAllItemsFoundMessage);
+		return;
+	}
+
+	// Level 2 - lever island
+	if (ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) &&
+		ProgressionManager->HasFlag(SparkPlugPickupFlag) &&
+		ProgressionManager->HasFlag(IgnitionCapPickupFlag) &&
+		!ProgressionManager->HasFlag(Level2LeverIslandSolvedFlag) &&
+		!ProgressionManager->HasFlag(Level2LeverIslandAllItemsDialogueShownFlag))
+	{
+		ProgressionManager->AddFlag(Level2LeverIslandAllItemsDialogueShownFlag);
+		DialogueManager->ShowMessage(Level2LeverIslandAllItemsFoundMessage);
 		return;
 	}
 	
