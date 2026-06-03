@@ -308,6 +308,19 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Island 3")
 	FName Island3PuzzleSolvedFlag = "Island3PuzzleSolved";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 3|Cleanup")
+	TArray<FName> Island3ItemsToClearOnLeave =
+	{
+		"Drawing",
+		"Pen",
+		"Paper"
+	};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Island 3|Cleanup")
+	FName Island3ItemsClearedFlag = "Island3ItemsCleared";
+
+	void TryClearIsland3ItemsFromInventory(AProgressionManager* ProgressionManager);
 	
 	
 	/****************** LEVEL 2 ********************/

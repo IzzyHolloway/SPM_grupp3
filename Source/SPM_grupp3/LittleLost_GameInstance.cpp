@@ -12,6 +12,7 @@
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 void ULittleLost_GameInstance::Init()
 {
@@ -349,6 +350,15 @@ void ULittleLost_GameInstance::ApplyToWorld()
         }
         PM->SetCurrentObjectiveText(PendingSave->CurrentObjectiveText);
         PM->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
+    }
+    
+    // Aimi la till denna
+    // After a level transition, force the controller back into a clean gameplay input state.
+    // This prevents later UI (like crafting/inventory) from inheriting stale focus or input mode.
+    if (APlayerController* PC = UGameplayStatics::GetPlayerController(this, 0))
+    {
+        UWidgetBlueprintLibrary::SetInputMode_GameOnly(PC);
+        PC->bShowMouseCursor = false;
     }
 
     // Only apply once per load

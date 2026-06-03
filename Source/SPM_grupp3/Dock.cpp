@@ -171,11 +171,17 @@ void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 	// Only show the dock prompt while the player is actually controlling the boat.
 	if (Boat->IsPlayerControlled())
 	{
-		ShowEnterDockPrompt();
+		if (!EnterDockPromptWidget)
+		{
+			ShowEnterDockPrompt();
+		}
 	}
 	else
 	{
-		HideEnterDockPrompt();
+		if (EnterDockPromptWidget)
+		{
+			HideEnterDockPrompt();
+		}
 	}
 }
 
@@ -189,7 +195,10 @@ void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
 	
 	// -------------------------------- UI --------------------------------
 	
-	HideEnterDockPrompt();
+	if (EnterDockPromptWidget)
+	{
+		HideEnterDockPrompt();
+	}
 }
 
 // ------------------------------------------------------------- PROGRESSION -------------------------------------------------------------
@@ -346,7 +355,10 @@ void ADock::ShowEnterDockPrompt()
 
 	if (EnterDockPromptWidget)
 	{
+		// Dock prompts are informational only and should never participate in input/focus.
+		EnterDockPromptWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		EnterDockPromptWidget->AddToViewport();
+		UE_LOG(LogTemp, Warning, TEXT("Dock prompt shown: %s"), *GetName());
 	}
 }
 
@@ -356,5 +368,6 @@ void ADock::HideEnterDockPrompt()
 	{
 		EnterDockPromptWidget->RemoveFromParent();
 		EnterDockPromptWidget = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("Dock prompt hidden: %s"), *GetName());
 	}
 }

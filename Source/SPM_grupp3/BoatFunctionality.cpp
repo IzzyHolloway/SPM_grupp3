@@ -22,6 +22,7 @@
 #include "Kismet/GameplayStatics.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 // Sets default values
 ABoatFunctionality::ABoatFunctionality()
@@ -337,6 +338,14 @@ void ABoatFunctionality::ExitBoat()
 			// Repossess player character
 			AController* PlayerController = GetController();
 			PlayerController->Possess(PlayerCharacter);
+
+			// Restore a clean gameplay input state after leaving the boat so later UI
+			// (like crafting) doesn't inherit any stale focus/input mode.
+			if (APlayerController* PC = Cast<APlayerController>(PlayerController))
+			{
+				UWidgetBlueprintLibrary::SetInputMode_GameOnly(PC);
+				PC->bShowMouseCursor = false;
+			}
 			
 			// Fix camera after repossessing player
 			FixCameraAfterRepossessingPlayer();
@@ -385,11 +394,6 @@ void ABoatFunctionality::ShowInteractPrompt()
 	{
 		return;
 	}
-	
-	if (InteractPromptWidget || !InteractPromptWidgetClass)
-	{
-		return;
-	}
 
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 	if (!PlayerController)
@@ -401,7 +405,10 @@ void ABoatFunctionality::ShowInteractPrompt()
 
 	if (InteractPromptWidget)
 	{
+		// Boat prompts are visual-only and should not be able to steal hit tests or focus.
+		InteractPromptWidget->SetVisibility(ESlateVisibility::HitTestInvisible);
 		InteractPromptWidget->AddToViewport();
+		UE_LOG(LogTemp, Warning, TEXT("Boat interact prompt shown: %s"), *GetName());
 	}
 }
 
@@ -411,6 +418,7 @@ void ABoatFunctionality::HideInteractPrompt()
 	{
 		InteractPromptWidget->RemoveFromParent();
 		InteractPromptWidget = nullptr;
+		UE_LOG(LogTemp, Warning, TEXT("Boat interact prompt hidden: %s"), *GetName());
 	}
 }
 

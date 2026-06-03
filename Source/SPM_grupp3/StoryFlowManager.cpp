@@ -498,6 +498,8 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		return;
 	}
 
+	TryClearIsland3ItemsFromInventory(ProgressionManager);
+
 	const bool bArrivedMotorIsland = ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag);
 	const bool bArrivedLeverIsland = ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag);
 	const bool bArrivedLighthouseIsland = ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag);
@@ -979,6 +981,38 @@ void AStoryFlowManager::TryClearIsland2ItemsFromInventory(AProgressionManager* P
 	}
 
 	ProgressionManager->AddFlag(Island2ItemsClearedFlag);
+}
+
+void AStoryFlowManager::TryClearIsland3ItemsFromInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager) return;
+
+	if (ProgressionManager->HasFlag(Island3ItemsClearedFlag)) return;
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Island 3 items: No player character."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Island 3 items: No InventoryComponent."));
+		return;
+	}
+
+	for (const FName& ItemID : Island3ItemsToClearOnLeave)
+	{
+		if (ItemID.IsNone()) continue;
+
+		const bool bRemoved = InventoryComponent->RemoveItemByID(ItemID);
+		UE_LOG(LogTemp, Warning, TEXT("Island 3 cleanup: %s -> %s"),
+			*ItemID.ToString(), bRemoved ? TEXT("removed") : TEXT("not found"));
+	}
+
+	ProgressionManager->AddFlag(Island3ItemsClearedFlag);
 }
 
 void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)

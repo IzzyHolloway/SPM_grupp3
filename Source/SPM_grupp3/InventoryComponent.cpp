@@ -396,6 +396,7 @@ bool UInventoryComponent::AddCraftedItem(FName ItemID)
             Slot.ItemID = ItemID;
             Slot.ItemQuantity = 1;
             Slot.bIsOnWorkbench = false;
+            Slot.WorkbenchOrder = -1; // Aimi la till
 
             OnInventoryUpdated.Broadcast();
             OnItemCrafted.Broadcast(ItemID);
@@ -415,6 +416,7 @@ bool UInventoryComponent::AddItemToInventory(FName ItemToAdd, int32 Quantity)
             InventorySlots[i].ItemID = ItemToAdd;
             InventorySlots[i].ItemQuantity = Quantity;
             InventorySlots[i].bIsOnWorkbench = false;
+            InventorySlots[i].WorkbenchOrder = -1; // Aimi la till
 
             // Track first-ever pickup so we can fire one-time tutorials / hints
             const bool bFirstPickupEver = !bHasEverPickedUpItem;
@@ -441,6 +443,7 @@ bool UInventoryComponent::RemoveItemByID(FName ItemID)
             Slot.ItemID = NAME_None;
             Slot.ItemQuantity = 0;
             Slot.bIsOnWorkbench = false;
+            Slot.WorkbenchOrder = -1; // Aimi la till
             bRemoved = true;
         }
     }
