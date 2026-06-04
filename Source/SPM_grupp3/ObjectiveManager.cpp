@@ -53,22 +53,24 @@ void AObjectiveManager::Tick(float DeltaTime)
 
 }
 
-// Creates a new objective for the provided recipe and creates or updates the widget
-void AObjectiveManager::ShowObjectiveForRecipe(FName RecipeResultItemID)
+void AObjectiveManager::ShowObjectiveProgress(int32 CurrentProgress, int32 TotalProgress)
 {
-	// Extract data corresponding to RecipeResultItemID from CraftingData table
-	if (!LookUpRecipeAndSetVariables(RecipeResultItemID))
+	if (TotalProgress <= 0)
 	{
+		HideObjective();
 		return;
-	}	
-	
+	}
+
+	CurrentObjectiveNumber = FMath::Clamp(CurrentProgress, 0, TotalProgress);
+	TotalObjectiveNumber = TotalProgress;
+
 	// If the Objective Widget already exists, update it
 	if (ObjectiveWidgetInstance)
 	{
 		ObjectiveWidgetInstance->UpdateProgressText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentObjectiveNumber, TotalObjectiveNumber)));
 		return;
 	}
-	
+
 	// Create the widget
 	if (!ObjectiveWidgetClass)
 	{
@@ -86,12 +88,21 @@ void AObjectiveManager::ShowObjectiveForRecipe(FName RecipeResultItemID)
 		UE_LOG(LogTemp, Warning, TEXT("Failed to create ObjectiveWidget."));
 		return;
 	}
-	
-	// Set the content
-	ObjectiveWidgetInstance->UpdateProgressText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentObjectiveNumber, TotalObjectiveNumber)));
 
-	// Add the widget to the viewport
+	ObjectiveWidgetInstance->UpdateProgressText(FText::FromString(FString::Printf(TEXT("%d / %d"), CurrentObjectiveNumber, TotalObjectiveNumber)));
 	ObjectiveWidgetInstance->AddToViewport();
+}
+
+// Creates a new objective for the provided recipe and creates or updates the widget
+void AObjectiveManager::ShowObjectiveForRecipe(FName RecipeResultItemID)
+{
+	// Extract data corresponding to RecipeResultItemID from CraftingData table
+	if (!LookUpRecipeAndSetVariables(RecipeResultItemID))
+	{
+		return;
+	}	
+
+	ShowObjectiveProgress(CurrentObjectiveNumber, TotalObjectiveNumber);
 }
 
 // Removes the ObjectiveWidget if one exists

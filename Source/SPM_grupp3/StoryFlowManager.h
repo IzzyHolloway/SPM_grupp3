@@ -6,6 +6,8 @@
 #include "StoryFlowManager.generated.h"
 
 class AProgressionManager;
+class AActor;
+class AObjectiveManager;
 
 /*
  * Story States
@@ -109,9 +111,30 @@ protected:
 
 	void UpdateStoryFlow();
 	void SetStoryState(EStoryState NewState);
+	void UpdateObjectiveSystems(EStoryState NewState);
+	FText GetObjectiveTextForState(EStoryState State) const;
+	int32 CountSatisfiedFlags(AProgressionManager* ProgressionManager, const TArray<FName>& Flags) const;
+
+	UPROPERTY()
+	TObjectPtr<AObjectiveManager> ObjectiveManager = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow")
 	EStoryState CurrentStoryState = EStoryState::Home_Explore;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName HomeLanternRecipeItemID = "Lantern";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Island2MechanismRecipeItemID = "GramophoneMechanism";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Island3DrawingRecipeItemID = "Drawing";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Level2MotorHalfRecipeItemID = "PipeWithWheel";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objectives|Recipes")
+	FName Level2LeverHalfRecipeItemID = "PlugWithCap";
 
 	/****************** HOME / INTRO ********************/
 
@@ -398,6 +421,21 @@ protected:
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Lighthouse")
 	FName GameEndingStartedFlag = "GameEndingStarted";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Level 2")
+	TSubclassOf<AActor> CompassBearerActorClass;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Lighthouse|Cleanup")
+	TArray<FName> LighthouseItemsToClearOnInstall =
+	{
+		"PipeWithWheel",
+		"PlugWithCap"
+	};
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Lighthouse|Cleanup")
+	FName LighthouseItemsClearedFlag = "LighthouseItemsCleared";
+
+	void TryClearLighthouseItemsFromInventory(AProgressionManager* ProgressionManager);
 	
 	
 	/*** Item Found Flags for dialogue ***/

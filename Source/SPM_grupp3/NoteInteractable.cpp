@@ -10,7 +10,17 @@
 
 ANoteInteractable::ANoteInteractable()
 {
-	
+	// Give the note a proximity outline so it glows when the player gets close,
+	// matching how the coat pickups light up. RootComponent (the Mesh) is created
+	// by the AInteractableActor constructor, so it's safe to attach to here.
+	OutlineComponent = CreateDefaultSubobject<UOutlineComponent>(TEXT("Outline"));
+	OutlineComponent->SetupAttachment(RootComponent);
+}
+
+void ANoteInteractable::SetPromptVisible(bool bVisible)
+{
+	// Intentionally empty: the note uses the proximity outline glow instead of the
+	// "X - Interact" prompt text, so we suppress the base-class prompt entirely.
 }
 
 void ANoteInteractable::Interact()

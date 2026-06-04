@@ -1,6 +1,7 @@
 // Fill out your copyright notice in the Description page of Project Settings.
 #include "StoryFlowManager.h"
 #include "DialogueManager.h"
+#include "ObjectiveManager.h"
 #include "ProgressionManager.h"
 #include "InventoryComponent.h"
 #include "GameFramework/Character.h"
@@ -23,6 +24,10 @@ void AStoryFlowManager::BeginPlay()
 	{
 		return;
 	}
+
+	ObjectiveManager = Cast<AObjectiveManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AObjectiveManager::StaticClass())
+	);
 	
 	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
 	ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
@@ -78,6 +83,7 @@ void AStoryFlowManager::BeginPlay()
 	}
 
 	UpdateStoryFlow();
+	UpdateObjectiveSystems(CurrentStoryState);
 }
 
 void AStoryFlowManager::Tick(float DeltaTime)
@@ -550,6 +556,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bEngineInstalled)
 	{
+		TryClearLighthouseItemsFromInventory(ProgressionManager);
 		SetStoryState(EStoryState::Lighthouse_LightCutscene);
 		return;
 	}
@@ -643,6 +650,19 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		if (!ProgressionManager->HasFlag(CompassBearerSpawnedFlag))
 		{
 			ProgressionManager->AddFlag(CompassBearerSpawnedFlag);
+
+			if (CompassBearerActorClass)
+			{
+				AActor* CompassBearerActor = UGameplayStatics::GetActorOfClass(GetWorld(), CompassBearerActorClass);
+				if (CompassBearerActor)
+				{
+					static const FName TriggerEventName(TEXT("ApearAndSpeak"));
+					if (UFunction* TriggerFunction = CompassBearerActor->FindFunction(TriggerEventName))
+					{
+						CompassBearerActor->ProcessEvent(TriggerFunction, nullptr);
+					}
+				}
+			}
 		}
 
 		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
@@ -722,6 +742,231 @@ void AStoryFlowManager::SetStoryState(EStoryState NewState)
 	CurrentStoryState = NewState;
 
 	UE_LOG(LogTemp, Warning, TEXT("Story state changed to: %s"), *UEnum::GetValueAsString(CurrentStoryState));
+
+	UpdateObjectiveSystems(CurrentStoryState);
+}
+
+void AStoryFlowManager::UpdateObjectiveSystems(EStoryState NewState)
+{
+	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+	);
+
+	if (ProgressionManager)
+	{
+		if (const UEnum* StoryStateEnum = StaticEnum<EStoryState>())
+		{
+			const FString StateName = StoryStateEnum->GetNameStringByValue(static_cast<int64>(NewState));
+			ProgressionManager->SetCurrentObjectiveID(FName(*StateName));
+		}
+
+		ProgressionManager->SetCurrentObjectiveText(GetObjectiveTextForState(NewState));
+	}
+
+	if (!ObjectiveManager)
+	{
+		ObjectiveManager = Cast<AObjectiveManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AObjectiveManager::StaticClass())
+		);
+	}
+
+	if (!ObjectiveManager)
+	{
+		return;
+	}
+
+	const TArray<FName> HomeCraftFlags = { PickedUpLanternFlag, PickedUpMatchesFlag };
+	const TArray<FName> Island2CraftFlags = { ShellReceivedFromIsland1Flag, RustyCrankPickedUpFlag, SmallGearPickedUpFlag };
+	const TArray<FName> Island3CraftFlags = { PenItemAddedToInventoryFlag, Island3PaperPickedUpFlag };
+	const TArray<FName> Level2MotorCraftFlags = { CopperPipePickupFlag, HandWheelPipePickupFlag };
+	const TArray<FName> Level2LeverCraftFlags = { SparkPlugPickupFlag, IgnitionCapPickupFlag };
+
+	switch (NewState)
+	{
+	case EStoryState::Home_FindLight:
+	case EStoryState::Home_CraftLantern:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, HomeCraftFlags),
+				HomeCraftFlags.Num());
+		}
+		break;
+
+	case EStoryState::Island1_CollectMelodyPieces:
+	case EStoryState::Island1_ReturnToListener:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, MelodyPieceFlags),
+				MelodyPieceFlags.Num());
+		}
+		break;
+
+	case EStoryState::Island2_FindGramophoneParts:
+	case EStoryState::Island2_CraftMechanism:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, Island2CraftFlags),
+				Island2CraftFlags.Num());
+		}
+		break;
+
+	case EStoryState::Island3_FindPaper:
+	case EStoryState::Island3_CraftNote:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, Island3CraftFlags),
+				Island3CraftFlags.Num());
+		}
+		break;
+
+	case EStoryState::Level2_MotorIslandExplore:
+	case EStoryState::Level2_MotorIslandFindParts:
+	case EStoryState::Level2_MotorIslandCraftHalf:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, Level2MotorCraftFlags),
+				Level2MotorCraftFlags.Num());
+		}
+		break;
+
+	case EStoryState::Level2_LeverIslandExplore:
+	case EStoryState::Level2_LeverIslandFindParts:
+	case EStoryState::Level2_LeverIslandCraftHalf:
+		if (ProgressionManager)
+		{
+			ObjectiveManager->ShowObjectiveProgress(
+				CountSatisfiedFlags(ProgressionManager, Level2LeverCraftFlags),
+				Level2LeverCraftFlags.Num());
+		}
+		break;
+
+	default:
+		ObjectiveManager->HideObjective();
+		break;
+	}
+}
+
+int32 AStoryFlowManager::CountSatisfiedFlags(AProgressionManager* ProgressionManager, const TArray<FName>& Flags) const
+{
+	if (!ProgressionManager)
+	{
+		return 0;
+	}
+
+	int32 Count = 0;
+	for (const FName& Flag : Flags)
+	{
+		if (!Flag.IsNone() && ProgressionManager->HasFlag(Flag))
+		{
+			++Count;
+		}
+	}
+
+	return Count;
+}
+
+FText AStoryFlowManager::GetObjectiveTextForState(EStoryState State) const
+{
+	switch (State)
+	{
+	case EStoryState::Home_Explore:
+		return FText::FromString("Look around the house.");
+	case EStoryState::Home_FindLight:
+		return FText::FromString("Find something to light the lantern.");
+	case EStoryState::Home_CraftLantern:
+		return FText::FromString("Craft the lantern.");
+	case EStoryState::Home_ReadyForBoat:
+		return FText::FromString("Go to the boat.");
+
+	case EStoryState::Island1_Explore:
+		return FText::FromString("Talk to the Listener.");
+	case EStoryState::Island1_CollectMelodyPieces:
+		return FText::FromString("Find the melody pieces.");
+	case EStoryState::Island1_ReturnToListener:
+		return FText::FromString("Return to the Listener.");
+	case EStoryState::Island1_PuzzleSolved:
+		return FText::FromString("Talk to the Listener.");
+	case EStoryState::Island1_ReadyToLeave:
+		return FText::FromString("Go back to the boat.");
+
+	case EStoryState::Island2_TalkToNPCInside:
+		return FText::FromString("Talk to the woman inside the house.");
+	case EStoryState::Island2_FindGramophoneParts:
+		return FText::FromString("Find what is needed to repair the gramophone.");
+	case EStoryState::Island2_CraftMechanism:
+		return FText::FromString("Craft the gramophone mechanism.");
+	case EStoryState::Island2_InstallMechanism:
+		return FText::FromString("Install the mechanism.");
+	case EStoryState::Island2_PlayGramophone:
+		return FText::FromString("Play the gramophone.");
+	case EStoryState::Island2_ReturnToNPC:
+		return FText::FromString("Talk to the woman again.");
+	case EStoryState::Island2_ReadyToLeave:
+		return FText::FromString("Go back to the boat.");
+
+	case EStoryState::Island3_TalkToNPC:
+		return FText::FromString("Talk to the Gatekeeper.");
+	case EStoryState::Island3_FindPaper:
+		return FText::FromString("Find paper.");
+	case EStoryState::Island3_CraftNote:
+		return FText::FromString("Draw the Gatekeeper.");
+	case EStoryState::Island3_GiveNoteToNPC:
+		return FText::FromString("Show the drawing to the Gatekeeper.");
+	case EStoryState::Island3_EnterHouse:
+		return FText::FromString("Enter the house.");
+	case EStoryState::Island3_OpenPadlock:
+		return FText::FromString("Open the padlock.");
+	case EStoryState::Island3_OpenGate:
+		return FText::FromString("Open the gate.");
+	case EStoryState::Island3_ReadyToLeave:
+		return FText::FromString("Go through the gate.");
+
+	case EStoryState::Level2_ChooseIsland:
+		return FText::FromString("Choose which island to explore.");
+	case EStoryState::Level2_MotorIslandExplore:
+	case EStoryState::Level2_MotorIslandFindParts:
+		return FText::FromString("Find parts for the first engine half.");
+	case EStoryState::Level2_MotorIslandCraftHalf:
+		return FText::FromString("Craft the first engine half.");
+	case EStoryState::Level2_MotorIslandSolved:
+		return FText::FromString("Go back to the boat.");
+	case EStoryState::Level2_LeverIslandExplore:
+	case EStoryState::Level2_LeverIslandFindParts:
+		return FText::FromString("Find parts for the second engine half.");
+	case EStoryState::Level2_LeverIslandCraftHalf:
+		return FText::FromString("Craft the second engine half.");
+	case EStoryState::Level2_LeverIslandSolved:
+		return FText::FromString("Go back to the boat.");
+	case EStoryState::Level2_CompassBearerSpawned:
+		return FText::FromString("Listen to the Compass Bearer.");
+	case EStoryState::Level2_CompassReceived:
+		return FText::FromString("Go to the lighthouse island.");
+
+	case EStoryState::Lighthouse_NotReady:
+		return FText::FromString("You are not ready for the lighthouse yet.");
+	case EStoryState::Lighthouse_TalkToEntity:
+		return FText::FromString("Talk to the Lost One.");
+	case EStoryState::Lighthouse_EnterLighthouse:
+		return FText::FromString("Enter the lighthouse.");
+	case EStoryState::Lighthouse_Explore:
+		return FText::FromString("Explore the lighthouse.");
+	case EStoryState::Lighthouse_InstallEngine:
+		return FText::FromString("Install the engine.");
+	case EStoryState::Lighthouse_LightCutscene:
+		return FText::FromString("Watch the lighthouse awaken.");
+	case EStoryState::Lighthouse_AfterLightDialogue:
+		return FText::FromString("Talk after the light returns.");
+	case EStoryState::Lighthouse_EndingCutscene:
+		return FText::FromString("See what happens next.");
+
+	default:
+		return FText::GetEmpty();
+	}
 }
 
 bool AStoryFlowManager::AreAllMelodyPiecesFound(AProgressionManager* ProgressionManager) const
@@ -1045,6 +1290,38 @@ void AStoryFlowManager::TryClearIsland3ItemsFromInventory(AProgressionManager* P
 	}
 
 	ProgressionManager->AddFlag(Island3ItemsClearedFlag);
+}
+
+void AStoryFlowManager::TryClearLighthouseItemsFromInventory(AProgressionManager* ProgressionManager)
+{
+	if (!ProgressionManager) return;
+
+	if (ProgressionManager->HasFlag(LighthouseItemsClearedFlag)) return;
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	if (!PlayerCharacter)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Lighthouse items: No player character."));
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear Lighthouse items: No InventoryComponent."));
+		return;
+	}
+
+	for (const FName& ItemID : LighthouseItemsToClearOnInstall)
+	{
+		if (ItemID.IsNone()) continue;
+
+		const bool bRemoved = InventoryComponent->RemoveItemByID(ItemID);
+		UE_LOG(LogTemp, Warning, TEXT("Lighthouse cleanup: %s -> %s"),
+			*ItemID.ToString(), bRemoved ? TEXT("removed") : TEXT("not found"));
+	}
+
+	ProgressionManager->AddFlag(LighthouseItemsClearedFlag);
 }
 
 void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)
