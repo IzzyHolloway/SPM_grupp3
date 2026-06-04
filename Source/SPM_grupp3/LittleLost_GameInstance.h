@@ -42,6 +42,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
     void CaptureFromWorld();                    // Read the current world state into PendingSave.
 
+    // Store a safe checkpoint/respawn location for the player.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    void SetLastSavedPlayerTransform(FVector Location, FRotator Rotation);
+
+    // Convenience helper for checkpoints: stores the current player transform as the safe respawn point.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    void SaveCurrentPlayerTransformAsLastSaved();
+
+    // Move the current player back to LastSavedLocation. Returns false if no safe location exists yet.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    bool RespawnPlayerAtLastSavedLocation();
+
     // True if the carried-over save already has this coat unlocked. Used by coat pickups in a
     // duplicated level (e.g. Level 2) to remove themselves if the player already collected them.
     UFUNCTION(BlueprintPure, Category = "SaveGame")
@@ -64,8 +76,16 @@ public:
 
 protected:
     virtual void Init() override;
+    virtual void Shutdown() override;
 
 private:
+    // Re-applies MasterVolume after every level load. The FMOD bus volume + SoundMix override
+    // are runtime audio state that gets reset on a map load, so the stored MasterVolume must be
+    // pushed back to the audio engine each time a new world becomes ready -- otherwise the volume
+    // set in a menu is silently lost as soon as gameplay starts.
+    void OnPostLoadMap(UWorld* LoadedWorld);
+    FDelegateHandle PostLoadMapHandle;
+
     // Loaded or in-progress save kept in memory until written / applied.
     UPROPERTY(Transient)
     TObjectPtr<ULittleLost_SaveGame> PendingSave;
@@ -76,6 +96,9 @@ private:
     // Set by TravelToLevel(bSpawnInBoat=true): seat the player in the destination level's
     // boat (at the boat's level-placed position) even though they were on land when leaving.
     bool bForceSpawnInBoat = false;
+
+    ULittleLost_SaveGame* GetOrCreatePendingSave();
+    bool HasUsableSavedLocation() const;
 
     void OnAsyncSaveFinished(const FString& Slot, const int32 Index, bool bSuccess);
 };

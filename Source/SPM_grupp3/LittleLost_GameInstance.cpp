@@ -4,9 +4,11 @@
 #include "InventoryComponent.h"
 #include "WardrobeComponent.h"
 #include "ProgressionManager.h"
+#include "StoryFlowManager.h"
 #include "CharacterAimi.h"
 #include "BoatFunctionality.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/UObjectGlobals.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
@@ -15,12 +17,37 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "FMODBlueprintStatics.h"
 #include "FMODBus.h"
+#include "FMODStudioModule.h"
+#include "FMOD/fmod_studio.hpp"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
 
 void ULittleLost_GameInstance::Init()
 {
     Super::Init();
+
+    // Re-apply the saved master volume after every level load (see OnPostLoadMap).
+    PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(
+        this, &ULittleLost_GameInstance::OnPostLoadMap);
+}
+
+void ULittleLost_GameInstance::Shutdown()
+{
+    if (PostLoadMapHandle.IsValid())
+    {
+        FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(PostLoadMapHandle);
+        PostLoadMapHandle.Reset();
+    }
+
+    Super::Shutdown();
+}
+
+// Fires when a newly loaded level is ready. The FMOD bus + SoundMix override are reset by the
+// map load, so push the stored MasterVolume back to the audio engine here -- this is what makes
+// the volume set in the menu actually persist into (and across) gameplay.
+void ULittleLost_GameInstance::OnPostLoadMap(UWorld* /*LoadedWorld*/)
+{
+    ApplyMasterVolume();
 }
 
 bool ULittleLost_GameInstance::HasSave() const
@@ -127,23 +154,122 @@ void ULittleLost_GameInstance::OnAsyncSaveFinished(const FString& Slot, const in
         *Slot, bSuccess ? TEXT("true") : TEXT("false"));
 }
 
+ULittleLost_SaveGame* ULittleLost_GameInstance::GetOrCreatePendingSave()
+{
+    if (!PendingSave)
+    {
+        PendingSave = Cast<ULittleLost_SaveGame>(
+            UGameplayStatics::CreateSaveGameObject(ULittleLost_SaveGame::StaticClass()));
+    }
+
+    return PendingSave;
+}
+
+bool ULittleLost_GameInstance::HasUsableSavedLocation() const
+{
+    return PendingSave
+        && PendingSave->bHasLastSavedLocation
+        && !PendingSave->LastSavedLocation.IsNearlyZero();
+}
+
+void ULittleLost_GameInstance::SetLastSavedPlayerTransform(FVector Location, FRotator Rotation)
+{
+    if (Location.IsNearlyZero())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SetLastSavedPlayerTransform ignored zero location."));
+        return;
+    }
+
+    ULittleLost_SaveGame* Save = GetOrCreatePendingSave();
+    if (!Save)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SetLastSavedPlayerTransform failed: could not create save object."));
+        return;
+    }
+
+    Save->LastSavedLocation = Location;
+    Save->LastSavedRotation = Rotation;
+    Save->bHasLastSavedLocation = true;
+}
+
+void ULittleLost_GameInstance::SaveCurrentPlayerTransformAsLastSaved()
+{
+    ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (!Player)
+    {
+        Player = Cast<ACharacterAimi>(
+            UGameplayStatics::GetActorOfClass(GetWorld(), ACharacterAimi::StaticClass()));
+    }
+
+    if (!Player)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SaveCurrentPlayerTransformAsLastSaved failed: no player found."));
+        return;
+    }
+
+    SetLastSavedPlayerTransform(Player->GetActorLocation(), Player->GetActorRotation());
+}
+
+bool ULittleLost_GameInstance::RespawnPlayerAtLastSavedLocation()
+{
+    if (!HasUsableSavedLocation())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("RespawnPlayerAtLastSavedLocation failed: no LastSavedLocation has been set."));
+        return false;
+    }
+
+    ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (!Player)
+    {
+        Player = Cast<ACharacterAimi>(
+            UGameplayStatics::GetActorOfClass(GetWorld(), ACharacterAimi::StaticClass()));
+    }
+
+    if (!Player)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("RespawnPlayerAtLastSavedLocation failed: no player found."));
+        return false;
+    }
+
+    Player->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    Player->IsBoating = false;
+
+    if (UCharacterMovementComponent* Move = Player->GetCharacterMovement())
+    {
+        Move->StopMovementImmediately();
+        Move->SetMovementMode(MOVE_Walking);
+    }
+
+    Player->SetActorLocationAndRotation(
+        PendingSave->LastSavedLocation,
+        PendingSave->LastSavedRotation,
+        false,
+        nullptr,
+        ETeleportType::TeleportPhysics);
+
+    return true;
+}
+
 // Reads the current player, inventory and progression state into PendingSave
 void ULittleLost_GameInstance::CaptureFromWorld()
 {
     UWorld* World = GetWorld();
     if (!World) return;
 
-    if (!PendingSave)
-    {
-        PendingSave = Cast<ULittleLost_SaveGame>(
-            UGameplayStatics::CreateSaveGameObject(ULittleLost_SaveGame::StaticClass()));
-        if (!PendingSave) return;
-    }
+    if (!GetOrCreatePendingSave()) return;
 
     PendingSave->SavedAtUtc = FDateTime::UtcNow();
     // bRemovePrefix=true: strip the PIE prefix (e.g. "UEDPIE_0_Level1") so the saved name
     // matches the real level and ContinueGame's OpenLevel works in both editor and packaged builds.
     PendingSave->CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
+
+    if (ABoatFunctionality* WorldBoat = Cast<ABoatFunctionality>(
+        UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass())))
+    {
+        PendingSave->BoatLocation = WorldBoat->GetActorLocation();
+        PendingSave->BoatRotation = WorldBoat->GetActorRotation();
+        PendingSave->bHasBoatTransform = true;
+    }
 
     // Find the player character. While riding the boat the controller possesses the BOAT
     // (a Pawn, not a Character), so GetPlayerCharacter() returns null -- we then look the
@@ -161,6 +287,7 @@ void ULittleLost_GameInstance::CaptureFromWorld()
             PendingSave->bWasInBoat = true;
             PendingSave->BoatLocation = Boat->GetActorLocation();
             PendingSave->BoatRotation = Boat->GetActorRotation();
+            PendingSave->bHasBoatTransform = true;
 
             TArray<AActor*> AttachedActors;
             Boat->GetAttachedActors(AttachedActors);
@@ -184,6 +311,13 @@ void ULittleLost_GameInstance::CaptureFromWorld()
     {
         PendingSave->PlayerLocation = Player->GetActorLocation();
         PendingSave->PlayerRotation = Player->GetActorRotation();
+
+        if (!PendingSave->bHasLastSavedLocation && !PendingSave->PlayerLocation.IsNearlyZero())
+        {
+            PendingSave->LastSavedLocation = PendingSave->PlayerLocation;
+            PendingSave->LastSavedRotation = PendingSave->PlayerRotation;
+            PendingSave->bHasLastSavedLocation = true;
+        }
 
         if (UInventoryComponent* Inv = Player->FindComponentByClass<UInventoryComponent>())
         {
@@ -240,6 +374,15 @@ void ULittleLost_GameInstance::ApplyToWorld()
     UWorld* World = GetWorld();
     if (!World) return;
 
+    AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+        UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass()));
+    if (!ProgressionManager)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ApplyToWorld: ProgressionManager not ready yet. Retrying next tick."));
+        World->GetTimerManager().SetTimerForNextTick(this, &ULittleLost_GameInstance::ApplyToWorld);
+        return;
+    }
+
     // The GameMode has already spawned & possessed the player character at a PlayerStart.
     ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
     if (!Player)
@@ -252,23 +395,24 @@ void ULittleLost_GameInstance::ApplyToWorld()
     // OR if this transition explicitly asked for it (e.g. walking through the gate on land
     // but spawning into the next level already in the boat).
     const bool bBoardBoat = PendingSave->bWasInBoat || bForceSpawnInBoat;
+    ABoatFunctionality* Boat = Cast<ABoatFunctionality>(
+        UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass()));
+
+    // ContinueGame should restore the boat to the island/dock where it was saved, even when
+    // Lumi saved on land. Gate transitions that force the player into a boat should keep the
+    // destination level's placed boat transform instead.
+    if (Boat && PendingSave->bHasBoatTransform && !bForceSpawnInBoat)
+    {
+        Boat->SetActorLocationAndRotation(PendingSave->BoatLocation, PendingSave->BoatRotation);
+    }
 
     if (Player)
     {
         if (bBoardBoat)
         {
             // Re-seat the player in the boat (mirrors EnterBoat()).
-            if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(
-                    UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass())))
+            if (Boat)
             {
-                // Only restore the saved boat transform when the player genuinely was in the
-                // boat. When forcing them in after a gate transition, leave the boat where the
-                // destination level placed it.
-                if (PendingSave->bWasInBoat)
-                {
-                    Boat->SetActorLocationAndRotation(PendingSave->BoatLocation, PendingSave->BoatRotation);
-                }
-
                 AController* PlayerController = Player->GetController(); // read before possession changes
 
                 if (UCharacterMovementComponent* Move = Player->GetCharacterMovement())
@@ -291,9 +435,22 @@ void ULittleLost_GameInstance::ApplyToWorld()
         }
         else
         {
-            Player->SetActorLocationAndRotation(
-                PendingSave->PlayerLocation,
-                PendingSave->PlayerRotation);
+            if (!PendingSave->PlayerLocation.IsNearlyZero())
+            {
+                Player->SetActorLocationAndRotation(
+                    PendingSave->PlayerLocation,
+                    PendingSave->PlayerRotation);
+            }
+            else if (HasUsableSavedLocation())
+            {
+                Player->SetActorLocationAndRotation(
+                    PendingSave->LastSavedLocation,
+                    PendingSave->LastSavedRotation);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("ApplyToWorld: saved player location is zero and no LastSavedLocation exists. Keeping PlayerStart location."));
+            }
         }
 
         // Inventory lives on the character and survives even while boating.
@@ -345,15 +502,17 @@ void ULittleLost_GameInstance::ApplyToWorld()
     }
 
     // Restore story flags + active objective
-    if (AProgressionManager* PM = Cast<AProgressionManager>(
-        UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass())))
+    for (const FName& Flag : PendingSave->ProgressFlags)
     {
-        for (const FName& Flag : PendingSave->ProgressFlags)
-        {
-            PM->AddFlag(Flag);
-        }
-        PM->SetCurrentObjectiveText(PendingSave->CurrentObjectiveText);
-        PM->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
+        ProgressionManager->AddFlag(Flag);
+    }
+    ProgressionManager->SetCurrentObjectiveText(PendingSave->CurrentObjectiveText);
+    ProgressionManager->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
+
+    if (AStoryFlowManager* StoryFlowManager = Cast<AStoryFlowManager>(
+        UGameplayStatics::GetActorOfClass(World, AStoryFlowManager::StaticClass())))
+    {
+        StoryFlowManager->RefreshFromProgression();
     }
     
     // Aimi la till denna
@@ -376,21 +535,64 @@ void ULittleLost_GameInstance::SetMasterVolume(float NewVolume)
     ApplyMasterVolume();
 }
 
-// Pushes MasterVolume to the FMOD master bus (what the game's audio actually routes
-// through) and to the engine sound-class mix (for any non-FMOD sounds). Mirrors the
-// three calls the old WBP_Volume slider made, but driven from one place in code.
+// Applies MasterVolume to BOTH audio systems this game uses, so it controls everything
+// regardless of which engine a given sound goes through:
+//
+//   1) FMOD (footsteps, water, boat, gate, ...): the master bus "bus:/" -- every FMOD event
+//      ultimately routes through it. We target the master bus via the studio system instead of a
+//      named sub-bus asset (e.g. fmod_ljud): BusSetVolume(named bus) only affects events routed
+//      through that exact bus, and silently does nothing if its cached GUID no longer matches the
+//      FMOD project after a rebuild.
+//
+//   2) Native UE audio (music, pickups, dialogue, ...): a SoundMix override per top-level sound
+//      class. This project's sound classes are NOT all parented under one master class, so the
+//      old code (which overrode only MasterSFX) reached the menu music -- SC_mainMenu is a child
+//      of MasterSFX -- but never the in-level music on SC_BackgroundMusic, which is its own root
+//      class. We override each root we use; bApplyToChildren=true cascades to their child classes.
 void ULittleLost_GameInstance::ApplyMasterVolume()
 {
-    if (UFMODBus* Bus = LoadObject<UFMODBus>(nullptr, TEXT("/Game/FMOD/Buses/fmod_ljud.fmod_ljud")))
+    // 1) FMOD master bus.
+    if (IFMODStudioModule::IsAvailable())
     {
-        UFMODBlueprintStatics::BusSetVolume(Bus, MasterVolume);
+        if (FMOD::Studio::System* StudioSystem =
+                IFMODStudioModule::Get().GetStudioSystem(EFMODSystemContext::Runtime))
+        {
+            FMOD::Studio::Bus* MasterBus = nullptr;
+            const FMOD_RESULT Result = StudioSystem->getBus("bus:/", &MasterBus);
+            if (Result == FMOD_OK && MasterBus)
+            {
+                MasterBus->setVolume(MasterVolume);
+                UE_LOG(LogTemp, Log,
+                    TEXT("ApplyMasterVolume: set FMOD master bus volume to %.2f."), MasterVolume);
+            }
+            else
+            {
+                // Usually means the Master bank isn't loaded yet (no banks => no master bus).
+                UE_LOG(LogTemp, Warning,
+                    TEXT("ApplyMasterVolume: could not get FMOD master bus 'bus:/' (result=%d). Is the Master bank loaded?"),
+                    (int32)Result);
+            }
+        }
     }
 
-    USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume"));
-    USoundClass* MasterSFX = LoadObject<USoundClass>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"));
-    if (Mix && MasterSFX)
+    // 2) Native UE audio: SoundMix override on each top-level sound class we use. Add a class
+    // here if a new root sound class is introduced and needs to follow the master volume.
+    if (USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume")))
     {
-        UGameplayStatics::SetSoundMixClassOverride(this, Mix, MasterSFX, MasterVolume, 1.0f, 1.0f, true);
+        static const TCHAR* RootSoundClassPaths[] =
+        {
+            TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"),                                  // menu music (child SC_mainMenu) + SFX
+            TEXT("/Game/Grupp03_Test/Zoey/Audio/music/Background/SC_BackgroundMusic.SC_BackgroundMusic"),   // in-level background music
+        };
+
+        for (const TCHAR* ClassPath : RootSoundClassPaths)
+        {
+            if (USoundClass* SoundClass = LoadObject<USoundClass>(nullptr, ClassPath))
+            {
+                UGameplayStatics::SetSoundMixClassOverride(this, Mix, SoundClass, MasterVolume, 1.0f, 1.0f, true);
+            }
+        }
+
         UGameplayStatics::PushSoundMixModifier(this, Mix);
     }
 }

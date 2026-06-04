@@ -29,6 +29,16 @@ public:
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     FRotator PlayerRotation = FRotator::ZeroRotator;
 
+    // Safe respawn/checkpoint transform used when the player falls in water.
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    FVector LastSavedLocation = FVector::ZeroVector;
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    FRotator LastSavedRotation = FRotator::ZeroRotator;
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    bool bHasLastSavedLocation = false;
+
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     bool bWasInBoat = false;                // True if the player was riding the boat when saved.
 
@@ -37,6 +47,9 @@ public:
 
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
     FRotator BoatRotation = FRotator::ZeroRotator;
+
+    UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Player")
+    bool bHasBoatTransform = false;
 
     // Inventory
     UPROPERTY(BlueprintReadWrite, Category = "SaveGame|Inventory")
