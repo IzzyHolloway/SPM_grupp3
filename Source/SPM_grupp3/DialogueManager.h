@@ -155,6 +155,15 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	int32 CurrentDialogueIndex = 0;
 	
+	FTimerHandle DialogueSkipPromptDelayTimerHandle;
+	
+	bool bDialogueSkipPromptVisualActive = false;
+	
+	void BeginDialogueSkipPromptAfterDelay();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue|Skip")
+	float DialogueSkipPromptDelay = 0.3f;
+	
 private:
 	bool bMessageVisible = false;
 };
