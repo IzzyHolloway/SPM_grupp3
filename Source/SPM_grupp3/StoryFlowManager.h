@@ -7,7 +7,9 @@
 
 class AProgressionManager;
 class AActor;
+class ADialogueManager;
 class AObjectiveManager;
+class UInventoryComponent;
 
 /*
  * Story States
@@ -97,6 +99,7 @@ enum class EStoryState : uint8
  * Dialogue, pickups, crafting, boat blocking, and puzzle interactables
  * should still use ProgressionManager flags directly.
  */
+
 UCLASS()
 class SPM_GRUPP3_API AStoryFlowManager : public AActor
 {
@@ -104,6 +107,9 @@ class SPM_GRUPP3_API AStoryFlowManager : public AActor
 
 public:
 	AStoryFlowManager();
+
+	UFUNCTION(BlueprintCallable, Category = "Story Flow")
+	void RefreshFromProgression();
 
 protected:
 	virtual void BeginPlay() override;
@@ -114,9 +120,26 @@ protected:
 	void UpdateObjectiveSystems(EStoryState NewState);
 	FText GetObjectiveTextForState(EStoryState State) const;
 	int32 CountSatisfiedFlags(AProgressionManager* ProgressionManager, const TArray<FName>& Flags) const;
+	void CacheRuntimeReferences();
+	AProgressionManager* GetProgressionManager();
+	ADialogueManager* GetDialogueManager();
+	UInventoryComponent* GetInventoryComponent();
+	bool IsInLevel2(AProgressionManager* ProgressionManager) const;
+	bool TryShowOneShotMessage(AProgressionManager* ProgressionManager, FName MessageShownFlag, const FText& Message, bool bBlockOnAnyVisibleDialogue);
+	void TryAddItemToInventoryOnce(AProgressionManager* ProgressionManager, FName ItemID, FName AddedFlag, const TCHAR* DebugName);
+	void TryClearInventoryItemsOnce(AProgressionManager* ProgressionManager, const TArray<FName>& ItemIDs, FName ClearedFlag, const TCHAR* DebugName);
 
 	UPROPERTY()
 	TObjectPtr<AObjectiveManager> ObjectiveManager = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<AProgressionManager> CachedProgressionManager = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<ADialogueManager> CachedDialogueManager = nullptr;
+
+	UPROPERTY()
+	TObjectPtr<UInventoryComponent> CachedInventoryComponent = nullptr;
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow")
 	EStoryState CurrentStoryState = EStoryState::Home_Explore;

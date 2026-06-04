@@ -4,6 +4,7 @@
 #include "InventoryComponent.h"
 #include "WardrobeComponent.h"
 #include "ProgressionManager.h"
+#include "StoryFlowManager.h"
 #include "CharacterAimi.h"
 #include "BoatFunctionality.h"
 #include "Kismet/GameplayStatics.h"
@@ -127,23 +128,122 @@ void ULittleLost_GameInstance::OnAsyncSaveFinished(const FString& Slot, const in
         *Slot, bSuccess ? TEXT("true") : TEXT("false"));
 }
 
+ULittleLost_SaveGame* ULittleLost_GameInstance::GetOrCreatePendingSave()
+{
+    if (!PendingSave)
+    {
+        PendingSave = Cast<ULittleLost_SaveGame>(
+            UGameplayStatics::CreateSaveGameObject(ULittleLost_SaveGame::StaticClass()));
+    }
+
+    return PendingSave;
+}
+
+bool ULittleLost_GameInstance::HasUsableSavedLocation() const
+{
+    return PendingSave
+        && PendingSave->bHasLastSavedLocation
+        && !PendingSave->LastSavedLocation.IsNearlyZero();
+}
+
+void ULittleLost_GameInstance::SetLastSavedPlayerTransform(FVector Location, FRotator Rotation)
+{
+    if (Location.IsNearlyZero())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SetLastSavedPlayerTransform ignored zero location."));
+        return;
+    }
+
+    ULittleLost_SaveGame* Save = GetOrCreatePendingSave();
+    if (!Save)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SetLastSavedPlayerTransform failed: could not create save object."));
+        return;
+    }
+
+    Save->LastSavedLocation = Location;
+    Save->LastSavedRotation = Rotation;
+    Save->bHasLastSavedLocation = true;
+}
+
+void ULittleLost_GameInstance::SaveCurrentPlayerTransformAsLastSaved()
+{
+    ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (!Player)
+    {
+        Player = Cast<ACharacterAimi>(
+            UGameplayStatics::GetActorOfClass(GetWorld(), ACharacterAimi::StaticClass()));
+    }
+
+    if (!Player)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("SaveCurrentPlayerTransformAsLastSaved failed: no player found."));
+        return;
+    }
+
+    SetLastSavedPlayerTransform(Player->GetActorLocation(), Player->GetActorRotation());
+}
+
+bool ULittleLost_GameInstance::RespawnPlayerAtLastSavedLocation()
+{
+    if (!HasUsableSavedLocation())
+    {
+        UE_LOG(LogTemp, Warning, TEXT("RespawnPlayerAtLastSavedLocation failed: no LastSavedLocation has been set."));
+        return false;
+    }
+
+    ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
+    if (!Player)
+    {
+        Player = Cast<ACharacterAimi>(
+            UGameplayStatics::GetActorOfClass(GetWorld(), ACharacterAimi::StaticClass()));
+    }
+
+    if (!Player)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("RespawnPlayerAtLastSavedLocation failed: no player found."));
+        return false;
+    }
+
+    Player->DetachFromActor(FDetachmentTransformRules::KeepWorldTransform);
+    Player->IsBoating = false;
+
+    if (UCharacterMovementComponent* Move = Player->GetCharacterMovement())
+    {
+        Move->StopMovementImmediately();
+        Move->SetMovementMode(MOVE_Walking);
+    }
+
+    Player->SetActorLocationAndRotation(
+        PendingSave->LastSavedLocation,
+        PendingSave->LastSavedRotation,
+        false,
+        nullptr,
+        ETeleportType::TeleportPhysics);
+
+    return true;
+}
+
 // Reads the current player, inventory and progression state into PendingSave
 void ULittleLost_GameInstance::CaptureFromWorld()
 {
     UWorld* World = GetWorld();
     if (!World) return;
 
-    if (!PendingSave)
-    {
-        PendingSave = Cast<ULittleLost_SaveGame>(
-            UGameplayStatics::CreateSaveGameObject(ULittleLost_SaveGame::StaticClass()));
-        if (!PendingSave) return;
-    }
+    if (!GetOrCreatePendingSave()) return;
 
     PendingSave->SavedAtUtc = FDateTime::UtcNow();
     // bRemovePrefix=true: strip the PIE prefix (e.g. "UEDPIE_0_Level1") so the saved name
     // matches the real level and ContinueGame's OpenLevel works in both editor and packaged builds.
     PendingSave->CurrentLevelName = FName(*UGameplayStatics::GetCurrentLevelName(this, true));
+
+    if (ABoatFunctionality* WorldBoat = Cast<ABoatFunctionality>(
+        UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass())))
+    {
+        PendingSave->BoatLocation = WorldBoat->GetActorLocation();
+        PendingSave->BoatRotation = WorldBoat->GetActorRotation();
+        PendingSave->bHasBoatTransform = true;
+    }
 
     // Find the player character. While riding the boat the controller possesses the BOAT
     // (a Pawn, not a Character), so GetPlayerCharacter() returns null -- we then look the
@@ -161,6 +261,7 @@ void ULittleLost_GameInstance::CaptureFromWorld()
             PendingSave->bWasInBoat = true;
             PendingSave->BoatLocation = Boat->GetActorLocation();
             PendingSave->BoatRotation = Boat->GetActorRotation();
+            PendingSave->bHasBoatTransform = true;
 
             TArray<AActor*> AttachedActors;
             Boat->GetAttachedActors(AttachedActors);
@@ -184,6 +285,13 @@ void ULittleLost_GameInstance::CaptureFromWorld()
     {
         PendingSave->PlayerLocation = Player->GetActorLocation();
         PendingSave->PlayerRotation = Player->GetActorRotation();
+
+        if (!PendingSave->bHasLastSavedLocation && !PendingSave->PlayerLocation.IsNearlyZero())
+        {
+            PendingSave->LastSavedLocation = PendingSave->PlayerLocation;
+            PendingSave->LastSavedRotation = PendingSave->PlayerRotation;
+            PendingSave->bHasLastSavedLocation = true;
+        }
 
         if (UInventoryComponent* Inv = Player->FindComponentByClass<UInventoryComponent>())
         {
@@ -240,6 +348,15 @@ void ULittleLost_GameInstance::ApplyToWorld()
     UWorld* World = GetWorld();
     if (!World) return;
 
+    AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+        UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass()));
+    if (!ProgressionManager)
+    {
+        UE_LOG(LogTemp, Warning, TEXT("ApplyToWorld: ProgressionManager not ready yet. Retrying next tick."));
+        World->GetTimerManager().SetTimerForNextTick(this, &ULittleLost_GameInstance::ApplyToWorld);
+        return;
+    }
+
     // The GameMode has already spawned & possessed the player character at a PlayerStart.
     ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0));
     if (!Player)
@@ -252,23 +369,24 @@ void ULittleLost_GameInstance::ApplyToWorld()
     // OR if this transition explicitly asked for it (e.g. walking through the gate on land
     // but spawning into the next level already in the boat).
     const bool bBoardBoat = PendingSave->bWasInBoat || bForceSpawnInBoat;
+    ABoatFunctionality* Boat = Cast<ABoatFunctionality>(
+        UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass()));
+
+    // ContinueGame should restore the boat to the island/dock where it was saved, even when
+    // Lumi saved on land. Gate transitions that force the player into a boat should keep the
+    // destination level's placed boat transform instead.
+    if (Boat && PendingSave->bHasBoatTransform && !bForceSpawnInBoat)
+    {
+        Boat->SetActorLocationAndRotation(PendingSave->BoatLocation, PendingSave->BoatRotation);
+    }
 
     if (Player)
     {
         if (bBoardBoat)
         {
             // Re-seat the player in the boat (mirrors EnterBoat()).
-            if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(
-                    UGameplayStatics::GetActorOfClass(World, ABoatFunctionality::StaticClass())))
+            if (Boat)
             {
-                // Only restore the saved boat transform when the player genuinely was in the
-                // boat. When forcing them in after a gate transition, leave the boat where the
-                // destination level placed it.
-                if (PendingSave->bWasInBoat)
-                {
-                    Boat->SetActorLocationAndRotation(PendingSave->BoatLocation, PendingSave->BoatRotation);
-                }
-
                 AController* PlayerController = Player->GetController(); // read before possession changes
 
                 if (UCharacterMovementComponent* Move = Player->GetCharacterMovement())
@@ -291,9 +409,22 @@ void ULittleLost_GameInstance::ApplyToWorld()
         }
         else
         {
-            Player->SetActorLocationAndRotation(
-                PendingSave->PlayerLocation,
-                PendingSave->PlayerRotation);
+            if (!PendingSave->PlayerLocation.IsNearlyZero())
+            {
+                Player->SetActorLocationAndRotation(
+                    PendingSave->PlayerLocation,
+                    PendingSave->PlayerRotation);
+            }
+            else if (HasUsableSavedLocation())
+            {
+                Player->SetActorLocationAndRotation(
+                    PendingSave->LastSavedLocation,
+                    PendingSave->LastSavedRotation);
+            }
+            else
+            {
+                UE_LOG(LogTemp, Warning, TEXT("ApplyToWorld: saved player location is zero and no LastSavedLocation exists. Keeping PlayerStart location."));
+            }
         }
 
         // Inventory lives on the character and survives even while boating.
@@ -345,15 +476,17 @@ void ULittleLost_GameInstance::ApplyToWorld()
     }
 
     // Restore story flags + active objective
-    if (AProgressionManager* PM = Cast<AProgressionManager>(
-        UGameplayStatics::GetActorOfClass(World, AProgressionManager::StaticClass())))
+    for (const FName& Flag : PendingSave->ProgressFlags)
     {
-        for (const FName& Flag : PendingSave->ProgressFlags)
-        {
-            PM->AddFlag(Flag);
-        }
-        PM->SetCurrentObjectiveText(PendingSave->CurrentObjectiveText);
-        PM->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
+        ProgressionManager->AddFlag(Flag);
+    }
+    ProgressionManager->SetCurrentObjectiveText(PendingSave->CurrentObjectiveText);
+    ProgressionManager->SetCurrentObjectiveID(PendingSave->CurrentObjectiveID);
+
+    if (AStoryFlowManager* StoryFlowManager = Cast<AStoryFlowManager>(
+        UGameplayStatics::GetActorOfClass(World, AStoryFlowManager::StaticClass())))
+    {
+        StoryFlowManager->RefreshFromProgression();
     }
     
     // Aimi la till denna

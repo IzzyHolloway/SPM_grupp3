@@ -42,6 +42,18 @@ public:
     UFUNCTION(BlueprintCallable, Category = "SaveGame")
     void CaptureFromWorld();                    // Read the current world state into PendingSave.
 
+    // Store a safe checkpoint/respawn location for the player.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    void SetLastSavedPlayerTransform(FVector Location, FRotator Rotation);
+
+    // Convenience helper for checkpoints: stores the current player transform as the safe respawn point.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    void SaveCurrentPlayerTransformAsLastSaved();
+
+    // Move the current player back to LastSavedLocation. Returns false if no safe location exists yet.
+    UFUNCTION(BlueprintCallable, Category = "SaveGame|Respawn")
+    bool RespawnPlayerAtLastSavedLocation();
+
     // True if the carried-over save already has this coat unlocked. Used by coat pickups in a
     // duplicated level (e.g. Level 2) to remove themselves if the player already collected them.
     UFUNCTION(BlueprintPure, Category = "SaveGame")
@@ -76,6 +88,9 @@ private:
     // Set by TravelToLevel(bSpawnInBoat=true): seat the player in the destination level's
     // boat (at the boat's level-placed position) even though they were on land when leaving.
     bool bForceSpawnInBoat = false;
+
+    ULittleLost_SaveGame* GetOrCreatePendingSave();
+    bool HasUsableSavedLocation() const;
 
     void OnAsyncSaveFinished(const FString& Slot, const int32 Index, bool bSuccess);
 };
