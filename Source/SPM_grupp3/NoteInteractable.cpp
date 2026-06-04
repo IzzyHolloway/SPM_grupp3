@@ -53,11 +53,13 @@ void ANoteInteractable::Interact()
     
 	NoteWidget = Widget;
 
+	/*
 	// Note is now open -- stop the interactable outline from glowing while you read it.
 	if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
 	{
 		Outline->SetOutlineSuppressed(true);
 	}
+	*/
 
 	//LockPlayerControls(NoteWidget);
     
