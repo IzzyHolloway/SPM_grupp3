@@ -614,6 +614,26 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 	const bool bTalkedAfterLight = ProgressionManager->HasFlag(TalkedAfterLighthouseLightFlag);
 	const bool bFinalCutsceneStarted = ProgressionManager->HasFlag(FinalCutsceneStartedFlag);
 
+	auto ShowCompassBearer = [this]()
+	{
+		if (!CompassBearerActorClass)
+		{
+			return;
+		}
+
+		AActor* CompassBearerActor = UGameplayStatics::GetActorOfClass(GetWorld(), CompassBearerActorClass);
+		if (!CompassBearerActor)
+		{
+			return;
+		}
+
+		static const FName TriggerEventName(TEXT("ShowCompassBearer"));
+		if (UFunction* TriggerFunction = CompassBearerActor->FindFunction(TriggerEventName))
+		{
+			CompassBearerActor->ProcessEvent(TriggerFunction, nullptr);
+		}
+	};
+
 	// -------------------------------
 	// Lighthouse ending part
 	// Check latest steps first.
@@ -717,6 +737,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bCompassBearerSpawned)
 	{
+		ShowCompassBearer();
 		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
 		return;
 	}
@@ -738,19 +759,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		if (!ProgressionManager->HasFlag(CompassBearerSpawnedFlag))
 		{
 			ProgressionManager->AddFlag(CompassBearerSpawnedFlag);
-
-			if (CompassBearerActorClass)
-			{
-				AActor* CompassBearerActor = UGameplayStatics::GetActorOfClass(GetWorld(), CompassBearerActorClass);
-				if (CompassBearerActor)
-				{
-					static const FName TriggerEventName(TEXT("ApearAndSpeak"));
-					if (UFunction* TriggerFunction = CompassBearerActor->FindFunction(TriggerEventName))
-					{
-						CompassBearerActor->ProcessEvent(TriggerFunction, nullptr);
-					}
-				}
-			}
+			ShowCompassBearer();
 		}
 
 		SetStoryState(EStoryState::Level2_CompassBearerSpawned);
