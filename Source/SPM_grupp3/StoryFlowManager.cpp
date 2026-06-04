@@ -16,23 +16,16 @@ void AStoryFlowManager::BeginPlay()
 {
 	Super::BeginPlay();
 
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
-	);
+	CacheRuntimeReferences();
+
+	AProgressionManager* ProgressionManager = GetProgressionManager();
 
 	if (!ProgressionManager)
 	{
 		return;
 	}
-
-	ObjectiveManager = Cast<AObjectiveManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AObjectiveManager::StaticClass())
-	);
 	
-	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
-	ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
-	ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
-	ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	if (IsInLevel2(ProgressionManager))
 	{
 		SetStoryState(EStoryState::Level2_ChooseIsland);
 	}
@@ -72,14 +65,9 @@ void AStoryFlowManager::BeginPlay()
 	}
 	*/
 	
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (PlayerCharacter)
+	if (UInventoryComponent* InventoryComponent = GetInventoryComponent())
 	{
-		UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
-		if (InventoryComponent)
-		{
-			InventoryComponent->OnItemPickedUp.AddDynamic(this, &AStoryFlowManager::HandleItemPickedUp);
-		}
+		InventoryComponent->OnItemPickedUp.AddDynamic(this, &AStoryFlowManager::HandleItemPickedUp);
 	}
 
 	UpdateStoryFlow();
@@ -93,11 +81,161 @@ void AStoryFlowManager::Tick(float DeltaTime)
 	UpdateStoryFlow();
 }
 
-void AStoryFlowManager::UpdateStoryFlow()
+void AStoryFlowManager::RefreshFromProgression()
 {
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
+	CacheRuntimeReferences();
+	UpdateStoryFlow();
+	UpdateObjectiveSystems(CurrentStoryState);
+}
+
+void AStoryFlowManager::CacheRuntimeReferences()
+{
+	CachedProgressionManager = Cast<AProgressionManager>(
 		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
 	);
+
+	CachedDialogueManager = Cast<ADialogueManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+	);
+
+	ObjectiveManager = Cast<AObjectiveManager>(
+		UGameplayStatics::GetActorOfClass(GetWorld(), AObjectiveManager::StaticClass())
+	);
+
+	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+	CachedInventoryComponent = PlayerCharacter ? PlayerCharacter->FindComponentByClass<UInventoryComponent>() : nullptr;
+}
+
+AProgressionManager* AStoryFlowManager::GetProgressionManager()
+{
+	if (!CachedProgressionManager)
+	{
+		CachedProgressionManager = Cast<AProgressionManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
+		);
+	}
+
+	return CachedProgressionManager;
+}
+
+ADialogueManager* AStoryFlowManager::GetDialogueManager()
+{
+	if (!CachedDialogueManager)
+	{
+		CachedDialogueManager = Cast<ADialogueManager>(
+			UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
+		);
+	}
+
+	return CachedDialogueManager;
+}
+
+UInventoryComponent* AStoryFlowManager::GetInventoryComponent()
+{
+	if (!CachedInventoryComponent)
+	{
+		ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
+		CachedInventoryComponent = PlayerCharacter ? PlayerCharacter->FindComponentByClass<UInventoryComponent>() : nullptr;
+	}
+
+	return CachedInventoryComponent;
+}
+
+bool AStoryFlowManager::IsInLevel2(AProgressionManager* ProgressionManager) const
+{
+	return ProgressionManager &&
+		(ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
+		ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
+		ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
+		ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag));
+}
+
+bool AStoryFlowManager::TryShowOneShotMessage(AProgressionManager* ProgressionManager, FName MessageShownFlag, const FText& Message, bool bBlockOnAnyVisibleDialogue)
+{
+	if (!ProgressionManager || ProgressionManager->HasFlag(MessageShownFlag))
+	{
+		return false;
+	}
+
+	ADialogueManager* DialogueManager = GetDialogueManager();
+	if (!DialogueManager)
+	{
+		return false;
+	}
+
+	const bool bDialogueBlocked = bBlockOnAnyVisibleDialogue
+		? DialogueManager->IsDialogueOrMessageVisible()
+		: DialogueManager->IsDialogueActive();
+
+	if (bDialogueBlocked)
+	{
+		return false;
+	}
+
+	ProgressionManager->AddFlag(MessageShownFlag);
+	DialogueManager->ShowMessage(Message);
+	return true;
+}
+
+void AStoryFlowManager::TryAddItemToInventoryOnce(AProgressionManager* ProgressionManager, FName ItemID, FName AddedFlag, const TCHAR* DebugName)
+{
+	if (!ProgressionManager || ItemID.IsNone() || ProgressionManager->HasFlag(AddedFlag))
+	{
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = GetInventoryComponent();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not add %s: No InventoryComponent found."), DebugName);
+		return;
+	}
+
+	const bool bAdded = InventoryComponent->AddItemToInventory(ItemID, 1);
+	if (bAdded)
+	{
+		ProgressionManager->AddFlag(AddedFlag);
+		UE_LOG(LogTemp, Warning, TEXT("%s added to inventory."), DebugName);
+		return;
+	}
+
+	UE_LOG(LogTemp, Warning, TEXT("Could not add %s: Inventory rejected item."), DebugName);
+}
+
+void AStoryFlowManager::TryClearInventoryItemsOnce(AProgressionManager* ProgressionManager, const TArray<FName>& ItemIDs, FName ClearedFlag, const TCHAR* DebugName)
+{
+	if (!ProgressionManager || ProgressionManager->HasFlag(ClearedFlag))
+	{
+		return;
+	}
+
+	UInventoryComponent* InventoryComponent = GetInventoryComponent();
+	if (!InventoryComponent)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Could not clear %s items: No InventoryComponent."), DebugName);
+		return;
+	}
+
+	for (const FName& ItemID : ItemIDs)
+	{
+		if (ItemID.IsNone())
+		{
+			continue;
+		}
+
+		const bool bRemoved = InventoryComponent->RemoveItemByID(ItemID);
+		UE_LOG(LogTemp, Warning, TEXT("%s cleanup: %s -> %s"),
+			DebugName,
+			*ItemID.ToString(),
+			bRemoved ? TEXT("removed") : TEXT("not found"));
+	}
+
+	ProgressionManager->AddFlag(ClearedFlag);
+}
+
+void AStoryFlowManager::UpdateStoryFlow()
+{
+	AProgressionManager* ProgressionManager = GetProgressionManager();
 
 	if (!ProgressionManager)
 	{
@@ -116,19 +254,13 @@ void AStoryFlowManager::UpdateStoryFlow()
 		TryAddShellToInventory(ProgressionManager);
 	}
 	
-	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
-	ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
-	ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
-	ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	if (IsInLevel2(ProgressionManager))
 	{
 		SetStoryState(EStoryState::Level2_ChooseIsland);
 	}
 	
 	// Check Level 2 first, because old Island 1/2/3 arrival flags may still exist.
-	if (ProgressionManager->HasFlag(ArrivedLevel2Flag) ||
-		ProgressionManager->HasFlag(ArrivedLevel2MotorIslandFlag) ||
-		ProgressionManager->HasFlag(ArrivedLevel2LeverIslandFlag) ||
-		ProgressionManager->HasFlag(ArrivedLighthouseIslandFlag))
+	if (IsInLevel2(ProgressionManager))
 	{
 		UpdateLevel2Flow(ProgressionManager);
 		return;
@@ -179,18 +311,7 @@ void AStoryFlowManager::UpdateHomeFlow(AProgressionManager* ProgressionManager)
 
 	if (bHasLantern && bHasMatches)
 	{
-		if (!ProgressionManager->HasFlag(HomeCraftLanternDialogueShownFlag))
-		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
-			{
-				ProgressionManager->AddFlag(HomeCraftLanternDialogueShownFlag);
-				DialogueManager->ShowMessage(HomeCraftLanternMessage);
-			}
-		}
+		TryShowOneShotMessage(ProgressionManager, HomeCraftLanternDialogueShownFlag, HomeCraftLanternMessage, true);
 
 		SetStoryState(EStoryState::Home_CraftLantern);
 		return;
@@ -260,18 +381,7 @@ void AStoryFlowManager::UpdateIsland1Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(SomeMelodyPiecesFoundFlag);
 		}
 
-		if (!ProgressionManager->HasFlag(Island1AllItemsDialogueShownFlag))
-		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueOrMessageVisible())
-			{
-				ProgressionManager->AddFlag(Island1AllItemsDialogueShownFlag);
-				DialogueManager->ShowMessage(Island1AllItemsFoundMessage);
-			}
-		}
+		TryShowOneShotMessage(ProgressionManager, Island1AllItemsDialogueShownFlag, Island1AllItemsFoundMessage, true);
 
 		SetStoryState(EStoryState::Island1_ReturnToListener);
 		return;
@@ -383,18 +493,7 @@ void AStoryFlowManager::UpdateIsland2Flow(AProgressionManager* ProgressionManage
 			ProgressionManager->AddFlag(AllGramophonePartsFoundFlag);
 		}
 
-		if (!ProgressionManager->HasFlag(Island2AllItemsDialogueShownFlag))
-		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueActive())
-			{
-				ProgressionManager->AddFlag(Island2AllItemsDialogueShownFlag);
-				DialogueManager->ShowMessage(Island2AllItemsFoundMessage);
-			}
-		}
+		TryShowOneShotMessage(ProgressionManager, Island2AllItemsDialogueShownFlag, Island2AllItemsFoundMessage, false);
 
 		SetStoryState(EStoryState::Island2_CraftMechanism);
 		return;
@@ -471,18 +570,7 @@ void AStoryFlowManager::UpdateIsland3Flow(AProgressionManager* ProgressionManage
 
 	if (bHasPaper && bHasPen)
 	{
-		if (!ProgressionManager->HasFlag(Island3AllItemsDialogueShownFlag))
-		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueActive())
-			{
-				ProgressionManager->AddFlag(Island3AllItemsDialogueShownFlag);
-				DialogueManager->ShowMessage(Island3AllItemsFoundMessage);
-			}
-		}
+		TryShowOneShotMessage(ProgressionManager, Island3AllItemsDialogueShownFlag, Island3AllItemsFoundMessage, false);
 
 		SetStoryState(EStoryState::Island3_CraftNote);
 		return;
@@ -680,15 +768,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 			ProgressionManager->HasFlag(HandWheelPipePickupFlag) &&
 			!ProgressionManager->HasFlag(Level2MotorIslandAllItemsDialogueShownFlag))
 		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueActive())
-			{
-				ProgressionManager->AddFlag(Level2MotorIslandAllItemsDialogueShownFlag);
-				DialogueManager->ShowMessage(Level2MotorIslandAllItemsFoundMessage);
-			}
+			TryShowOneShotMessage(ProgressionManager, Level2MotorIslandAllItemsDialogueShownFlag, Level2MotorIslandAllItemsFoundMessage, false);
 		}
 
 		if (bMotorIslandSolved)
@@ -708,15 +788,7 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 			ProgressionManager->HasFlag(IgnitionCapPickupFlag) &&
 			!ProgressionManager->HasFlag(Level2LeverIslandAllItemsDialogueShownFlag))
 		{
-			ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-			);
-
-			if (DialogueManager && !DialogueManager->IsDialogueActive())
-			{
-				ProgressionManager->AddFlag(Level2LeverIslandAllItemsDialogueShownFlag);
-				DialogueManager->ShowMessage(Level2LeverIslandAllItemsFoundMessage);
-			}
+			TryShowOneShotMessage(ProgressionManager, Level2LeverIslandAllItemsDialogueShownFlag, Level2LeverIslandAllItemsFoundMessage, false);
 		}
 
 		if (bLeverIslandSolved)
@@ -748,9 +820,7 @@ void AStoryFlowManager::SetStoryState(EStoryState NewState)
 
 void AStoryFlowManager::UpdateObjectiveSystems(EStoryState NewState)
 {
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
-	);
+	AProgressionManager* ProgressionManager = GetProgressionManager();
 
 	if (ProgressionManager)
 	{
@@ -1013,8 +1083,6 @@ bool AStoryFlowManager::HasAnyMelodyPiece(AProgressionManager* ProgressionManage
 
 	for (const FName& Flag : MelodyPieceFlags)
 	{
-		UE_LOG(LogTemp, Warning, TEXT("Checking melody flag: %s"), *Flag.ToString());
-
 		if (Flag.IsNone())
 		{
 			continue;
@@ -1022,12 +1090,10 @@ bool AStoryFlowManager::HasAnyMelodyPiece(AProgressionManager* ProgressionManage
 
 		if (ProgressionManager->HasFlag(Flag))
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Found melody piece flag: %s"), *Flag.ToString());
 			return true;
 		}
 	}
 
-	UE_LOG(LogTemp, Warning, TEXT("No melody piece flags found."));
 	return false;
 }
 
@@ -1058,109 +1124,13 @@ bool AStoryFlowManager::HasAnyGramophonePart(AProgressionManager* ProgressionMan
 
 void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionManager)
 {
-	if (!ProgressionManager)
-	{
-		return;
-	}
-
-	// Do not add the shell twice.
-	if (ProgressionManager->HasFlag(ShellItemAddedToInventoryFlag))
-	{
-		return;
-	}
-
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (!PlayerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: No player character found."));
-		return;
-	}
-
-	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
-	if (!InventoryComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: No InventoryComponent found."));
-		return;
-	}
-
-	const bool bAdded = InventoryComponent->AddItemToInventory(ShellItemID, 1);
-
-	if (bAdded)
-	{
-		ProgressionManager->AddFlag(ShellItemAddedToInventoryFlag);
-
-		UE_LOG(LogTemp, Warning, TEXT("Shell added to inventory."));
-		
-		/*
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				3.f,
-				FColor::Green,
-				TEXT("Shell added to inventory")
-			);
-		}
-		*/
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add shell: Inventory rejected item."));
-	}
+	TryAddItemToInventoryOnce(ProgressionManager, ShellItemID, ShellItemAddedToInventoryFlag, TEXT("Shell"));
 }
 
 
 void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionManager)
 {
-	if (!ProgressionManager)
-	{
-		return;
-	}
-
-	// Do not add the pen twice.
-	if (ProgressionManager->HasFlag(PenItemAddedToInventoryFlag))
-	{
-		return;
-	}
-
-	ACharacter* PlayerCharacter = UGameplayStatics::GetPlayerCharacter(GetWorld(), 0);
-	if (!PlayerCharacter)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: No player character found."));
-		return;
-	}
-
-	UInventoryComponent* InventoryComponent = PlayerCharacter->FindComponentByClass<UInventoryComponent>();
-	if (!InventoryComponent)
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: No InventoryComponent found."));
-		return;
-	}
-
-	const bool bAdded = InventoryComponent->AddItemToInventory(PenItemID, 1);
-
-	if (bAdded)
-	{
-		ProgressionManager->AddFlag(PenItemAddedToInventoryFlag);
-
-		UE_LOG(LogTemp, Warning, TEXT("Pen added to inventory."));
-		
-		/*
-		if (GEngine)
-		{
-			GEngine->AddOnScreenDebugMessage(
-				-1,
-				3.f,
-				FColor::Green,
-				TEXT("Pen added to inventory")
-			);
-		}
-		*/
-	}
-	else
-	{
-		UE_LOG(LogTemp, Warning, TEXT("Could not add pen: Inventory rejected item."));
-	}
+	TryAddItemToInventoryOnce(ProgressionManager, PenItemID, PenItemAddedToInventoryFlag, TEXT("Pen"));
 }
 
 void AStoryFlowManager::TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager)
@@ -1326,9 +1296,7 @@ void AStoryFlowManager::TryClearLighthouseItemsFromInventory(AProgressionManager
 
 void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)
 {
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
-	);
+	AProgressionManager* ProgressionManager = GetProgressionManager();
 
 	if (!ProgressionManager)
 	{
@@ -1345,9 +1313,7 @@ void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* Progre
 		return;
 	}
 
-	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-	);
+	ADialogueManager* DialogueManager = GetDialogueManager();
 
 	if (!DialogueManager)
 	{
@@ -1478,9 +1444,7 @@ void AStoryFlowManager::ShowMelodyOrderHint()
 {
 	UE_LOG(LogTemp, Warning, TEXT("ShowMelodyOrderHint called."));
 
-	AProgressionManager* ProgressionManager = Cast<AProgressionManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass())
-	);
+	AProgressionManager* ProgressionManager = GetProgressionManager();
 
 	if (!ProgressionManager)
 	{
@@ -1494,9 +1458,7 @@ void AStoryFlowManager::ShowMelodyOrderHint()
 		return;
 	}
 
-	ADialogueManager* DialogueManager = Cast<ADialogueManager>(
-		UGameplayStatics::GetActorOfClass(GetWorld(), ADialogueManager::StaticClass())
-	);
+	ADialogueManager* DialogueManager = GetDialogueManager();
 
 	if (!DialogueManager)
 	{
