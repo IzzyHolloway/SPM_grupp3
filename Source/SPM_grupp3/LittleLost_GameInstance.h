@@ -47,6 +47,21 @@ public:
     UFUNCTION(BlueprintPure, Category = "SaveGame")
     bool IsCoatUnlockedInSave(FName CoatID) const;
 
+    // --- Audio settings -------------------------------------------------------
+    // Master volume (0..1) used by the sound menu. Lives on the GameInstance so it
+    // survives level loads and is available even in the main menu (where there is no
+    // player character). Replaces the old per-character VolumeValue the WBP_Volume used.
+    UPROPERTY(BlueprintReadWrite, Category = "Settings")
+    float MasterVolume = 1.0f;
+
+    // Clamp to 0..1, store, and apply immediately.
+    UFUNCTION(BlueprintCallable, Category = "Settings")
+    void SetMasterVolume(float NewVolume);
+
+    // Push the current MasterVolume to the FMOD master bus + the engine sound mix.
+    UFUNCTION(BlueprintCallable, Category = "Settings")
+    void ApplyMasterVolume();
+
 protected:
     virtual void Init() override;
 
