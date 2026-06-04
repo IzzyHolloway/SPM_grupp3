@@ -23,6 +23,9 @@ class SPM_GRUPP3_API UMenuWidgetBase : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
+    // Controller is primary: cursor is hidden on open and on gamepad input, shown again on mouse move.
+    virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
+    void SetMouseCursorVisible(bool bVisible);
 
     // The widget that should have focus when this menu opens, so a controller can
     // navigate immediately. Return e.g. the first button, or the slider on the volume
@@ -45,6 +48,11 @@ protected:
 
     // Register a (button, text) pair to be highlighted. Call from a subclass's NativeConstruct.
     void AddHighlightPair(UButton* Button, UTextBlock* Text);
+
+    // Wire explicit Up/Down gamepad navigation between a vertical list of widgets, so the
+    // controller can move between them even when the visual layout defeats UMG's default
+    // spatial search (e.g. a close button in a corner + buttons in a centered box).
+    void LinkVerticalNavigation(const TArray<UWidget*>& Widgets);
 
     // Text colours: idle / hovered-or-focused / pressed. Tweakable per widget in the editor.
     UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Menu|Style")

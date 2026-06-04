@@ -24,6 +24,12 @@ void UPauseMenuWidget::NativeConstruct()
 
     AddHighlightPair(SettingsButton, TextBlock_122);
     AddHighlightPair(Button_SaveQuit, TextBlock_0);
+
+    // The Resume/close button sits apart from Settings/Save & Quit, so UMG's default spatial
+    // navigation can't reach between them. Wire the d-pad order explicitly: Resume <-> Settings
+    // <-> Save & Quit. This is why the controller could "select" (A on the focused Resume) but
+    // not move -- now Up/Down walks the list.
+    LinkVerticalNavigation({ Cast<UWidget>(Button_ResumeGame), Cast<UWidget>(SettingsButton), Cast<UWidget>(Button_SaveQuit) });
 }
 
 UWidget* UPauseMenuWidget::GetInitialFocusTarget()
