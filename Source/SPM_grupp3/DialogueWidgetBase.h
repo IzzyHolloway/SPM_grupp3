@@ -77,7 +77,15 @@ public:
 	// Dialogue manager listens to this instead of needing direct access to the nested skip prompt widget.
 	UPROPERTY(BlueprintAssignable, Category = "Dialogue|Skip")
 	FOnDialogueSkipPromptCompleted OnSkipPromptCompleted;
-
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Dialogue")
+	bool bShowSkipPrompt = false;
+	
+	/*
+	UFUNCTION(BlueprintImplementableEvent, Category = "Dialogue")
+	void SetSkipPromptVisible(bool bVisible);
+	*/
+	
 	//Zoey start
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	TObjectPtr<USoundBase> DefaultDialogueSound = nullptr;
