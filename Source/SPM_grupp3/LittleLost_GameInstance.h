@@ -76,8 +76,16 @@ public:
 
 protected:
     virtual void Init() override;
+    virtual void Shutdown() override;
 
 private:
+    // Re-applies MasterVolume after every level load. The FMOD bus volume + SoundMix override
+    // are runtime audio state that gets reset on a map load, so the stored MasterVolume must be
+    // pushed back to the audio engine each time a new world becomes ready -- otherwise the volume
+    // set in a menu is silently lost as soon as gameplay starts.
+    void OnPostLoadMap(UWorld* LoadedWorld);
+    FDelegateHandle PostLoadMapHandle;
+
     // Loaded or in-progress save kept in memory until written / applied.
     UPROPERTY(Transient)
     TObjectPtr<ULittleLost_SaveGame> PendingSave;
