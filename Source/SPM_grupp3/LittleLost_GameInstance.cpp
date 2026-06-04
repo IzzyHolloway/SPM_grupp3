@@ -13,6 +13,10 @@
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
+#include "FMODBlueprintStatics.h"
+#include "FMODBus.h"
+#include "Sound/SoundMix.h"
+#include "Sound/SoundClass.h"
 
 void ULittleLost_GameInstance::Init()
 {
@@ -364,4 +368,29 @@ void ULittleLost_GameInstance::ApplyToWorld()
     // Only apply once per load
     bShouldApplyOnNextWorldReady = false;
     bForceSpawnInBoat = false;
+}
+
+void ULittleLost_GameInstance::SetMasterVolume(float NewVolume)
+{
+    MasterVolume = FMath::Clamp(NewVolume, 0.0f, 1.0f);
+    ApplyMasterVolume();
+}
+
+// Pushes MasterVolume to the FMOD master bus (what the game's audio actually routes
+// through) and to the engine sound-class mix (for any non-FMOD sounds). Mirrors the
+// three calls the old WBP_Volume slider made, but driven from one place in code.
+void ULittleLost_GameInstance::ApplyMasterVolume()
+{
+    if (UFMODBus* Bus = LoadObject<UFMODBus>(nullptr, TEXT("/Game/FMOD/Buses/fmod_ljud.fmod_ljud")))
+    {
+        UFMODBlueprintStatics::BusSetVolume(Bus, MasterVolume);
+    }
+
+    USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume"));
+    USoundClass* MasterSFX = LoadObject<USoundClass>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"));
+    if (Mix && MasterSFX)
+    {
+        UGameplayStatics::SetSoundMixClassOverride(this, Mix, MasterSFX, MasterVolume, 1.0f, 1.0f, true);
+        UGameplayStatics::PushSoundMixModifier(this, Mix);
+    }
 }
