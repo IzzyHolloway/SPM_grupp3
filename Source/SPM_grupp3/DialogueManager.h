@@ -40,7 +40,7 @@ public:
 	float MessageDisplayTime = 2.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue|Skip")
-	float DialogueSkipHoldTime = 3.0f;
+	float DialogueSkipHoldTime = 2.0f;
 
 	FTimerHandle MessageHideTimerHandle;
 
