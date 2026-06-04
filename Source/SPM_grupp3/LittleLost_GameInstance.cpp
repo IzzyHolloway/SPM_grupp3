@@ -8,6 +8,7 @@
 #include "CharacterAimi.h"
 #include "BoatFunctionality.h"
 #include "Kismet/GameplayStatics.h"
+#include "UObject/UObjectGlobals.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
 #include "GameFramework/Character.h"
@@ -16,12 +17,37 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "FMODBlueprintStatics.h"
 #include "FMODBus.h"
+#include "FMODStudioModule.h"
+#include "FMOD/fmod_studio.hpp"
 #include "Sound/SoundMix.h"
 #include "Sound/SoundClass.h"
 
 void ULittleLost_GameInstance::Init()
 {
     Super::Init();
+
+    // Re-apply the saved master volume after every level load (see OnPostLoadMap).
+    PostLoadMapHandle = FCoreUObjectDelegates::PostLoadMapWithWorld.AddUObject(
+        this, &ULittleLost_GameInstance::OnPostLoadMap);
+}
+
+void ULittleLost_GameInstance::Shutdown()
+{
+    if (PostLoadMapHandle.IsValid())
+    {
+        FCoreUObjectDelegates::PostLoadMapWithWorld.Remove(PostLoadMapHandle);
+        PostLoadMapHandle.Reset();
+    }
+
+    Super::Shutdown();
+}
+
+// Fires when a newly loaded level is ready. The FMOD bus + SoundMix override are reset by the
+// map load, so push the stored MasterVolume back to the audio engine here -- this is what makes
+// the volume set in the menu actually persist into (and across) gameplay.
+void ULittleLost_GameInstance::OnPostLoadMap(UWorld* /*LoadedWorld*/)
+{
+    ApplyMasterVolume();
 }
 
 bool ULittleLost_GameInstance::HasSave() const
@@ -509,21 +535,64 @@ void ULittleLost_GameInstance::SetMasterVolume(float NewVolume)
     ApplyMasterVolume();
 }
 
-// Pushes MasterVolume to the FMOD master bus (what the game's audio actually routes
-// through) and to the engine sound-class mix (for any non-FMOD sounds). Mirrors the
-// three calls the old WBP_Volume slider made, but driven from one place in code.
+// Applies MasterVolume to BOTH audio systems this game uses, so it controls everything
+// regardless of which engine a given sound goes through:
+//
+//   1) FMOD (footsteps, water, boat, gate, ...): the master bus "bus:/" -- every FMOD event
+//      ultimately routes through it. We target the master bus via the studio system instead of a
+//      named sub-bus asset (e.g. fmod_ljud): BusSetVolume(named bus) only affects events routed
+//      through that exact bus, and silently does nothing if its cached GUID no longer matches the
+//      FMOD project after a rebuild.
+//
+//   2) Native UE audio (music, pickups, dialogue, ...): a SoundMix override per top-level sound
+//      class. This project's sound classes are NOT all parented under one master class, so the
+//      old code (which overrode only MasterSFX) reached the menu music -- SC_mainMenu is a child
+//      of MasterSFX -- but never the in-level music on SC_BackgroundMusic, which is its own root
+//      class. We override each root we use; bApplyToChildren=true cascades to their child classes.
 void ULittleLost_GameInstance::ApplyMasterVolume()
 {
-    if (UFMODBus* Bus = LoadObject<UFMODBus>(nullptr, TEXT("/Game/FMOD/Buses/fmod_ljud.fmod_ljud")))
+    // 1) FMOD master bus.
+    if (IFMODStudioModule::IsAvailable())
     {
-        UFMODBlueprintStatics::BusSetVolume(Bus, MasterVolume);
+        if (FMOD::Studio::System* StudioSystem =
+                IFMODStudioModule::Get().GetStudioSystem(EFMODSystemContext::Runtime))
+        {
+            FMOD::Studio::Bus* MasterBus = nullptr;
+            const FMOD_RESULT Result = StudioSystem->getBus("bus:/", &MasterBus);
+            if (Result == FMOD_OK && MasterBus)
+            {
+                MasterBus->setVolume(MasterVolume);
+                UE_LOG(LogTemp, Log,
+                    TEXT("ApplyMasterVolume: set FMOD master bus volume to %.2f."), MasterVolume);
+            }
+            else
+            {
+                // Usually means the Master bank isn't loaded yet (no banks => no master bus).
+                UE_LOG(LogTemp, Warning,
+                    TEXT("ApplyMasterVolume: could not get FMOD master bus 'bus:/' (result=%d). Is the Master bank loaded?"),
+                    (int32)Result);
+            }
+        }
     }
 
-    USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume"));
-    USoundClass* MasterSFX = LoadObject<USoundClass>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"));
-    if (Mix && MasterSFX)
+    // 2) Native UE audio: SoundMix override on each top-level sound class we use. Add a class
+    // here if a new root sound class is introduced and needs to follow the master volume.
+    if (USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume")))
     {
-        UGameplayStatics::SetSoundMixClassOverride(this, Mix, MasterSFX, MasterVolume, 1.0f, 1.0f, true);
+        static const TCHAR* RootSoundClassPaths[] =
+        {
+            TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"),                                  // menu music (child SC_mainMenu) + SFX
+            TEXT("/Game/Grupp03_Test/Zoey/Audio/music/Background/SC_BackgroundMusic.SC_BackgroundMusic"),   // in-level background music
+        };
+
+        for (const TCHAR* ClassPath : RootSoundClassPaths)
+        {
+            if (USoundClass* SoundClass = LoadObject<USoundClass>(nullptr, ClassPath))
+            {
+                UGameplayStatics::SetSoundMixClassOverride(this, Mix, SoundClass, MasterVolume, 1.0f, 1.0f, true);
+            }
+        }
+
         UGameplayStatics::PushSoundMixModifier(this, Mix);
     }
 }
