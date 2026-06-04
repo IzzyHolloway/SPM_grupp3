@@ -32,9 +32,10 @@ void UVolumeMenuWidget::NativeConstruct()
 
 UWidget* UVolumeMenuWidget::GetInitialFocusTarget()
 {
-    // Focus the widget itself (return nullptr) -- NativeOnKeyDown then reads Left/Right and
-    // moves the slider in code, so it works with d-pad, stick and arrow keys alike.
-    return nullptr;
+    // Focus the whole screen (made focusable in NativeConstruct) so its NativeOnKeyDown reads
+    // Left/Right and moves the slider in code -- works with d-pad, stick and arrow keys alike,
+    // and gets focus synchronously so it also works when opened from the (paused) pause menu.
+    return this;
 }
 
 FReply UVolumeMenuWidget::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent)

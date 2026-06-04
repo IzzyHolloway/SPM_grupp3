@@ -5,6 +5,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "InputCoreTypes.h"
+#include "Types/SlateEnums.h"
 
 void UMenuWidgetBase::NativeConstruct()
 {
@@ -23,10 +24,38 @@ void UMenuWidgetBase::SetupMenuInput()
 {
     if (APlayerController* PC = GetOwningPlayer())
     {
-        // UI-only is what lets the gamepad navigate UMG (move focus, drag the slider).
-        UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, nullptr, EMouseLockMode::DoNotLock, false);
-        PC->bShowMouseCursor = true;
+        UWidget* FocusTarget = GetInitialFocusTarget();
+
+        // UI-only lets the gamepad navigate UMG. Passing the focus target here sets focus
+        // synchronously as part of establishing the mode -- this is what makes the controller
+        // work in the PAUSE menu, where widgets don't tick (so a deferred focus never runs).
+        UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, FocusTarget, EMouseLockMode::DoNotLock, false);
+
+        // Controller is primary: hide the cursor on open. NativeOnMouseMove shows it again.
+        PC->bShowMouseCursor = false;
+
+        if (FocusTarget)
+        {
+            FocusTarget->SetKeyboardFocus();
+        }
     }
+}
+
+void UMenuWidgetBase::SetMouseCursorVisible(bool bVisible)
+{
+    if (APlayerController* PC = GetOwningPlayer())
+    {
+        if (PC->bShowMouseCursor != bVisible)
+        {
+            PC->bShowMouseCursor = bVisible;
+        }
+    }
+}
+
+FReply UMenuWidgetBase::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
+{
+    SetMouseCursorVisible(true);
+    return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 }
 
 UWidget* UMenuWidgetBase::GetInitialFocusTarget()
@@ -43,8 +72,17 @@ FReply UMenuWidgetBase::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyE
 {
     const FKey Key = InKeyEvent.GetKey();
 
-    // Backspace (keyboard), B / right face button (gamepad), Escape -> go back.
-    if (Key == EKeys::BackSpace || Key == EKeys::Gamepad_FaceButton_Right || Key == EKeys::Escape)
+    // Any controller input hides the mouse cursor (controller is primary).
+    if (Key.IsGamepadKey())
+    {
+        SetMouseCursorVisible(false);
+    }
+
+    // Backspace (keyboard), B / right face button (gamepad), Start/Menu (Special_Right),
+    // Escape -> go back. Special_Right keeps "close pause with the Menu button" working
+    // after the old Blueprint OnPreviewKeyDown that did it is deleted.
+    if (Key == EKeys::BackSpace || Key == EKeys::Gamepad_FaceButton_Right
+        || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Escape)
     {
         HandleBack();
         return FReply::Handled();
@@ -74,6 +112,26 @@ void UMenuWidgetBase::AddHighlightPair(UButton* Button, UTextBlock* Text)
     {
         HighlightButtons.Add(Button);
         HighlightTexts.Add(Text);
+    }
+}
+
+void UMenuWidgetBase::LinkVerticalNavigation(const TArray<UWidget*>& Widgets)
+{
+    for (int32 i = 0; i < Widgets.Num(); ++i)
+    {
+        UWidget* Current = Widgets[i];
+        if (!Current)
+        {
+            continue;
+        }
+        if (i > 0 && Widgets[i - 1])
+        {
+            Current->SetNavigationRuleExplicit(EUINavigation::Up, Widgets[i - 1]);
+        }
+        if (i + 1 < Widgets.Num() && Widgets[i + 1])
+        {
+            Current->SetNavigationRuleExplicit(EUINavigation::Down, Widgets[i + 1]);
+        }
     }
 }
 
