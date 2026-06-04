@@ -7,6 +7,8 @@
 #include "NoteWidgetBase.h"
 #include "NoteInteractable.generated.h"
 
+class UOutlineComponent;
+
 
 /**
  * 
@@ -19,8 +21,12 @@ class SPM_GRUPP3_API ANoteInteractable : public AInteractableActor
 public:
 
 	ANoteInteractable();
-	
+
 	virtual void Interact() override;
+
+	// The note glows with the proximity outline instead of showing the "X - Interact" prompt,
+	// so we deliberately do nothing here to suppress that on-screen text.
+	virtual void SetPromptVisible(bool bVisible) override;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Note")
 	FString NoteTitle;
@@ -33,7 +39,12 @@ public:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Note")
 	USoundBase* PickupSound;
 	//Zoey end
-	
+
+protected:
+	// Proximity outline -- lights up while the player is within range.
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
+	TObjectPtr<UOutlineComponent> OutlineComponent;
+
 private:
 	void LockPlayerControls(UNoteWidgetBase* NoteWidget);
 	UFUNCTION()
