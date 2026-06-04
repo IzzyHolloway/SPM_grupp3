@@ -142,8 +142,10 @@ void ADialogueManager::StartDialogueAdvanceHold()
 
 	bDialogueSkipTriggered = false;
 	bDialogueSkipHoldActive = false;
+	bDialogueSkipPromptVisualActive = false;
 
 	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+	GetWorldTimerManager().ClearTimer(DialogueSkipPromptDelayTimerHandle);
 
 	if (!CanSkipCurrentDialogue())
 	{
@@ -153,11 +155,17 @@ void ADialogueManager::StartDialogueAdvanceHold()
 
 	bDialogueSkipHoldActive = true;
 
-	if (DialogueWidgetInstance)
-	{
-		DialogueWidgetInstance->SetConversationSkipHintVisible(false);
-		DialogueWidgetInstance->StartSkipPromptHold(DialogueSkipHoldTime);
-	}
+	// Important:
+	// Do NOT hide the passive skip hint yet.
+	// We only hide it if the player actually holds long enough.
+
+	GetWorldTimerManager().SetTimer(
+		DialogueSkipPromptDelayTimerHandle,
+		this,
+		&ADialogueManager::BeginDialogueSkipPromptAfterDelay,
+		DialogueSkipPromptDelay,
+		false
+	);
 }
 
 void ADialogueManager::FinishDialogueAdvanceHold()
@@ -165,30 +173,37 @@ void ADialogueManager::FinishDialogueAdvanceHold()
 	if (!bDialogueActive)
 	{
 		GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+		GetWorldTimerManager().ClearTimer(DialogueSkipPromptDelayTimerHandle);
+		
 		if (DialogueWidgetInstance)
 		{
 			DialogueWidgetInstance->CancelSkipPromptHold();
 		}
+		bDialogueSkipTriggered = false;
 		ResetDialogueSkipPrompt();
 		return;
 	}
 
 	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
+	GetWorldTimerManager().ClearTimer(DialogueSkipPromptDelayTimerHandle);
 	bDialogueSkipHoldActive = false;
 
 	if (bDialogueSkipTriggered)
 	{
 		bDialogueSkipTriggered = false;
+		bDialogueSkipPromptVisualActive = false;
 		ResetDialogueSkipPrompt();
 		UpdateConversationSkipHint();
 		return;
 	}
 
-	if (DialogueWidgetInstance)
+	if (DialogueWidgetInstance && bDialogueSkipPromptVisualActive)
 	{
 		DialogueWidgetInstance->CancelSkipPromptHold();
+		ResetDialogueSkipPrompt();
 	}
 
+	//ResetDialogueSkipPrompt();
 	ResetDialogueSkipPrompt();
 	AdvanceDialogue();
 }
@@ -217,10 +232,12 @@ void ADialogueManager::EndDialogue()
 	if (GetWorld())
 	{
 		GetWorld()->GetTimerManager().ClearTimer(DialogueSkipTimerHandle);
+		GetWorldTimerManager().ClearTimer(DialogueSkipPromptDelayTimerHandle);
 	}
 
 	bDialogueSkipTriggered = false;
 	bDialogueSkipHoldActive = false;
+	bDialogueSkipPromptVisualActive = false;
 	
 	bDialogueActive = false;
 	CurrentDialogueIndex = 0;
@@ -442,4 +459,31 @@ void ADialogueManager::UpdateConversationSkipHint()
 	// Show the passive skip hint only for real conversations, not for one-line messages.
 	const bool bShowConversationHint = bDialogueActive && ActiveDialogueLines.Num() > 1 && !bDialogueSkipHoldActive;
 	DialogueWidgetInstance->SetConversationSkipHintVisible(bShowConversationHint);
+}
+
+void ADialogueManager::BeginDialogueSkipPromptAfterDelay()
+{
+	if (!bDialogueActive)
+	{
+		return;
+	}
+
+	if (!bDialogueSkipHoldActive)
+	{
+		return;
+	}
+
+	if (!CanSkipCurrentDialogue())
+	{
+		ResetDialogueSkipPrompt();
+		return;
+	}
+	
+	bDialogueSkipPromptVisualActive = true;
+
+	if (DialogueWidgetInstance)
+	{
+		DialogueWidgetInstance->SetConversationSkipHintVisible(false);
+		DialogueWidgetInstance->StartSkipPromptHold(DialogueSkipHoldTime);
+	}
 }

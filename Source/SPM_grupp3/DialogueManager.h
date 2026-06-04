@@ -40,7 +40,7 @@ public:
 	float MessageDisplayTime = 2.0f;
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue|Skip")
-	float DialogueSkipHoldTime = 3.0f;
+	float DialogueSkipHoldTime = 2.0f;
 
 	FTimerHandle MessageHideTimerHandle;
 
@@ -154,6 +154,15 @@ protected:
 	// Current index inside ActiveDialogueLines
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dialogue")
 	int32 CurrentDialogueIndex = 0;
+	
+	FTimerHandle DialogueSkipPromptDelayTimerHandle;
+	
+	bool bDialogueSkipPromptVisualActive = false;
+	
+	void BeginDialogueSkipPromptAfterDelay();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Dialogue|Skip")
+	float DialogueSkipPromptDelay = 0.3f;
 	
 private:
 	bool bMessageVisible = false;
