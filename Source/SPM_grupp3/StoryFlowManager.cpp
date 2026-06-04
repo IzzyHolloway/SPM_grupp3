@@ -1296,14 +1296,20 @@ void AStoryFlowManager::TryClearLighthouseItemsFromInventory(AProgressionManager
 
 void AStoryFlowManager::HandleItemPickedUp(FName ItemID, bool bFirstPickupEver)
 {
-	AProgressionManager* ProgressionManager = GetProgressionManager();
-
-	if (!ProgressionManager)
+	GetWorldTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this, ItemID]()
 	{
-		return;
-	}
+		CacheRuntimeReferences();
 
-	TryShowAllItemsFoundDialogue(ProgressionManager, ItemID);
+		AProgressionManager* ProgressionManager = GetProgressionManager();
+		if (!ProgressionManager)
+		{
+			return;
+		}
+
+		TryShowAllItemsFoundDialogue(ProgressionManager, ItemID);
+		UpdateStoryFlow();
+		UpdateObjectiveSystems(CurrentStoryState);
+	}));
 }
 
 void AStoryFlowManager::TryShowAllItemsFoundDialogue(AProgressionManager* ProgressionManager, FName PickedUpItemID)
