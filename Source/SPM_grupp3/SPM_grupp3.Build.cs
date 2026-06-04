@@ -8,7 +8,7 @@ public class SPM_grupp3 : ModuleRules
 	{
 		PCHUsage = PCHUsageMode.UseExplicitOrSharedPCHs;
 	
-		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "NavigationSystem", "CinematicCamera", "AIModule" });
+		PublicDependencyModuleNames.AddRange(new string[] { "Core", "CoreUObject", "Engine", "InputCore", "EnhancedInput", "UMG", "NavigationSystem", "CinematicCamera", "AIModule", "FMODStudio" });
 
 		// Slate/SlateCore needed for FReply, FSlateBrush in DrawingPuzzleWidget. //Izzy lagt till för ritpussel
 		PrivateDependencyModuleNames.AddRange(new string[] { "Slate", "SlateCore" });
