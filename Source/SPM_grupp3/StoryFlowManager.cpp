@@ -691,6 +691,8 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 	{
 		if (bLifeCompassReceived)
 		{
+			TryAddLifeCompassToInventory(ProgressionManager);
+
 			if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
 			{
 				ProgressionManager->AddFlag(LighthouseReadyFlag);
@@ -710,6 +712,8 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 
 	if (bLifeCompassReceived)
 	{
+		TryAddLifeCompassToInventory(ProgressionManager);
+
 		if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
 		{
 			ProgressionManager->AddFlag(LighthouseReadyFlag);
@@ -725,6 +729,8 @@ void AStoryFlowManager::UpdateLevel2Flow(AProgressionManager* ProgressionManager
 		{
 			ProgressionManager->AddFlag(LifeCompassReceivedFlag);
 		}
+
+		TryAddLifeCompassToInventory(ProgressionManager);
 
 		if (!ProgressionManager->HasFlag(LighthouseReadyFlag))
 		{
@@ -1140,6 +1146,11 @@ void AStoryFlowManager::TryAddShellToInventory(AProgressionManager* ProgressionM
 void AStoryFlowManager::TryAddPenToInventory(AProgressionManager* ProgressionManager)
 {
 	TryAddItemToInventoryOnce(ProgressionManager, PenItemID, PenItemAddedToInventoryFlag, TEXT("Pen"));
+}
+
+void AStoryFlowManager::TryAddLifeCompassToInventory(AProgressionManager* ProgressionManager)
+{
+	TryAddItemToInventoryOnce(ProgressionManager, LifeCompassItemID, LifeCompassItemAddedToInventoryFlag, TEXT("LifeCompass"));
 }
 
 void AStoryFlowManager::TryClearIsland1ItemsFromInventory(AProgressionManager* ProgressionManager)
