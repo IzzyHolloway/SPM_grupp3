@@ -53,6 +53,7 @@ void AObjectiveManager::Tick(float DeltaTime)
 
 }
 
+// Shows a simple current / total counter - modified by Aimi
 void AObjectiveManager::ShowObjectiveProgress(int32 CurrentProgress, int32 TotalProgress)
 {
 	if (TotalProgress <= 0)
