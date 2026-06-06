@@ -122,7 +122,7 @@ void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputC
 		// Bind Movement and Rotation Actions
 		EnhancedInputComponent->BindAction(MoveRotateAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::MoveRotate);
 		
-		// COMMENTATED BY MADDE TO MAKE THE WHOLE BOOST IMPLEMENTATION IN BLUEPRINTS
+		// COMMENTED OUT BY MADDE TO MAKE THE WHOLE BOOST IMPLEMENTATION IN BLUEPRINTS
 		// Bind Sprint Actions
 		//EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Started, this, &ABoatFunctionality::StartSprint);
 		//EnhancedInputComponent->BindAction(SprintAction, ETriggerEvent::Completed, this, &ABoatFunctionality::StopSprint);
@@ -142,11 +142,13 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 	// 2D Vector of movement values returned from the input action
 	const FVector2D MovementValue = Value.Get<FVector2D>();
 	
+	UWorld* World = GetWorld();
+	
 	// Check if the controller possessing this Actor is valid
-	if (Controller)
+	if (IsValid(Controller) && IsValid(World))
 	{
 		// Apply rotation input
-		AddActorWorldRotation(FRotator(0.f, MovementValue.X * RotationSpeed * GetWorld()->GetDeltaSeconds(), 0.f));
+		AddActorWorldRotation(FRotator(0.f, MovementValue.X * RotationSpeed * World->GetDeltaSeconds(), 0.f));
 		
 		// Apply forward and back movement
 		AddMovementInput(GetActorForwardVector(), MovementValue.Y);
@@ -155,14 +157,20 @@ void ABoatFunctionality::MoveRotate(const FInputActionValue& Value)
 
 void ABoatFunctionality::StartSprint()
 {
-	// Make movement faster
-	MovementComponent->MaxSpeed = SprintMovementSpeed;
+	if (IsValid(MovementComponent))
+	{
+		// Make movement faster
+		MovementComponent->MaxSpeed = SprintMovementSpeed;
+	}
 }
 
 void ABoatFunctionality::StopSprint()
 {	
-	// Reset movement speed
-	MovementComponent->MaxSpeed = DefaultMovementSpeed;
+	if (IsValid(MovementComponent))
+	{
+		// Reset movement speed
+		MovementComponent->MaxSpeed = DefaultMovementSpeed;
+	}
 }
 
 // ------------------------------------------------------------------ CAMERA ------------------------------------------------------------------
@@ -171,8 +179,7 @@ void ABoatFunctionality::Look(const FInputActionValue& Value)
 {
 	// 2D Vector of look values returned from the input action
 	const FVector2D LookValue = Value.Get<FVector2D>();
-
-	// Check if the controller possessing this Actor is valid
+	
 	if (Controller)
 	{
 		// Apply camera input
@@ -188,14 +195,14 @@ void ABoatFunctionality::Interact(const FInputActionValue& Value)
 	HideInteractPrompt();
 
 	// If there is a dock to interact with, start exiting the boat
-	if (DockInReach != nullptr)
+	if (IsValid(DockInReach))
 	{
 		DockInReach->HideEnterDockPrompt();
 		ExitBoat();
 	}
 	
 	// If there is a coat to pick up, notify the wardrobe
-	if (CoatPickupInReach != nullptr)
+	if (IsValid(CoatPickupInReach))
 	{
 		CoatPickupInReach->Interact();
 	}
@@ -207,7 +214,6 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 	// Check if the overlapping object is the player character
 	if (ACharacterAimi* PlayerCharacterFound = Cast<ACharacterAimi>(OtherActor))
 	{
-		
 		// Enable entering the boat for the player
 		EnableEnteringBoat(PlayerCharacterFound);
 	}
@@ -220,6 +226,7 @@ void ABoatFunctionality::OnEnterTriggerBeginOverlap(UPrimitiveComponent* Overlap
 	}
 }
 
+// Reacts to the OnComponentEndOverlap event of the EnterTrigger (for the player to enter the boat) - calls DisableEnteringBoat()
 void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex)
 {
 	// Check if the overlapping object is the player character
@@ -242,7 +249,7 @@ void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* Overlappe
 // Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
 void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {
-	if (!PlayerCharacter)
+	if (!IsValid(PlayerCharacter))
 	{
 		return;
 	}
@@ -252,7 +259,7 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 
 	// ------------------------------ UI ------------------------------
 	
-	if (DockInReach)
+	if (IsValid(DockInReach))
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
@@ -261,9 +268,13 @@ void ABoatFunctionality::EnableEnteringBoat(ACharacterAimi* PlayerCharacter)
 // Communicates to the player character that it isn't possible anymore to enter the boat and removes the reference to this boat
 void ABoatFunctionality::DisableEnteringBoat(ACharacterAimi* PlayerCharacter)
 {	
-	// Remove the reference to myself in the player character to disable entering the boat
-	PlayerCharacter->RemoveBoatInReach();
+	if (IsValid(PlayerCharacter))
+	{
+		// Remove the reference to myself in the player character to disable entering the boat
+		PlayerCharacter->RemoveBoatInReach();
+	}
 }
+	
 
 // Returns offset the character should have to the boat's coordinate center when it gets placed in the boat
 FVector ABoatFunctionality::GetCharacterPositionOffset() const
@@ -279,7 +290,7 @@ void ABoatFunctionality::ExitBoat()
 	
 	HideInteractPrompt();
 	
-	if (DockInReach)
+	if (IsValid(DockInReach))
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
@@ -287,7 +298,7 @@ void ABoatFunctionality::ExitBoat()
 	// ----------------------------------------------------------------
 	
 	// Double check that we're in reach of a pier
-	if (DockInReach == nullptr)
+	if (!IsValid(DockInReach))
 	{
 		UE_LOG(LogTemp, Warning, TEXT("ExitBoat() was called without a boat in reach. This shouldn't be happening!"));
 		return;
@@ -300,15 +311,15 @@ void ABoatFunctionality::ExitBoat()
 	SetCameraPositionWhenExiting(Camera);
 	
 	// Remove any forces added by impulse to make sure the boat stays at the docking spot
-	CollisionComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
-	CollisionComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	if (IsValid(CollisionComponent))
+	{
+		CollisionComponent->SetPhysicsLinearVelocity(FVector::ZeroVector);
+		CollisionComponent->SetPhysicsAngularVelocityInDegrees(FVector::ZeroVector);
+	}
 	
 	// Move boat to docking spot
 	SetActorLocation(CurrentDockInReach->GetDockingSpotPosition());
 	SetActorRotation(CurrentDockInReach->GetDockingSpotRotation());
-	
-	// ExitAnimation
-	// TODO
 	
 	// Find the player character among the children
 	TArray<AActor*> AttachedActors;
@@ -337,7 +348,10 @@ void ABoatFunctionality::ExitBoat()
 			
 			// Repossess player character
 			AController* PlayerController = GetController();
-			PlayerController->Possess(PlayerCharacter);
+			if (IsValid(PlayerController))
+			{
+				PlayerController->Possess(PlayerCharacter);
+			}
 
 			// Restore a clean gameplay input state after leaving the boat so later UI
 			// (like crafting) doesn't inherit any stale focus/input mode.
@@ -347,10 +361,9 @@ void ABoatFunctionality::ExitBoat()
 				PC->bShowMouseCursor = false;
 			}
 			
-			// Fix camera after repossessing player
 			FixCameraAfterRepossessingPlayer();
 
-			// Boat is no longer in use -- allow the outline to light up again if the player is still near.
+			// Boat is no longer in use -- allow the outline to light up again if the player is still close
 			if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())
 			{
 				Outline->SetOutlineSuppressed(false);
@@ -369,7 +382,7 @@ void ABoatFunctionality::SetDockInReach(ADock* Dock)
 
 void ABoatFunctionality::RemoveDockInReach()
 {
-	if (DockInReach)
+	if (IsValid(DockInReach))
 	{
 		DockInReach->HideEnterDockPrompt();
 	}
@@ -377,7 +390,7 @@ void ABoatFunctionality::RemoveDockInReach()
 	DockInReach = nullptr;
 }
 
-// ------------------------------------------------------------------- UI -------------------------------------------------------------------
+// ------------------------------------------------------------- UI (ALICE OR IZZY) -------------------------------------------------------------
 
 void ABoatFunctionality::ShowInteractPrompt()
 {
@@ -446,7 +459,7 @@ void ABoatFunctionality::PossessedBy(AController* NewController)
 	}
 }
 
-// ---------------------------------------------------------------- PROGRESSION ----------------------------------------------------------------
+// ------------------------------------------------------------- PROGRESSION (AIMI) -------------------------------------------------------------
 
 bool ABoatFunctionality::CanPlayerEnterBoat() const
 {

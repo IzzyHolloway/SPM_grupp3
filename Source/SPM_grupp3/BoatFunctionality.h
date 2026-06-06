@@ -92,7 +92,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void RemoveDockInReach();
 	
-	// --------------------------- PROGRESSION ---------------------------
+	// ------------------------ PROGRESSION (AIMI) ------------------------
 	
 	UFUNCTION(BlueprintCallable)
 	bool CanPlayerEnterBoat() const;
@@ -108,7 +108,7 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void FixCameraAfterRepossessingPlayer();
 	
-	// ------------------------------ SOUND ------------------------------
+	// -------------------------- SOUND (ZOEY) --------------------------
 
 	UFUNCTION(BlueprintImplementableEvent)
 	void BoatSoundStop();
@@ -179,9 +179,8 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Enter & Exit")
 	FVector CharacterPositionOffset = FVector(0.0f, 0.0f, 0.0f);
 	
-	// ------------------------------- UI -------------------------------
+	// ----------------------- UI (ALICE OR IZZY) -----------------------
 	
-	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
 	TSubclassOf<UUserWidget> InteractPromptWidgetClass;
 
@@ -193,7 +192,7 @@ protected:
 	void ShowInteractPrompt();
 	void HideInteractPrompt();
 	
-	// --------------------------- PROGRESSION ---------------------------
+	// ------------------------ PROGRESSION (AIMI) ------------------------
 	
 	/*
 	 * This part is needed to check if you can board the boat
@@ -218,6 +217,7 @@ private:
 	// ------------------------------- EXIT -------------------------------
 	
 	// If in reach of a pier, reference to the corresponding Pier, otherwise null
+	UPROPERTY()
 	TObjectPtr<ADock> DockInReach;
 	
 	void ExitBoat();
@@ -230,5 +230,6 @@ private:
 	// --------------------------- WARDROBE ---------------------------
 	
 	// If in reach of a coat pickup, reference to the corresponding coat pickup, otherwise null
+	UPROPERTY()
 	ACoatPickup* CoatPickupInReach;
 };
