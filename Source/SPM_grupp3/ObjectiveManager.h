@@ -20,7 +20,7 @@ public:
 	// Sets default values for this actor's properties
 	AObjectiveManager();
 	
-	// Shows a simple current / total counter.
+	// Shows a simple current / total counter - modified by Aimi
 	UFUNCTION(BlueprintCallable)
 	void ShowObjectiveProgress(int32 CurrentProgress, int32 TotalProgress);
 	
