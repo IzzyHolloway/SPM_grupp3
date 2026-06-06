@@ -53,7 +53,7 @@ public:
 	UFUNCTION()
 	FRotator GetDockingSpotRotation() const;
 	
-	// ------------------------- PROGRESSION -------------------------
+	// ----------------------- PROGRESSION (AIMI) -----------------------
 	
 	// Adding Flag when docking. Like ArriveIsland1 and so on...
 	UFUNCTION()
@@ -66,7 +66,7 @@ public:
 	UFUNCTION(BlueprintCallable)
 	FText GetCannotLeaveDockMessage() const;
 	
-	// ----------------------------- UI ------------------------------
+	// ----------------------- UI (ALICE OR IZZY) ------------------------
 	
 	void ShowEnterDockPrompt();
 	void HideEnterDockPrompt();
@@ -108,7 +108,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Enter & Exit")
 	FRotator LeftDockingSpotRotation = FRotator(0.0f, 0.0f, 0.0f);
 	
-	// ------------------------- PROGRESSION -------------------------
+	// ----------------------- PROGRESSION (AIMI) -----------------------
 	
 	// Progression flag required before the boat can dock here.
 	// Leave as None if this dock should always be usable.
@@ -134,7 +134,7 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression|Leaving")
 	FText CannotLeaveDockMessage = FText::FromString(TEXT("I should finish helping here before leaving."));
 
-	// ------------------------- UI TEMPORARY -------------------------
+	// ---------------------- UI (ALICE OR IZZY) ----------------------
 	
 	// Widget class for "Press X / Press E to enter boat"
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Boat|UI")
@@ -155,7 +155,7 @@ private:
 	// Either RightDockingSpotRotation or LeftDockingSpotRotation
 	FRotator* CurrentDockingSpotRotation = nullptr;
 	
-	// ------------------------- PROGRESSION -------------------------
+	// ----------------------- PROGRESSION (AIMI) -----------------------
 	
 	bool IsExitingBoatAllowed(ABoatFunctionality* Boat);
 };

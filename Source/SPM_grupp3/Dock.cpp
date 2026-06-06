@@ -49,12 +49,20 @@ void ADock::BeginPlay()
 	// Check if the boat is already in the trigger zone for exiting the boat when the game starts
 	
 	// Wait for next tick: At BeginPlay, the engine hasn't checked for overlapping actors yet
-	GetWorld()->GetTimerManager().SetTimerForNextTick([this]()
+	UWorld* World = GetWorld();
+	if (!IsValid(World))
+	{
+		UE_LOG(LogTemp, Warning, TEXT("Unable to get reference to world."));
+		return;
+	}
+	World->GetTimerManager().SetTimerForNextTick([this]()
 	{
 		TArray<AActor*> OverlappingBoats;
-		ExitBoatTriggerRight->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
-		// Check left side also, not only right -- Aimi
-		ExitBoatTriggerLeft->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
+		if (IsValid(ExitBoatTriggerRight) && IsValid(ExitBoatTriggerLeft))
+		{
+			ExitBoatTriggerRight->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
+			ExitBoatTriggerLeft->GetOverlappingActors(OverlappingBoats, ABoatFunctionality::StaticClass());
+		}
 		
 		for (AActor* Actor : OverlappingBoats)
 		{
@@ -95,11 +103,8 @@ void ADock::OnExitBoatTriggerLeftBeginOverlap(UPrimitiveComponent* OverlappedCom
 	{		
 		// Safe the docking spot corresponding to the trigger box
 		CurrentDockingSpotPosition = &LeftDockingSpotPosition;
-		//CurrentDockingSpotRotation = &RightDockingSpotRotation; this is the old one. New one is the one line under --Aimi
 		CurrentDockingSpotRotation = &LeftDockingSpotRotation;
-
 		
-		// Enable exiting the boat
 		EnableExitingBoat(Boat);
 	}
 }
@@ -109,7 +114,6 @@ void ADock::OnExitBoatTriggerRightEndOverlap(UPrimitiveComponent* OverlappedComp
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
 	{
-		// Added this check --Aimi
 		if (ExitBoatTriggerLeft && ExitBoatTriggerLeft->IsOverlappingActor(Boat))
 		{
 			return;
@@ -124,8 +128,7 @@ void ADock::OnExitBoatTriggerLeftEndOverlap(UPrimitiveComponent* OverlappedComp,
 	// Check if the overlapping object is the boat
 	if (ABoatFunctionality* Boat = Cast<ABoatFunctionality>(OtherActor))
 	{
-		// Added this check --Aimi
-		if (ExitBoatTriggerLeft && ExitBoatTriggerLeft->IsOverlappingActor(Boat))
+		if (ExitBoatTriggerRight && ExitBoatTriggerRight->IsOverlappingActor(Boat))
 		{
 			return;
 		}
@@ -151,7 +154,7 @@ FRotator ADock::GetDockingSpotRotation() const
 
 void ADock::EnableExitingBoat(ABoatFunctionality* Boat)
 {	
-	if (!Boat)
+	if (!IsValid(Boat))
 	{
 		return;
 	}
@@ -201,7 +204,7 @@ void ADock::DisableExitingBoat(ABoatFunctionality* Boat)
 	}
 }
 
-// ------------------------------------------------------------- PROGRESSION -------------------------------------------------------------
+// ---------------------------------------------------------- PROGRESSION (AIMI) ----------------------------------------------------------
 
 bool ADock::IsExitingBoatAllowed(ABoatFunctionality* Boat)
 {
@@ -336,7 +339,7 @@ FText ADock::GetCannotLeaveDockMessage() const
 	return CannotLeaveDockMessage;
 }
 
-// ---------------------------------------------------------------- UI ----------------------------------------------------------------
+// ----------------------------------------------------------- UI (IZZY OR ALICE) -----------------------------------------------------------
 
 void ADock::ShowEnterDockPrompt()
 {
