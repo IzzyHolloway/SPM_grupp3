@@ -2,7 +2,7 @@
 
 
 #include "ProgressionManager.h"
-#include "ObjectiveWidgetBase.h"
+//#include "ObjectiveWidgetBase.h"
 
 AProgressionManager::AProgressionManager()
 {
@@ -14,6 +14,7 @@ void AProgressionManager::BeginPlay()
 	Super::BeginPlay();
 
 	// Create the debug/prototype objective widget once at startup.
+	/*
 	if (ObjectiveWidgetClass)
 	{
 		ObjectiveWidgetInstance = CreateWidget<UObjectiveWidgetBase>(GetWorld(), ObjectiveWidgetClass);
@@ -24,6 +25,7 @@ void AProgressionManager::BeginPlay()
 			RefreshObjectiveWidget();
 		}
 	}
+	*/
 }
 
 void AProgressionManager::AddFlag(FName FlagName)
@@ -68,7 +70,7 @@ void AProgressionManager::SetCurrentObjectiveText(const FText& NewObjectiveText)
 
 	UE_LOG(LogTemp, Warning, TEXT("Set current objective text: %s"), *CurrentObjectiveText.ToString());
 
-	RefreshObjectiveWidget();
+	//RefreshObjectiveWidget();
 }
 
 void AProgressionManager::SetCurrentObjectiveID(FName NewObjectiveID)
@@ -77,7 +79,7 @@ void AProgressionManager::SetCurrentObjectiveID(FName NewObjectiveID)
 
 	UE_LOG(LogTemp, Warning, TEXT("Set current objective ID: %s"), *CurrentObjectiveID.ToString());
 
-	RefreshObjectiveWidget();
+	//RefreshObjectiveWidget();
 }
 
 FText AProgressionManager::GetCurrentObjectiveText() const
@@ -90,6 +92,7 @@ FName AProgressionManager::GetCurrentObjectiveID() const
 	return CurrentObjectiveID;
 }
 
+/*
 void AProgressionManager::RefreshObjectiveWidget()
 {
 	if (!ObjectiveWidgetInstance)
@@ -100,3 +103,4 @@ void AProgressionManager::RefreshObjectiveWidget()
 	const FText ObjectiveIDText = FText::FromName(CurrentObjectiveID);
 	ObjectiveWidgetInstance->SetObjectiveData(CurrentObjectiveText, ObjectiveIDText);
 }
+*/

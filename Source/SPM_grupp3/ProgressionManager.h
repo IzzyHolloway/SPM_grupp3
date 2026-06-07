@@ -81,12 +81,12 @@ protected:
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Objective")
 	FName CurrentObjectiveID;
 	
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
-	TSubclassOf<UObjectiveWidgetBase> ObjectiveWidgetClass;
+	//UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Objective")
+	//TSubclassOf<UObjectiveWidgetBase> ObjectiveWidgetClass;
 
-	UPROPERTY()
-	TObjectPtr<UObjectiveWidgetBase> ObjectiveWidgetInstance;
+	//UPROPERTY()
+	//TObjectPtr<UObjectiveWidgetBase> ObjectiveWidgetInstance;
 	
-	void RefreshObjectiveWidget();
+	//void RefreshObjectiveWidget();
 	
 };
