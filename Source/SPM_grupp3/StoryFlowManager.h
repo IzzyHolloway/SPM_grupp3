@@ -410,6 +410,12 @@ protected:
 	FName LifeCompassReceivedFlag = "LifeCompassReceived";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
+	FName LifeCompassItemAddedToInventoryFlag = "LifeCompassItemAddedToInventory";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flow|Level 2")
+	FName LifeCompassItemID = "LifeCompass";
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
 	FName LighthouseReadyFlag = "LighthouseReady";
 
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Story Flags|Level 2")
@@ -518,6 +524,8 @@ protected:
 	void TryShowAllItemsFoundDialogue(AProgressionManager* ProgressionManager, FName PickedUpItemID);
 	
 	void TryAddShellToInventory(AProgressionManager* ProgressionManager);
-	
+
 	void TryAddPenToInventory(AProgressionManager* ProgressionManager);
+
+	void TryAddLifeCompassToInventory(AProgressionManager* ProgressionManager);
 };
