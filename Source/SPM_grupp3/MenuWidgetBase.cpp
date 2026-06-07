@@ -12,11 +12,7 @@ void UMenuWidgetBase::NativeConstruct()
     Super::NativeConstruct();
 
     SetupMenuInput();
-
-    // Focus is applied on the first NativeTick, NOT here: setting keyboard focus during
-    // Construct is too early and silently fails (the widget isn't in the focus path yet),
-    // which left the gamepad dead until the mouse moved. NativeTick also runs while the game
-    // is paused, so this gives the pause menu working controller focus too.
+    
     bInitialFocusApplied = false;
 }
 
@@ -26,9 +22,7 @@ void UMenuWidgetBase::SetupMenuInput()
     {
         UWidget* FocusTarget = GetInitialFocusTarget();
 
-        // UI-only lets the gamepad navigate UMG. Passing the focus target here sets focus
-        // synchronously as part of establishing the mode -- this is what makes the controller
-        // work in the PAUSE menu, where widgets don't tick (so a deferred focus never runs).
+       
         UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, FocusTarget, EMouseLockMode::DoNotLock, false);
 
         // Controller is primary: hide the cursor on open. NativeOnMouseMove shows it again.
@@ -78,9 +72,7 @@ FReply UMenuWidgetBase::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyE
         SetMouseCursorVisible(false);
     }
 
-    // Backspace (keyboard), B / right face button (gamepad), Start/Menu (Special_Right),
-    // Escape -> go back. Special_Right keeps "close pause with the Menu button" working
-    // after the old Blueprint OnPreviewKeyDown that did it is deleted.
+    
     if (Key == EKeys::BackSpace || Key == EKeys::Gamepad_FaceButton_Right
         || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Escape)
     {

@@ -24,7 +24,6 @@ ALumiStudio::ALumiStudio()
     // animation rate for distant/off-screen meshes, which freezes the idle here -- turn it off.
     PreviewMesh->bEnableUpdateRateOptimizations = false;
 
-    // --- Local lights. Bright by default so the preview is never black; dim them in the BP if needed. ---
     KeyLight = CreateDefaultSubobject<UPointLightComponent>(TEXT("KeyLight"));
     KeyLight->SetupAttachment(SceneRoot);
     KeyLight->SetRelativeLocation(FVector(140.f, -90.f, 170.f));
@@ -41,7 +40,6 @@ ALumiStudio::ALumiStudio()
     FillLight->SetCastShadows(false);
     FillLight->SetMobility(EComponentMobility::Movable);
 
-    // --- Capture camera. Sits in front of Lumi (+X) looking back toward her (-X). ---
     Capture = CreateDefaultSubobject<USceneCaptureComponent2D>(TEXT("Capture"));
     Capture->SetupAttachment(SceneRoot);
     Capture->SetRelativeLocation(FVector(CaptureDistance, 0.f, CaptureHeight));
@@ -94,10 +92,7 @@ void ALumiStudio::BeginPlay()
     Capture->SetRelativeLocation(FVector(CaptureDistance, 0.f, CaptureHeight));
     Capture->FOVAngle = CaptureFOV;
 
-    // Capture every mesh on this actor -- PreviewMesh plus anything added in the BP (e.g. a
-    // backdrop plane behind Lumi). Lights and the capture itself aren't primitives, so they're
-    // excluded automatically. This lets designers add background/props in BP_LumiStudio without
-    // touching C++.
+    
     Capture->ShowOnlyComponents.Empty();
     TArray<UPrimitiveComponent*> Primitives;
     GetComponents<UPrimitiveComponent>(Primitives);
@@ -142,7 +137,6 @@ void ALumiStudio::SetStudioActive(bool bActive)
     PreviewMesh->SetComponentTickEnabled(bActive);
 
     // bCaptureEveryFrame already re-renders on the next frame, so don't also call CaptureScene()
-    // here -- doing both logs a "major inefficiency" warning.
     Capture->bCaptureEveryFrame = bActive;
 }
 

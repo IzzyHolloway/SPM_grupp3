@@ -99,7 +99,7 @@ private:
 	// Prevents the player from accidentally triggering FinishPuzzle multiple times.
 	bool bIsFinishing = false;
 
-	// //Izzy lagt till för bug-fix: musen ska inte rita om den inte rört sig.
+	// bug-fix: musen ska inte rita om den inte rört sig.
 	// Tracks the previous mouse screen position so we can ignore frames where the
 	// cursor is stationary (otherwise the mouse logic fights joystick input and
 	// also draws a stray line on the first frame).

@@ -4,14 +4,7 @@
 #include "Components/SphereComponent.h"
 #include "OutlineComponent.generated.h"
 
-/**
- * Drop this onto ANY interactable actor (Blueprint or C++). While the player is inside its radius it
- * turns on the Custom Depth outline on all of the owner's mesh components; the M_outline post-process
- * material then draws the edge. Turns it off when the player leaves. No event-graph wiring needed --
- * just add the component and set the radius.
- *
- * It is a sphere, so set its radius in the component's Details (Shape -> Sphere Radius).
- */
+
 UCLASS(ClassGroup=(Custom), meta=(BlueprintSpawnableComponent, DisplayName="Outline"))
 class SPM_GRUPP3_API UOutlineComponent : public USphereComponent
 {
@@ -28,9 +21,7 @@ public:
     UFUNCTION(BlueprintCallable, Category = "Outline")
     void SetOutline(bool bEnabled);
 
-    // While suppressed the outline stays OFF and overlaps are ignored. Use this when the actor is
-    // "in use" so it doesn't glow the whole time -- e.g. call SetOutlineSuppressed(true) when the
-    // player boards the boat and SetOutlineSuppressed(false) when they leave.
+  
     UFUNCTION(BlueprintCallable, Category = "Outline")
     void SetOutlineSuppressed(bool bSuppressed);
 

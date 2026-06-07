@@ -10,24 +10,6 @@ class UPointLightComponent;
 class UTextureRenderTarget2D;
 class UMaterialInterface;
 class UDataTable;
-
-/**
- * Self-contained "photo studio" that renders a preview copy of Lumi into a render target so the
- * wardrobe UI can show her live (idle animation + currently equipped coat).
- *
- * Place one of these somewhere far away from the playable area (e.g. deep below the floor, or in
- * the L_GarderobStudio sublevel). It carries its own lights so it does NOT matter how dark the
- * surrounding level is -- that is the usual cause of a pure-black preview.
- *
- * Setup:
- *   1. Drop a BP child of this actor into the level. On the PreviewMesh component set Lumi's
- *      Skeletal Mesh + her idle Anim Blueprint (Anim Class).
- *   2. Assign RenderTarget = RT_LumiPreview (the same RT your RT_LumiPreview_Mat samples).
- *   3. (Optional) Assign CoatDataTable = DT_Coats so ApplyCoat(CoatID) can look materials up itself.
- *   4. In BP_Wardrobe: on OpenWardrobe -> Studio->SetStudioActive(true); on CloseWardrobe -> false.
- *   5. In BP_Wardrobe's OnCoatEquipped (or by binding OnEquippedCoatChanged) call
- *      Studio->ApplyCoat(CoatID)  (or SetPreviewCoatMaterial directly).
- */
 UCLASS()
 class SPM_GRUPP3_API ALumiStudio : public AActor
 {

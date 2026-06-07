@@ -42,10 +42,8 @@ void ULittleLost_GameInstance::Shutdown()
     Super::Shutdown();
 }
 
-// Fires when a newly loaded level is ready. The FMOD bus + SoundMix override are reset by the
-// map load, so push the stored MasterVolume back to the audio engine here -- this is what makes
-// the volume set in the menu actually persist into (and across) gameplay.
-void ULittleLost_GameInstance::OnPostLoadMap(UWorld* /*LoadedWorld*/)
+/
+void ULittleLost_GameInstance::OnPostLoadMap(UWorld* )
 {
     ApplyMasterVolume();
 }
@@ -107,10 +105,7 @@ void ULittleLost_GameInstance::ContinueGame()
 // the snapshot is kept in memory.
 void ULittleLost_GameInstance::TravelToLevel(FName LevelName, bool bSpawnInBoat)
 {
-    // Loop guard: Level 2 was duplicated from Level 1, so it contains the same BP_Gate.
-    // When we arrive in Level 2 and ApplyToWorld restores the Island3PadlockSolved flag,
-    // that gate's Tick sees the flag and calls TravelToLevel again -- which would reload the
-    // same level forever. Refuse any request to travel to the level we are already in.
+    
     const FString CurrentLevel = UGameplayStatics::GetCurrentLevelName(this, true);
     if (!LevelName.IsNone() && LevelName.ToString() == CurrentLevel)
     {

@@ -24,15 +24,14 @@ public:
 protected:
     virtual void BeginPlay() override;
 
-    // Proximity outline -- lights up while the player is within range.
     UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Components")
     TObjectPtr<UOutlineComponent> OutlineComponent;
 
-    // Coat row name in the wardrobe DataTable (must match exactly, e.g. "CoatRed").
+    // Coat row name in the wardrobe DataTable 
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Wardrobe")
     FName CoatID = NAME_None;
 
-    // If true, the pickup is consumed only if UnlockCoat succeeds (e.g. not already unlocked).
+    // If true, the pickup is consumed only if UnlockCoat succeeds
     UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Pickup|Wardrobe")
     bool bRequireUnlockSuccess = true;
 

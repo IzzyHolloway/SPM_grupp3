@@ -4,10 +4,7 @@
 #include "MenuWidgetBase.h"
 #include "MainMenuWidget.generated.h"
 
-/**
- * Main menu. Play / Settings / Controls / Credits / Exit.
- * Button names below must match the widgets in WBP_MainMenu.
- */
+
 UCLASS()
 class SPM_GRUPP3_API UMainMenuWidget : public UMenuWidgetBase
 {
@@ -20,7 +17,6 @@ public:
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Credits;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Exit;
 
-    // Optional: only used for the focus/hover text-colour highlight.
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Play;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Settings;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Controls;
