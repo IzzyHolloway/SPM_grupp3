@@ -546,48 +546,25 @@ void ULittleLost_GameInstance::SetMasterVolume(float NewVolume)
 //      class. We override each root we use; bApplyToChildren=true cascades to their child classes.
 void ULittleLost_GameInstance::ApplyMasterVolume()
 {
-    // 1) FMOD master bus.
-    if (IFMODStudioModule::IsAvailable())
+    // MUSIC-ONLY volume. The slider lowers only the music sound classes; SFX, footsteps, UI,
+    // dialogue, FMOD audio and cutscene sound effects are deliberately left at full volume.
+    // bApplyToChildren=true, so any child sound class of these (e.g. a cutscene-music class
+    // parented under SC_BackgroundMusic) follows along too. For a cutscene's music to obey this
+    // slider, its Sound Wave/Cue must use one of these classes (or a child of them).
+    USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Audio/SCM_MasterVolume.SCM_MasterVolume"));
+    USoundClass* MusicClass = LoadObject<USoundClass>(nullptr, TEXT("/Game/Audio/music/Background/SC_BackgroundMusic.SC_BackgroundMusic"));
+
+    // Diagnostic: shows on every slider change whether the mix + music class actually loaded,
+    // and the value we apply. If both say OK but the music doesn't get quieter, the playing
+    // music is routing through a DIFFERENT sound class (e.g. the menu-music cue is tagged MasterSFX).
+    UE_LOG(LogTemp, Warning, TEXT("ApplyMasterVolume: vol=%.2f  Mix=%s  MusicClass(SC_BackgroundMusic)=%s"),
+        MasterVolume,
+        Mix ? TEXT("OK") : TEXT("NULL"),
+        MusicClass ? TEXT("OK") : TEXT("NULL"));
+
+    if (Mix && MusicClass)
     {
-        if (FMOD::Studio::System* StudioSystem =
-                IFMODStudioModule::Get().GetStudioSystem(EFMODSystemContext::Runtime))
-        {
-            FMOD::Studio::Bus* MasterBus = nullptr;
-            const FMOD_RESULT Result = StudioSystem->getBus("bus:/", &MasterBus);
-            if (Result == FMOD_OK && MasterBus)
-            {
-                MasterBus->setVolume(MasterVolume);
-                UE_LOG(LogTemp, Log,
-                    TEXT("ApplyMasterVolume: set FMOD master bus volume to %.2f."), MasterVolume);
-            }
-            else
-            {
-                // Usually means the Master bank isn't loaded yet (no banks => no master bus).
-                UE_LOG(LogTemp, Warning,
-                    TEXT("ApplyMasterVolume: could not get FMOD master bus 'bus:/' (result=%d). Is the Master bank loaded?"),
-                    (int32)Result);
-            }
-        }
-    }
-
-    // 2) Native UE audio: SoundMix override on each top-level sound class we use. Add a class
-    // here if a new root sound class is introduced and needs to follow the master volume.
-    if (USoundMix* Mix = LoadObject<USoundMix>(nullptr, TEXT("/Game/Grupp03_Test/Zoey/SCM_MasterVolume.SCM_MasterVolume")))
-    {
-        static const TCHAR* RootSoundClassPaths[] =
-        {
-            TEXT("/Game/Grupp03_Test/Zoey/Audio/SFX/MasterSFX.MasterSFX"),                                  // menu music (child SC_mainMenu) + SFX
-            TEXT("/Game/Grupp03_Test/Zoey/Audio/music/Background/SC_BackgroundMusic.SC_BackgroundMusic"),   // in-level background music
-        };
-
-        for (const TCHAR* ClassPath : RootSoundClassPaths)
-        {
-            if (USoundClass* SoundClass = LoadObject<USoundClass>(nullptr, ClassPath))
-            {
-                UGameplayStatics::SetSoundMixClassOverride(this, Mix, SoundClass, MasterVolume, 1.0f, 1.0f, true);
-            }
-        }
-
+        UGameplayStatics::SetSoundMixClassOverride(this, Mix, MusicClass, MasterVolume, 1.0f, 1.0f, true);
         UGameplayStatics::PushSoundMixModifier(this, Mix);
     }
 }

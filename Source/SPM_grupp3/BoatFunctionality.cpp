@@ -87,8 +87,6 @@ void ABoatFunctionality::BeginPlay()
 	
 	// ---------------------------------- INPUT ----------------------------------
 	
-	check(GEngine != nullptr);
-	
 	// Get the player controller for this Pawn
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
 	{
@@ -117,7 +115,9 @@ void ABoatFunctionality::Tick(float DeltaTime)
 // Called to bind functionality to input
 void ABoatFunctionality::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)
 {
-	if (UEnhancedInputComponent* EnhancedInputComponent = CastChecked<UEnhancedInputComponent>(PlayerInputComponent))
+	// Cast (not CastChecked): a wrong/null input component must not hard-crash. In a Shipping
+	// build CastChecked compiles its check away and would hand back a bad pointer instead.
+	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent))
 	{
 		// Bind Movement and Rotation Actions
 		EnhancedInputComponent->BindAction(MoveRotateAction, ETriggerEvent::Triggered, this, &ABoatFunctionality::MoveRotate);
