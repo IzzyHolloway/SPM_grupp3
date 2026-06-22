@@ -15,7 +15,6 @@ class ALevelScriptActor;
 class FBoolProperty;
 class FIntProperty;
 class AExponentialHeightFog;
-class AProgressionManager;
 
 /*
  * Main player character used for movement, interaction
@@ -270,24 +269,4 @@ protected:
 		int32 LastLighthouseIndex = -1;
 		const FBoolProperty* CachedLighthouseFlagProp = nullptr;
 		const FIntProperty* CachedLighthouseIndexProp = nullptr;
-
-		// ------------------------------ CUTSCENE CHAINING ------------------------------
-
-		// When the lighthouse cutscene ends (bIsInCutsceneLighthouse true->false), automatically
-		// progress the story straight to the ending cutscene -- skipping the manual "after light"
-		// click-dialogue. We add progression flags; AStoryFlowManager routes them to
-		// Lighthouse_EndingCutscene and the Level 2 level Blueprint plays WBP_EndCutscene / MP_EndCutscene.
-		// Set in UpdateCutsceneFade on the falling edge. Toggle/rename without recompiling below.
-		UPROPERTY(EditAnywhere, Category = "Cutscene")
-		bool bAutoStartEndingAfterLighthouse = true;
-
-		// Flag the StoryFlowManager + Level 2 level BP watch to fire the ending cutscene.
-		UPROPERTY(EditAnywhere, Category = "Cutscene")
-		FName FinalCutsceneFlag = "FinalCutsceneStarted";
-
-		// Also recorded so any system that gates on "the light cutscene happened" stays consistent.
-		UPROPERTY(EditAnywhere, Category = "Cutscene")
-		FName LighthouseCutscenePlayedFlag = "LighthouseLightCutscenePlayed";
-
-		TWeakObjectPtr<AProgressionManager> CachedProgressionManager;
 };

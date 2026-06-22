@@ -20,7 +20,6 @@
 #include "Engine/ExponentialHeightFog.h"
 #include "Components/ExponentialHeightFogComponent.h"
 #include "Camera/PlayerCameraManager.h"
-#include "ProgressionManager.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -280,8 +279,6 @@ void ACharacterAimi::UpdateCutsceneFade()
 
 	// Fade when the cutscene first starts, and on every angle change while it runs.
 	const bool bShouldFade = bInLighthouse && (!bWasInLighthouseCutscene || Index != LastLighthouseIndex);
-	// The lighthouse cutscene just finished this frame (true -> false).
-	const bool bLighthouseJustEnded = bWasInLighthouseCutscene && !bInLighthouse;
 
 	bWasInLighthouseCutscene = bInLighthouse;
 	LastLighthouseIndex = Index;
@@ -293,29 +290,6 @@ void ACharacterAimi::UpdateCutsceneFade()
 			// FromAlpha = 1 means the screen is fully black THIS frame -- which hides the hard cut that
 			// the director just made -- then it interpolates to clear (0) over CutsceneFadeTime.
 			Mgr->StartCameraFade(1.f, 0.f, CutsceneFadeTime, FLinearColor::Black, false, /*bHoldWhenFinished*/ false);
-		}
-	}
-
-	// Chain straight into the ending cutscene when the lighthouse cutscene finishes -- no manual
-	// "after light" dialogue. AStoryFlowManager turns these flags into Lighthouse_EndingCutscene and
-	// the Level 2 level Blueprint plays WBP_EndCutscene / MP_EndCutscene.
-	if (bLighthouseJustEnded && bAutoStartEndingAfterLighthouse)
-	{
-		if (!CachedProgressionManager.IsValid())
-		{
-			CachedProgressionManager = Cast<AProgressionManager>(
-				UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass()));
-		}
-		if (AProgressionManager* PM = CachedProgressionManager.Get())
-		{
-			if (!LighthouseCutscenePlayedFlag.IsNone() && !PM->HasFlag(LighthouseCutscenePlayedFlag))
-			{
-				PM->AddFlag(LighthouseCutscenePlayedFlag);
-			}
-			if (!FinalCutsceneFlag.IsNone() && !PM->HasFlag(FinalCutsceneFlag))
-			{
-				PM->AddFlag(FinalCutsceneFlag);
-			}
 		}
 	}
 }
