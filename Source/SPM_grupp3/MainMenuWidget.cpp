@@ -27,15 +27,6 @@ void UMainMenuWidget::NativeConstruct()
     AddHighlightPair(Button_Controls, Text_Controls);
     AddHighlightPair(Button_Credits, Text_Credits);
     AddHighlightPair(Button_Exit, Text_Exit);
-
-    // The menu is HitTestInvisible (mouse fully disabled), so UMG's default spatial navigation
-    // has no hit-test grid to search -- wire the d-pad order explicitly instead.
-    LinkVerticalNavigation({
-        Cast<UWidget>(Button_Play),
-        Cast<UWidget>(Button_Settings),
-        Cast<UWidget>(Button_Controls),
-        Cast<UWidget>(Button_Credits),
-        Cast<UWidget>(Button_Exit) });
 }
 
 UWidget* UMainMenuWidget::GetInitialFocusTarget()

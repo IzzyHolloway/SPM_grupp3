@@ -13,6 +13,7 @@
 #include "InputAction.h"
 #include "InputMappingContext.h"
 #include "Kismet/KismetSystemLibrary.h"
+#include "UObject/UnrealType.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -58,6 +59,10 @@ void ACharacterAimi::BeginPlay()
 {
 	Super::BeginPlay();
 
+	// Remember where we spawned as a last-resort respawn point (used until the player reaches
+	// their first BP_SaveLocation checkpoint).
+	SpawnLocation = GetActorLocation();
+
 	if (APlayerController* PC = Cast<APlayerController>(GetController()))
 	{
 		if (ULocalPlayer* LocalPlayer = PC->GetLocalPlayer())
@@ -79,6 +84,49 @@ void ACharacterAimi::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateInteractableCandidate();
+}
+
+void ACharacterAimi::FellOutOfWorld(const UDamageType& DmgType)
+{
+	// Default behaviour destroys the pawn. Instead, recover the player. This is the global
+	// backup for the BP_ResetZone water boxes: World Settings' Kill Z (set just under the
+	// water surface) catches a fall anywhere, even where no trigger box was placed.
+
+	if (IsBoating)
+	{
+		// Attached to the boat, which floats above the water -- don't yank the player out of
+		// it. (Returning without calling Super also skips the default "destroy".)
+		return;
+	}
+
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		Movement->StopMovementImmediately();
+	}
+
+	const FVector Target = GetRespawnLocation() + FVector(0.f, 0.f, RespawnZOffset);
+	SetActorLocation(Target, false, nullptr, ETeleportType::TeleportPhysics);
+}
+
+FVector ACharacterAimi::GetRespawnLocation() const
+{
+	// Prefer the checkpoint that BP_SaveLocation writes (the Blueprint variable
+	// "LastSavedPosition"), so this backup lands the player exactly where the trigger-box
+	// system would. It lives on the Blueprint, so read it via reflection.
+	if (const FStructProperty* SavedProp = CastField<FStructProperty>(GetClass()->FindPropertyByName(TEXT("LastSavedPosition"))))
+	{
+		if (SavedProp->Struct == TBaseStructure<FVector>::Get())
+		{
+			const FVector Saved = *SavedProp->ContainerPtrToValuePtr<FVector>(this);
+			if (!Saved.IsNearlyZero())
+			{
+				return Saved;
+			}
+		}
+	}
+
+	// No checkpoint reached yet (still at origin): fall back to the level spawn point.
+	return SpawnLocation;
 }
 
 void ACharacterAimi::SetupPlayerInputComponent(UInputComponent* PlayerInputComponent)

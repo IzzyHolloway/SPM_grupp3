@@ -10,12 +10,11 @@ class UTextBlock;
 /**
  * Shared base for all the game's menu widgets (Volume, MainMenu, PlayMenu, ...).
  * Handles, entirely in C++ (no Blueprint logic needed):
- *   - Controller-only input: UI-only input mode, cursor hidden, and the whole menu set
- *     HitTestInvisible so the mouse can't hover or click anything
+ *   - Controller-first input: UI-only input mode + cursor hidden, so the controller drives
+ *     the menu and there's no visible cursor to use the mouse with
  *   - Initial keyboard/gamepad focus (controller navigation), via GetInitialFocusTarget()
  *   - Backspace / Gamepad-B / Escape -> HandleBack()
- * Subclasses override GetInitialFocusTarget() and HandleBack() as needed. Multi-button menus
- * must wire LinkVerticalNavigation() (default spatial nav needs the disabled hit-test grid).
+ * Subclasses override GetInitialFocusTarget() and HandleBack() as needed.
  */
 UCLASS()
 class SPM_GRUPP3_API UMenuWidgetBase : public UUserWidget
@@ -34,8 +33,7 @@ protected:
     // What "back / cancel" does (Backspace, Gamepad B, Escape). Default: close this menu.
     virtual void HandleBack();
 
-    // Put the player in UI-only, controller-only input mode: cursor hidden and the menu set
-    // HitTestInvisible so the mouse is fully ignored.
+    // Put the player in UI-only input mode and hide the mouse cursor (controller-driven menu).
     void SetupMenuInput();
 
     // Create + show another menu widget by class. Returns it so callers can configure it.

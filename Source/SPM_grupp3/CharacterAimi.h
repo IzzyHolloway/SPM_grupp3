@@ -56,6 +56,11 @@ public:
 protected:
 	virtual void BeginPlay() override;
 	virtual void Tick(float DeltaTime) override;
+
+	// Caught by World Settings' Kill Z: instead of the default (destroy the pawn), send the
+	// player back to safety. A global backup for the BP_ResetZone water boxes, so a fall is
+	// recoverable even where no box was placed. Set each level's Kill Z just under the water.
+	virtual void FellOutOfWorld(const class UDamageType& DmgType) override;
 	
 	// INPUT MAPPING AND ACTIONS
 	virtual void SetupPlayerInputComponent(UInputComponent* PlayerInputComponent) override;
@@ -183,4 +188,18 @@ protected:
 		TObjectPtr<ABoatFunctionality> BoatInReach;
 		
 		void EnterBoat();
+
+		// ------------------------------ RESPAWN ------------------------------
+
+		// Height added above the respawn point when recovering from a fall, so the player
+		// drops in cleanly instead of spawning embedded in the ground.
+		UPROPERTY(EditAnywhere, Category = "Respawn")
+		float RespawnZOffset = 50.f;
+
+		// Where the player started this level; fallback respawn target before any checkpoint.
+		FVector SpawnLocation = FVector::ZeroVector;
+
+		// The spot to send the player to after a fall: the BP_SaveLocation checkpoint variable
+		// "LastSavedPosition" if it's been set, otherwise SpawnLocation.
+		FVector GetRespawnLocation() const;
 };

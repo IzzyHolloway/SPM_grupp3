@@ -38,17 +38,6 @@ void UPlayMenuWidget::NativeConstruct()
     {
         Text_Continue->SetColorAndOpacity(FSlateColor(FLinearColor(0.4f, 0.4f, 0.4f, 1.0f)));
     }
-
-    // The menu is HitTestInvisible (mouse fully disabled), so wire the d-pad order explicitly.
-    // Skip Continue when it's disabled -- a disabled button can't take focus.
-    TArray<UWidget*> NavList;
-    NavList.Add(Cast<UWidget>(Button_NewGame));
-    if (bHasSave)
-    {
-        NavList.Add(Cast<UWidget>(Button_Continue));
-    }
-    NavList.Add(Cast<UWidget>(Button_Back));
-    LinkVerticalNavigation(NavList);
 }
 
 UWidget* UPlayMenuWidget::GetInitialFocusTarget()
