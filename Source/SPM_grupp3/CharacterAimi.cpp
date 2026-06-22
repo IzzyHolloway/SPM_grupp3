@@ -16,6 +16,11 @@
 #include "UObject/UnrealType.h"
 #include "Engine/World.h"
 #include "Engine/LevelScriptActor.h"
+#include "EngineUtils.h"
+#include "Engine/ExponentialHeightFog.h"
+#include "Components/ExponentialHeightFogComponent.h"
+#include "Camera/PlayerCameraManager.h"
+#include "ProgressionManager.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -87,6 +92,8 @@ void ACharacterAimi::Tick(float DeltaTime)
 
 	UpdateInteractableCandidate();
 	UpdateCutsceneLock();
+	UpdateCutsceneFog();
+	UpdateCutsceneFade();
 }
 
 void ACharacterAimi::UpdateCutsceneLock()
@@ -152,6 +159,162 @@ void ACharacterAimi::UpdateCutsceneLock()
 			{
 				SetMovementLocked(true);
 				bCutsceneMovementFrozen = true;
+			}
+		}
+	}
+}
+
+void ACharacterAimi::UpdateCutsceneFog()
+{
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	// Resolve (and cache) the BP_CameraDirector instance plus its set of "cutscene running" bools.
+	// Found by class-name prefix because the director is a Blueprint class with no C++ parent.
+	if (!CachedCameraDirector.IsValid())
+	{
+		CachedCutsceneFlagProps.Reset();
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			if (It->GetClass()->GetName().StartsWith(TEXT("BP_CameraDirector")))
+			{
+				CachedCameraDirector = *It;
+
+				// "Any cutscene active" = OR of these. We poll several so the fog drops for every
+				// cutscene the director runs, whichever flag it happens to flip.
+				static const TCHAR* FlagNames[] = {
+					TEXT("bCutsceneActive"),
+					TEXT("bIsInCutsceneLighthouse"),
+					TEXT("bIsInCutscene1"),
+					TEXT("bIsInCutscene2"),
+					TEXT("bIsInCutscene3"),
+					TEXT("bIsInEntityCutscene"),
+				};
+				for (const TCHAR* Name : FlagNames)
+				{
+					if (const FBoolProperty* Prop = CastField<FBoolProperty>(It->GetClass()->FindPropertyByName(Name)))
+					{
+						CachedCutsceneFlagProps.Add(Prop);
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	// Resolve (and cache) the level's Exponential Height Fog, remembering its authored density.
+	if (!CachedHeightFog.IsValid())
+	{
+		for (TActorIterator<AExponentialHeightFog> It(World); It; ++It)
+		{
+			CachedHeightFog = *It;
+			if (const UExponentialHeightFogComponent* Comp = It->GetComponent())
+			{
+				DefaultFogDensity = Comp->FogDensity;
+			}
+			break;
+		}
+	}
+
+	const AActor* Director = CachedCameraDirector.Get();
+	bool bInCutscene = false;
+	if (Director)
+	{
+		for (const FBoolProperty* Prop : CachedCutsceneFlagProps)
+		{
+			if (Prop->GetPropertyValue_InContainer(Director))
+			{
+				bInCutscene = true;
+				break;
+			}
+		}
+	}
+
+	// --- Drop / restore the fog on the edge ---
+	if (bInCutscene && !bCutsceneFogActive)
+	{
+		bCutsceneFogActive = true;
+		if (UExponentialHeightFogComponent* Comp = CachedHeightFog.IsValid() ? CachedHeightFog->GetComponent() : nullptr)
+		{
+			DefaultFogDensity = Comp->FogDensity; // capture the live value right before lowering it
+			Comp->SetFogDensity(CutsceneFogDensity);
+		}
+	}
+	else if (!bInCutscene && bCutsceneFogActive)
+	{
+		bCutsceneFogActive = false;
+		if (UExponentialHeightFogComponent* Comp = CachedHeightFog.IsValid() ? CachedHeightFog->GetComponent() : nullptr)
+		{
+			Comp->SetFogDensity(DefaultFogDensity);
+		}
+	}
+}
+
+void ACharacterAimi::UpdateCutsceneFade()
+{
+	// The BP_CameraDirector instance is resolved/cached by UpdateCutsceneFog (called just before this).
+	AActor* Director = CachedCameraDirector.Get();
+	if (!Director)
+	{
+		bWasInLighthouseCutscene = false;
+		return;
+	}
+
+	// Resolve the lighthouse "is active" bool and the "CurrentIndex" int once.
+	if (!CachedLighthouseFlagProp || !CachedLighthouseIndexProp)
+	{
+		UClass* DirClass = Director->GetClass();
+		CachedLighthouseFlagProp = CastField<FBoolProperty>(DirClass->FindPropertyByName(TEXT("bIsInCutsceneLighthouse")));
+		CachedLighthouseIndexProp = CastField<FIntProperty>(DirClass->FindPropertyByName(TEXT("CurrentIndex")));
+	}
+	if (!CachedLighthouseFlagProp || !CachedLighthouseIndexProp)
+	{
+		return;
+	}
+
+	const bool bInLighthouse = CachedLighthouseFlagProp->GetPropertyValue_InContainer(Director);
+	const int32 Index = CachedLighthouseIndexProp->GetPropertyValue_InContainer(Director);
+
+	// Fade when the cutscene first starts, and on every angle change while it runs.
+	const bool bShouldFade = bInLighthouse && (!bWasInLighthouseCutscene || Index != LastLighthouseIndex);
+	// The lighthouse cutscene just finished this frame (true -> false).
+	const bool bLighthouseJustEnded = bWasInLighthouseCutscene && !bInLighthouse;
+
+	bWasInLighthouseCutscene = bInLighthouse;
+	LastLighthouseIndex = Index;
+
+	if (bShouldFade)
+	{
+		if (APlayerCameraManager* Mgr = UGameplayStatics::GetPlayerCameraManager(this, 0))
+		{
+			// FromAlpha = 1 means the screen is fully black THIS frame -- which hides the hard cut that
+			// the director just made -- then it interpolates to clear (0) over CutsceneFadeTime.
+			Mgr->StartCameraFade(1.f, 0.f, CutsceneFadeTime, FLinearColor::Black, false, /*bHoldWhenFinished*/ false);
+		}
+	}
+
+	// Chain straight into the ending cutscene when the lighthouse cutscene finishes -- no manual
+	// "after light" dialogue. AStoryFlowManager turns these flags into Lighthouse_EndingCutscene and
+	// the Level 2 level Blueprint plays WBP_EndCutscene / MP_EndCutscene.
+	if (bLighthouseJustEnded && bAutoStartEndingAfterLighthouse)
+	{
+		if (!CachedProgressionManager.IsValid())
+		{
+			CachedProgressionManager = Cast<AProgressionManager>(
+				UGameplayStatics::GetActorOfClass(GetWorld(), AProgressionManager::StaticClass()));
+		}
+		if (AProgressionManager* PM = CachedProgressionManager.Get())
+		{
+			if (!LighthouseCutscenePlayedFlag.IsNone() && !PM->HasFlag(LighthouseCutscenePlayedFlag))
+			{
+				PM->AddFlag(LighthouseCutscenePlayedFlag);
+			}
+			if (!FinalCutsceneFlag.IsNone() && !PM->HasFlag(FinalCutsceneFlag))
+			{
+				PM->AddFlag(FinalCutsceneFlag);
 			}
 		}
 	}

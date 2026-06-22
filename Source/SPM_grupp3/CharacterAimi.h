@@ -13,6 +13,9 @@ class AInteractableActor;
 class ABoatFunctionality;
 class ALevelScriptActor;
 class FBoolProperty;
+class FIntProperty;
+class AExponentialHeightFog;
+class AProgressionManager;
 
 /*
  * Main player character used for movement, interaction
@@ -225,4 +228,66 @@ protected:
 		// (its script actor) changes.
 		TWeakObjectPtr<ALevelScriptActor> CachedLevelScript;
 		const FBoolProperty* CachedCutsceneFlagProp = nullptr;
+
+		// ------------------------------ CUTSCENE FOG ------------------------------
+
+		// While a BP_CameraDirector cutscene runs, drop the level's Exponential Height Fog density so
+		// the in-engine cutscene shots read clearly, then restore it when the cutscene ends. Polled
+		// from Tick on the true<->false edge -- same reflection approach as UpdateCutsceneLock, no
+		// Blueprint wiring. The cutscene state is read off the BP_CameraDirector's own bools.
+		void UpdateCutsceneFog();
+
+		// Density forced on the Exponential Height Fog while a cutscene plays. Tweakable per-instance
+		// in the player Blueprint's Details panel.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		float CutsceneFogDensity = 0.005f;
+
+		bool bCutsceneFogActive = false;
+
+		// The fog density to restore when the cutscene ends, captured live just before lowering it.
+		float DefaultFogDensity = 0.02f;
+
+		TWeakObjectPtr<AExponentialHeightFog> CachedHeightFog;
+		TWeakObjectPtr<AActor> CachedCameraDirector;
+		// "Any cutscene active" is the OR of these BP_CameraDirector bools, resolved once per level.
+		TArray<const FBoolProperty*> CachedCutsceneFlagProps;
+
+		// ------------------------------ CUTSCENE FADE ------------------------------
+
+		// Hides the lighthouse cutscene's hard camera cuts behind a black fade -- fully in C++, no
+		// Blueprint wiring. The director snaps the camera to IslandLighthouseLocation/Rotation[CurrentIndex]
+		// and advances CurrentIndex every few seconds. We poll that index (and bIsInCutsceneLighthouse)
+		// via reflection; on each change we snap the screen to black and fade back in over CutsceneFadeTime,
+		// so the cut lands while the screen is black. (Code only learns of the cut as it happens, so the
+		// out-fade is instant and the in-fade is smooth -- a symmetric pre-fade would need the BP to call us.)
+		void UpdateCutsceneFade();
+
+		// Fade-in duration (seconds) used to reveal each new lighthouse angle. Tweakable on the player BP.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		float CutsceneFadeTime = 0.4f;
+
+		bool bWasInLighthouseCutscene = false;
+		int32 LastLighthouseIndex = -1;
+		const FBoolProperty* CachedLighthouseFlagProp = nullptr;
+		const FIntProperty* CachedLighthouseIndexProp = nullptr;
+
+		// ------------------------------ CUTSCENE CHAINING ------------------------------
+
+		// When the lighthouse cutscene ends (bIsInCutsceneLighthouse true->false), automatically
+		// progress the story straight to the ending cutscene -- skipping the manual "after light"
+		// click-dialogue. We add progression flags; AStoryFlowManager routes them to
+		// Lighthouse_EndingCutscene and the Level 2 level Blueprint plays WBP_EndCutscene / MP_EndCutscene.
+		// Set in UpdateCutsceneFade on the falling edge. Toggle/rename without recompiling below.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		bool bAutoStartEndingAfterLighthouse = true;
+
+		// Flag the StoryFlowManager + Level 2 level BP watch to fire the ending cutscene.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		FName FinalCutsceneFlag = "FinalCutsceneStarted";
+
+		// Also recorded so any system that gates on "the light cutscene happened" stays consistent.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		FName LighthouseCutscenePlayedFlag = "LighthouseLightCutscenePlayed";
+
+		TWeakObjectPtr<AProgressionManager> CachedProgressionManager;
 };
