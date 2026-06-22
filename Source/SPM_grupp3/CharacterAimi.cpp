@@ -17,6 +17,8 @@
 #include "Engine/World.h"
 #include "Engine/LevelScriptActor.h"
 #include "TimerManager.h"
+#include "Blueprint/UserWidget.h"
+#include "Blueprint/WidgetBlueprintLibrary.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -412,7 +414,29 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		SetCurrentInteractable(nullptr);
 		return;
 	}
-	
+
+	// While the player is movement-locked (MOVE_None) -- a cutscene, the gate cutscene video,
+	// or a level transition where SetMovementLocked(true) was called -- hide the interact
+	// prompt: if you can't move, you can't interact. Keeps the prompt off the gate video and
+	// the black loading screen with no Blueprint wiring.
+	if (const UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		if (Movement->MovementMode == MOVE_None)
+		{
+			SetCurrentInteractable(nullptr);
+			return;
+		}
+	}
+
+	// Hide the prompt while the gate cutscene video (WBP_Cutscene) is on screen. The player can
+	// still walk during that video (it isn't movement-locked), so the MOVE_None rule above misses
+	// it -- detect the widget directly instead.
+	if (IsGateCutsceneWidgetOnScreen())
+	{
+		SetCurrentInteractable(nullptr);
+		return;
+	}
+
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (PC && PC->bShowMouseCursor)
@@ -513,6 +537,31 @@ void ACharacterAimi::UpdateInteractableCandidate()
 
 	
 	SetCurrentInteractable(BestCandidate);
+}
+
+bool ACharacterAimi::IsGateCutsceneWidgetOnScreen()
+{
+	// Resolve the WBP_Cutscene class once (the widget BP_Gate shows for the gate cutscene video).
+	if (!CachedGateCutsceneWidgetClass)
+	{
+		CachedGateCutsceneWidgetClass = LoadClass<UUserWidget>(nullptr,
+			TEXT("/Game/Blueprints/WBP/CutScenes/WBP_Cutscene.WBP_Cutscene_C"));
+		if (!CachedGateCutsceneWidgetClass)
+		{
+			return false;
+		}
+	}
+
+	TArray<UUserWidget*> Found;
+	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), Found, CachedGateCutsceneWidgetClass, false);
+	for (const UUserWidget* Widget : Found)
+	{
+		if (Widget && Widget->IsInViewport())
+		{
+			return true;
+		}
+	}
+	return false;
 }
 
 void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)

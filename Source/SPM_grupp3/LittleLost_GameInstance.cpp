@@ -131,6 +131,13 @@ void ULittleLost_GameInstance::TravelToLevel(FName LevelName, bool bSpawnInBoat)
         CamMgr->SetManualCameraFade(1.0f, FLinearColor::Black, false);
     }
 
+    // Stop the (about-to-be-replaced) player from popping an interact prompt over the black fade
+    // while the level swaps. The destination level's fresh player re-enables detection on spawn.
+    if (ACharacterAimi* Player = Cast<ACharacterAimi>(UGameplayStatics::GetPlayerCharacter(this, 0)))
+    {
+        Player->SetInteractionDetectionEnabled(false);
+    }
+
     if (!LevelName.IsNone())
     {
         UGameplayStatics::OpenLevel(this, LevelName);

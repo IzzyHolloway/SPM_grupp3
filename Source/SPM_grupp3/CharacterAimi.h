@@ -14,6 +14,7 @@ class AInteractableActor;
 class ABoatFunctionality;
 class ALevelScriptActor;
 class FBoolProperty;
+class UUserWidget;
 
 /*
  * Main player character used for movement, interaction
@@ -236,4 +237,14 @@ protected:
 
 		FTimerHandle LevelLoadSuppressTimer;
 		void EndLevelLoadInteractionSuppress();
+
+		// ------------------------- GATE CUTSCENE VIDEO SUPPRESS -------------------------
+
+		// True while the gate cutscene video (WBP_Cutscene) is on screen. The player is NOT
+		// movement-locked during that video, so the MOVE_None rule doesn't catch it -- instead we
+		// hide the interact prompt whenever that widget is in the viewport.
+		bool IsGateCutsceneWidgetOnScreen();
+
+		UPROPERTY()
+		TSubclassOf<UUserWidget> CachedGateCutsceneWidgetClass;
 };
