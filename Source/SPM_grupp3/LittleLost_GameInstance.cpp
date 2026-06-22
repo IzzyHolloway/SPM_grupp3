@@ -11,6 +11,7 @@
 #include "UObject/UObjectGlobals.h"
 #include "TimerManager.h"
 #include "Engine/World.h"
+#include "Camera/PlayerCameraManager.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/CharacterMovementComponent.h"
 #include "GameFramework/PlayerController.h"
@@ -118,6 +119,17 @@ void ULittleLost_GameInstance::TravelToLevel(FName LevelName, bool bSpawnInBoat)
     CaptureFromWorld();
     bShouldApplyOnNextWorldReady = true;
     bForceSpawnInBoat = bSpawnInBoat;
+
+    // Black out the screen the instant travel starts, so the hand-off to the next level never
+    // flashes gameplay. The gate cutscene (BP_Gate) removes its video overlay one frame before
+    // calling this, which would briefly reveal the character; forcing a full camera fade here
+    // hides that gap regardless of Blueprint node order. The fade lives on the player camera
+    // manager, which is destroyed and recreated fresh in the destination level, so it clears
+    // itself on arrival -- no fade-back needed.
+    if (APlayerCameraManager* CamMgr = UGameplayStatics::GetPlayerCameraManager(this, 0))
+    {
+        CamMgr->SetManualCameraFade(1.0f, FLinearColor::Black, false);
+    }
 
     if (!LevelName.IsNone())
     {

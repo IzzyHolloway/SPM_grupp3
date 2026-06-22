@@ -16,6 +16,7 @@
 #include "UObject/UnrealType.h"
 #include "Engine/World.h"
 #include "Engine/LevelScriptActor.h"
+#include "TimerManager.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -78,6 +79,15 @@ void ACharacterAimi::BeginPlay()
 				}
 			}
 		}
+	}
+
+	// Hide the interact prompt for a moment so it doesn't flash over the level-load / loading
+	// screen. The timer turns detection back on (unless a cutscene is still suppressing it).
+	SetInteractionDetectionEnabled(false);
+	if (UWorld* World = GetWorld())
+	{
+		World->GetTimerManager().SetTimer(LevelLoadSuppressTimer, this,
+			&ACharacterAimi::EndLevelLoadInteractionSuppress, LevelLoadInteractionSuppressSeconds, false);
 	}
 }
 
@@ -154,6 +164,16 @@ void ACharacterAimi::UpdateCutsceneLock()
 				bCutsceneMovementFrozen = true;
 			}
 		}
+	}
+}
+
+void ACharacterAimi::EndLevelLoadInteractionSuppress()
+{
+	// Don't re-enable detection if a cutscene (or another system) is still holding it off; that
+	// system turns it back on when it's done.
+	if (!bCutsceneLockActive)
+	{
+		SetInteractionDetectionEnabled(true);
 	}
 }
 

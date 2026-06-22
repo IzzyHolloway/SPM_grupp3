@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Engine/TimerHandle.h"
 #include "CharacterAimi.generated.h"
 
 class UInputMappingContext;
@@ -225,4 +226,14 @@ protected:
 		// (its script actor) changes.
 		TWeakObjectPtr<ALevelScriptActor> CachedLevelScript;
 		const FBoolProperty* CachedCutsceneFlagProp = nullptr;
+
+		// ------------------------- LEVEL-LOAD INTERACTION SUPPRESS -------------------------
+
+		// Hide the interact prompt for a moment right after a level loads, so it doesn't flash
+		// over the loading screen. Tunable per Blueprint; raise it if your loading screen lingers.
+		UPROPERTY(EditAnywhere, Category = "Interaction")
+		float LevelLoadInteractionSuppressSeconds = 1.5f;
+
+		FTimerHandle LevelLoadSuppressTimer;
+		void EndLevelLoadInteractionSuppress();
 };
