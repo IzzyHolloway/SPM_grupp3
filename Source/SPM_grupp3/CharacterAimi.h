@@ -184,7 +184,9 @@ protected:
 	private:
 		// ENTERING BOAT
 	
-		// If in reach of boat, reference to the corresponding BoatFunctionality, otherwise null
+		// If in reach of boat, reference to the corresponding BoatFunctionality, otherwise null.
+		// UPROPERTY so the GC tracks it and clears it if the boat is ever destroyed (no dangling).
+		UPROPERTY()
 		TObjectPtr<ABoatFunctionality> BoatInReach;
 		
 		void EnterBoat();

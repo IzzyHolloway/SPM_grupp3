@@ -12,13 +12,11 @@ class SPM_GRUPP3_API UMainMenuWidget : public UMenuWidgetBase
 
 public:
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Play;
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Settings;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Controls;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Credits;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_Exit;
 
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Play;
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Settings;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Controls;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Credits;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> Text_Exit;
@@ -29,7 +27,6 @@ protected:
     virtual void HandleBack() override; // root menu: ignore back/cancel
 
     UFUNCTION() void OnPlayClicked();
-    UFUNCTION() void OnSettingsClicked();
     UFUNCTION() void OnControlsClicked();
     UFUNCTION() void OnCreditsClicked();
     UFUNCTION() void OnExitClicked();

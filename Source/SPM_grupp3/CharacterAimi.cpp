@@ -286,9 +286,14 @@ void ACharacterAimi::Interact(const FInputActionValue& Value)
 
 	if (CurrentInteractable)
 	{
+		// Capture the name up front: Interact() can destroy or clear the interactable (a pickup
+		// being consumed, a boat/dock handoff, etc.), which leaves CurrentInteractable dangling.
+		// Reading ->GetName() after the call then dereferences a dead pointer -- this was the
+		// recurring Interact() crash (CharacterAimi.cpp:243 in the crash dumps).
+		const FString InteractableName = CurrentInteractable->GetName();
 		CurrentInteractable->Interact();
 
-		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *CurrentInteractable->GetName());
+		UE_LOG(LogTemp, Warning, TEXT("Interacted with: %s"), *InteractableName);
 	}
 
 	// ENTERING BOAT
@@ -697,8 +702,11 @@ void ACharacterAimi::EnterBoat()
 	// Move character to right offset relative to the boat (so it sits "on" the boat and not "in" it)
 	SetActorRelativeLocation(CurrentBoatInReach->GetCharacterPositionOffset());
 	
-	// Possess the boat
-	GetController()->Possess(CurrentBoatInReach);
+	// Possess the boat (guard the controller -- never dereference a null GetController()).
+	if (AController* OwningController = GetController())
+	{
+		OwningController->Possess(CurrentBoatInReach);
+	}
 
 }
 
