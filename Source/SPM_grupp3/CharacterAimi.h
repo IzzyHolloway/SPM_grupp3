@@ -11,6 +11,8 @@ class UCameraComponent;
 class USpringArmComponent;
 class AInteractableActor;
 class ABoatFunctionality;
+class ALevelScriptActor;
+class FBoolProperty;
 
 /*
  * Main player character used for movement, interaction
@@ -204,4 +206,23 @@ protected:
 		// The spot to send the player to after a fall: the BP_SaveLocation checkpoint variable
 		// "LastSavedPosition" if it's been set, otherwise SpawnLocation.
 		FVector GetRespawnLocation() const;
+
+		// ------------------------------ CUTSCENE LOCK ------------------------------
+
+		// While the Level Blueprint's own "bIsInCutscene" bool is true (a cutscene video is
+		// playing), freeze the player; restore control when it goes false (cutscene ends or is
+		// skipped). Polled from Tick; the lock/unlock only fire on the true<->false transition.
+		// No Blueprint wiring needed -- the flag is read via reflection.
+		void UpdateCutsceneLock();
+
+		bool bCutsceneLockActive = false;
+
+		// True once the player has actually landed and movement is fully frozen (MOVE_None).
+		// Until then, during a cutscene, only input is blocked so gravity can bring them down.
+		bool bCutsceneMovementFrozen = false;
+
+		// Cached so we don't search for the flag property every frame; re-resolved if the level
+		// (its script actor) changes.
+		TWeakObjectPtr<ALevelScriptActor> CachedLevelScript;
+		const FBoolProperty* CachedCutsceneFlagProp = nullptr;
 };

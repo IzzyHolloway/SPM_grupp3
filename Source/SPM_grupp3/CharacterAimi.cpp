@@ -14,6 +14,8 @@
 #include "InputMappingContext.h"
 #include "Kismet/KismetSystemLibrary.h"
 #include "UObject/UnrealType.h"
+#include "Engine/World.h"
+#include "Engine/LevelScriptActor.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -84,6 +86,75 @@ void ACharacterAimi::Tick(float DeltaTime)
 	Super::Tick(DeltaTime);
 
 	UpdateInteractableCandidate();
+	UpdateCutsceneLock();
+}
+
+void ACharacterAimi::UpdateCutsceneLock()
+{
+	// The Level Blueprint flips its own bool "bIsInCutscene" true while a cutscene video plays
+	// and false when it ends or is skipped. Mirror that onto the player's movement -- with no
+	// Blueprint wiring -- by reading the flag via reflection and acting only on the edge.
+	UWorld* World = GetWorld();
+	ALevelScriptActor* LevelScript = World ? World->GetLevelScriptActor() : nullptr;
+
+	// Re-resolve the (cached) flag property only when the level / its script actor changes.
+	if (LevelScript != CachedLevelScript.Get())
+	{
+		CachedLevelScript = LevelScript;
+		CachedCutsceneFlagProp = LevelScript
+			? CastField<FBoolProperty>(LevelScript->GetClass()->FindPropertyByName(TEXT("bIsInCutscene")))
+			: nullptr;
+	}
+
+	const bool bInCutscene = (LevelScript && CachedCutsceneFlagProp)
+		? CachedCutsceneFlagProp->GetPropertyValue_InContainer(LevelScript)
+		: false;
+
+	// --- Enter / leave the cutscene state on the edge ---
+	if (bInCutscene && !bCutsceneLockActive)
+	{
+		// Cutscene started: block input, camera and the interact prompt right away, but DON'T
+		// freeze movement yet -- let gravity carry the player down so they land naturally instead
+		// of freezing mid-air. The full freeze happens below, once they're on the ground.
+		bCutsceneLockActive = true;
+		bCutsceneMovementFrozen = false;
+		SetInteractionDetectionEnabled(false);
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->SetIgnoreMoveInput(true);
+			PC->SetIgnoreLookInput(true);
+		}
+	}
+	else if (!bInCutscene && bCutsceneLockActive)
+	{
+		// Cutscene ended or was skipped: restore everything.
+		bCutsceneLockActive = false;
+		if (bCutsceneMovementFrozen)
+		{
+			SetMovementLocked(false); // MOVE_None -> Walking
+			bCutsceneMovementFrozen = false;
+		}
+		SetInteractionDetectionEnabled(true);
+		if (APlayerController* PC = Cast<APlayerController>(GetController()))
+		{
+			PC->ResetIgnoreMoveInput();
+			PC->ResetIgnoreLookInput();
+		}
+	}
+
+	// While the cutscene runs, fully freeze movement (MOVE_None, so no nudging or jumping) the
+	// moment the player is back on the ground. Before that, gravity does its job.
+	if (bCutsceneLockActive && !bCutsceneMovementFrozen)
+	{
+		if (const UCharacterMovementComponent* Movement = GetCharacterMovement())
+		{
+			if (Movement->IsMovingOnGround())
+			{
+				SetMovementLocked(true);
+				bCutsceneMovementFrozen = true;
+			}
+		}
+	}
 }
 
 void ACharacterAimi::FellOutOfWorld(const UDamageType& DmgType)
