@@ -22,10 +22,10 @@ void UMenuWidgetBase::SetupMenuInput()
     {
         UWidget* FocusTarget = GetInitialFocusTarget();
 
-       
+
         UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, FocusTarget, EMouseLockMode::DoNotLock, false);
 
-        // Controller is primary: hide the cursor on open. NativeOnMouseMove shows it again.
+        // Controller-only menus: hide the mouse cursor so the mouse can't drive the menu.
         PC->bShowMouseCursor = false;
 
         if (FocusTarget)
@@ -33,23 +33,6 @@ void UMenuWidgetBase::SetupMenuInput()
             FocusTarget->SetKeyboardFocus();
         }
     }
-}
-
-void UMenuWidgetBase::SetMouseCursorVisible(bool bVisible)
-{
-    if (APlayerController* PC = GetOwningPlayer())
-    {
-        if (PC->bShowMouseCursor != bVisible)
-        {
-            PC->bShowMouseCursor = bVisible;
-        }
-    }
-}
-
-FReply UMenuWidgetBase::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-    SetMouseCursorVisible(true);
-    return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 }
 
 UWidget* UMenuWidgetBase::GetInitialFocusTarget()
@@ -66,13 +49,6 @@ FReply UMenuWidgetBase::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyE
 {
     const FKey Key = InKeyEvent.GetKey();
 
-    // Any controller input hides the mouse cursor (controller is primary).
-    if (Key.IsGamepadKey())
-    {
-        SetMouseCursorVisible(false);
-    }
-
-    
     if (Key == EKeys::BackSpace || Key == EKeys::Gamepad_FaceButton_Right
         || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Escape)
     {
@@ -160,8 +136,9 @@ void UMenuWidgetBase::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         {
             Colour = PressedTextColor;
         }
-        else if (Button->IsHovered() || Button->HasAnyUserFocus() || Button->HasKeyboardFocus())
+        else if (Button->HasAnyUserFocus() || Button->HasKeyboardFocus())
         {
+            // Controller-only: highlight follows gamepad/keyboard focus, not the mouse.
             Colour = HighlightTextColor;
         }
         Text->SetColorAndOpacity(FSlateColor(Colour));
