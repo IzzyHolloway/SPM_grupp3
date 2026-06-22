@@ -3,6 +3,7 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
+#include "Engine/TimerHandle.h"
 #include "CharacterAimi.generated.h"
 
 class UInputMappingContext;
@@ -13,6 +14,7 @@ class AInteractableActor;
 class ABoatFunctionality;
 class ALevelScriptActor;
 class FBoolProperty;
+class UUserWidget;
 
 /*
  * Main player character used for movement, interaction
@@ -225,4 +227,24 @@ protected:
 		// (its script actor) changes.
 		TWeakObjectPtr<ALevelScriptActor> CachedLevelScript;
 		const FBoolProperty* CachedCutsceneFlagProp = nullptr;
+
+		// ------------------------- LEVEL-LOAD INTERACTION SUPPRESS -------------------------
+
+		// Hide the interact prompt for a moment right after a level loads, so it doesn't flash
+		// over the loading screen. Tunable per Blueprint; raise it if your loading screen lingers.
+		UPROPERTY(EditAnywhere, Category = "Interaction")
+		float LevelLoadInteractionSuppressSeconds = 1.5f;
+
+		FTimerHandle LevelLoadSuppressTimer;
+		void EndLevelLoadInteractionSuppress();
+
+		// ------------------------- GATE CUTSCENE VIDEO SUPPRESS -------------------------
+
+		// True while the gate cutscene video (WBP_Cutscene) is on screen. The player is NOT
+		// movement-locked during that video, so the MOVE_None rule doesn't catch it -- instead we
+		// hide the interact prompt whenever that widget is in the viewport.
+		bool IsGateCutsceneWidgetOnScreen();
+
+		UPROPERTY()
+		TSubclassOf<UUserWidget> CachedGateCutsceneWidgetClass;
 };
