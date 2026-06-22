@@ -144,7 +144,7 @@ bool UDrawingPuzzleWidget::PollMouseDrawing()
 	// Gets the global screen position of the mouse
 	const FVector2D ScreenPos = FSlateApplication::Get().GetCursorPos();
 
-	//Izzy lagt till för bug-fix: ignorera musen om den inte faktiskt rört sig.
+	//bug-fix: ignorera musen om den inte faktiskt rört sig.
 	// First frame: just record the cursor position without drawing. Otherwise we'd
 	// draw a stray line from the center (0.5, 0.5) to wherever the mouse happens
 	// to be sitting when the puzzle opens.

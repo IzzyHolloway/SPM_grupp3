@@ -9,7 +9,8 @@
 #include "ObjectiveWidget.generated.h"
 
 /**
- * 
+ * Widget base class for showing the progress of the player within the current objective.
+ * It includes a text block "ObjectiveProgress" which can be set through "UpdateProgressText(const FText& ProgressText)"
  */
 UCLASS()
 class SPM_GRUPP3_API UObjectiveWidget : public UUserWidget

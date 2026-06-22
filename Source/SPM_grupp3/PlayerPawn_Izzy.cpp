@@ -29,7 +29,6 @@ void APlayerPawn_Izzy::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Lägg till din IMC_Izzy
     if (APlayerController* PC = Cast<APlayerController>(GetController()))
     {
         if (UEnhancedInputLocalPlayerSubsystem* Subsystem = ULocalPlayer::GetSubsystem<UEnhancedInputLocalPlayerSubsystem>(PC->GetLocalPlayer()))

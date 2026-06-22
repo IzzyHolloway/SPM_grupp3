@@ -16,11 +16,7 @@ void ACoatPickup::BeginPlay()
 {
     Super::BeginPlay();
 
-    // Level 2 is a duplicate of Level 1, so it spawns every coat pickup again -- including the
-    // ones the player already collected. The GameInstance carries the saved wardrobe across the
-    // level load; if this coat is already unlocked there, remove this pickup so the player only
-    // sees the coats they still haven't found. On a fresh game there is no save yet, so nothing
-    // is removed and every coat is collectable as normal.
+    
     if (ULittleLost_GameInstance* GI =
             Cast<ULittleLost_GameInstance>(UGameplayStatics::GetGameInstance(this)))
     {
@@ -87,7 +83,7 @@ bool ACoatPickup::TryUnlockInWardrobe() const
 
     // The wardrobe lives on the player character. Usually that's the possessed pawn, but while the
     // player is in the boat the possessed pawn is the boat (which has no wardrobe). In that case fall
-    // back to searching the world for the character that actually owns the UWardrobeComponent -- it
+    // back to searching the world for the character that actually owns the UWardrobeComponent it
     // still exists, attached to the boat.
     UWardrobeComponent* WardrobeComp = nullptr;
 
