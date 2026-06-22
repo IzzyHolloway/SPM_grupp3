@@ -10,10 +10,12 @@ class UTextBlock;
 /**
  * Shared base for all the game's menu widgets (Volume, MainMenu, PlayMenu, ...).
  * Handles, entirely in C++ (no Blueprint logic needed):
- *   - UI-only input mode + mouse cursor on open, so both mouse and controller work
+ *   - Controller-only input: UI-only input mode, cursor hidden, and the whole menu set
+ *     HitTestInvisible so the mouse can't hover or click anything
  *   - Initial keyboard/gamepad focus (controller navigation), via GetInitialFocusTarget()
  *   - Backspace / Gamepad-B / Escape -> HandleBack()
- * Subclasses override GetInitialFocusTarget() and HandleBack() as needed.
+ * Subclasses override GetInitialFocusTarget() and HandleBack() as needed. Multi-button menus
+ * must wire LinkVerticalNavigation() (default spatial nav needs the disabled hit-test grid).
  */
 UCLASS()
 class SPM_GRUPP3_API UMenuWidgetBase : public UUserWidget
@@ -23,9 +25,6 @@ class SPM_GRUPP3_API UMenuWidgetBase : public UUserWidget
 protected:
     virtual void NativeConstruct() override;
     virtual FReply NativeOnKeyDown(const FGeometry& InGeometry, const FKeyEvent& InKeyEvent) override;
-    // Controller is primary: cursor is hidden on open and on gamepad input, shown again on mouse move.
-    virtual FReply NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent) override;
-    void SetMouseCursorVisible(bool bVisible);
 
     // The widget that should have focus when this menu opens, so a controller can
     // navigate immediately. Return e.g. the first button, or the slider on the volume
@@ -35,15 +34,16 @@ protected:
     // What "back / cancel" does (Backspace, Gamepad B, Escape). Default: close this menu.
     virtual void HandleBack();
 
-    // Put the player in UI-only input mode and show the cursor (mouse + controller).
+    // Put the player in UI-only, controller-only input mode: cursor hidden and the menu set
+    // HitTestInvisible so the mouse is fully ignored.
     void SetupMenuInput();
 
     // Create + show another menu widget by class. Returns it so callers can configure it.
     UUserWidget* OpenMenu(TSubclassOf<UUserWidget> MenuClass);
 
-    // Per-frame highlight: registered texts turn HighlightTextColor while their button is
-    // moused-over OR has controller focus, else NormalTextColor. Mirrors the old
-    // Get_Text_..._ColorAndOpacity bindings so both mouse and gamepad highlight identically.
+    // Per-frame highlight: registered texts turn HighlightTextColor while their button has
+    // controller/keyboard focus, else NormalTextColor. (Mouse hover is intentionally ignored
+    // since these menus are controller-only.)
     virtual void NativeTick(const FGeometry& MyGeometry, float InDeltaTime) override;
 
     // Register a (button, text) pair to be highlighted. Call from a subclass's NativeConstruct.

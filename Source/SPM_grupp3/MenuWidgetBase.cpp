@@ -6,6 +6,8 @@
 #include "Blueprint/WidgetBlueprintLibrary.h"
 #include "InputCoreTypes.h"
 #include "Types/SlateEnums.h"
+#include "Engine/World.h"
+#include "TimerManager.h"
 
 void UMenuWidgetBase::NativeConstruct()
 {
@@ -22,34 +24,38 @@ void UMenuWidgetBase::SetupMenuInput()
     {
         UWidget* FocusTarget = GetInitialFocusTarget();
 
-       
+
         UWidgetBlueprintLibrary::SetInputMode_UIOnlyEx(PC, FocusTarget, EMouseLockMode::DoNotLock, false);
 
-        // Controller is primary: hide the cursor on open. NativeOnMouseMove shows it again.
+        // Controller-only menus: hide the mouse cursor.
         PC->bShowMouseCursor = false;
+
+        // The main-menu level Blueprint turns the cursor back on the same frame this widget is
+        // created (its BeginPlay runs after our AddToViewport), which would override the line
+        // above. Re-hide it once on the next frame -- a one-shot timer, not a per-frame tick.
+        if (UWorld* World = GetWorld())
+        {
+            World->GetTimerManager().SetTimerForNextTick(FTimerDelegate::CreateWeakLambda(this, [this]()
+            {
+                if (APlayerController* PC2 = GetOwningPlayer())
+                {
+                    PC2->bShowMouseCursor = false;
+                }
+            }));
+        }
+
+        // Make the entire menu non-hit-testable so the mouse can't hover or click any element.
+        // HitTestInvisible cascades to every child widget; gamepad focus navigation and the
+        // accept/back keys go through the focus path, so the controller still drives the menu.
+        // (Multi-button menus must wire explicit navigation via LinkVerticalNavigation, since
+        // UMG's default spatial navigation relies on the same hit-test grid we just disabled.)
+        SetVisibility(ESlateVisibility::HitTestInvisible);
 
         if (FocusTarget)
         {
             FocusTarget->SetKeyboardFocus();
         }
     }
-}
-
-void UMenuWidgetBase::SetMouseCursorVisible(bool bVisible)
-{
-    if (APlayerController* PC = GetOwningPlayer())
-    {
-        if (PC->bShowMouseCursor != bVisible)
-        {
-            PC->bShowMouseCursor = bVisible;
-        }
-    }
-}
-
-FReply UMenuWidgetBase::NativeOnMouseMove(const FGeometry& InGeometry, const FPointerEvent& InMouseEvent)
-{
-    SetMouseCursorVisible(true);
-    return Super::NativeOnMouseMove(InGeometry, InMouseEvent);
 }
 
 UWidget* UMenuWidgetBase::GetInitialFocusTarget()
@@ -66,13 +72,6 @@ FReply UMenuWidgetBase::NativeOnKeyDown(const FGeometry& InGeometry, const FKeyE
 {
     const FKey Key = InKeyEvent.GetKey();
 
-    // Any controller input hides the mouse cursor (controller is primary).
-    if (Key.IsGamepadKey())
-    {
-        SetMouseCursorVisible(false);
-    }
-
-    
     if (Key == EKeys::BackSpace || Key == EKeys::Gamepad_FaceButton_Right
         || Key == EKeys::Gamepad_Special_Right || Key == EKeys::Escape)
     {
@@ -160,8 +159,9 @@ void UMenuWidgetBase::NativeTick(const FGeometry& MyGeometry, float InDeltaTime)
         {
             Colour = PressedTextColor;
         }
-        else if (Button->IsHovered() || Button->HasAnyUserFocus() || Button->HasKeyboardFocus())
+        else if (Button->HasAnyUserFocus() || Button->HasKeyboardFocus())
         {
+            // Controller-only: highlight follows gamepad/keyboard focus, not the mouse.
             Colour = HighlightTextColor;
         }
         Text->SetColorAndOpacity(FSlateColor(Colour));
