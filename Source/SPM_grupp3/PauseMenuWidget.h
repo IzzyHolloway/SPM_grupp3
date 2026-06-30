@@ -5,8 +5,8 @@
 #include "PauseMenuWidget.generated.h"
 
 /**
- * In-game pause menu: Resume / Settings / Save & Quit.
- * Button names must match WBP_PauseMenu (note: the settings button is "SettingsButton").
+ * In-game pause menu: Resume / Save & Quit.
+ * Button names must match WBP_PauseMenu.
  */
 UCLASS()
 class SPM_GRUPP3_API UPauseMenuWidget : public UMenuWidgetBase
@@ -17,11 +17,9 @@ public:
     UPauseMenuWidget(const FObjectInitializer& ObjectInitializer);
 
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_ResumeGame;
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> SettingsButton;
     UPROPERTY(BlueprintReadOnly, meta = (BindWidget)) TObjectPtr<UButton> Button_SaveQuit;
 
     // Optional, for the focus/hover highlight (these are the texts inside the buttons).
-    UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> TextBlock_122; // "Settings"
     UPROPERTY(BlueprintReadOnly, meta = (BindWidgetOptional)) TObjectPtr<UTextBlock> TextBlock_0;   // "Save & Quit"
 
     // Level loaded by Save & Quit.
@@ -36,6 +34,5 @@ protected:
     void Resume();
 
     UFUNCTION() void OnResumeClicked();
-    UFUNCTION() void OnSettingsClicked();
     UFUNCTION() void OnSaveQuitClicked();
 };
