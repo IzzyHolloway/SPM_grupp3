@@ -86,15 +86,13 @@ void AInteractableActor::Interact()
 
 void AInteractableActor::SetPromptVisible(bool bVisible)
 {
-	UE_LOG(LogTemp, Warning, TEXT("SetPromptVisible on %s: %s"),
-	*GetName(),
-	bVisible ? TEXT("TRUE") : TEXT("FALSE"));
-
-	if (bVisible && !InteractPromptWidgetClass)
+	// This interactable opts out of the prompt (e.g. it relies on its outline instead), or has no
+	// prompt widget class set. Either way: never show a prompt, just make sure none is lingering.
+	if (bVisible && (!bShowInteractPrompt || !InteractPromptWidgetClass))
 	{
-		UE_LOG(LogTemp, Error, TEXT("InteractPromptWidgetClass is NULL on %s"), *GetName());
+		bVisible = false;
 	}
-	
+
 	APlayerController* PlayerController = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (!PlayerController)

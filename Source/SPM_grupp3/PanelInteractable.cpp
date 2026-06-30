@@ -34,6 +34,16 @@ void APanelInteractable::EndInteraction()
 	CloseInteraction();
 }
 
+void APanelInteractable::OnPuzzleSolved()
+{
+	UE_LOG(LogTemp, Warning, TEXT("APanelInteractable::OnPuzzleSolved called on %s -- destroying it now."),
+		*GetName());
+
+	// Close the keypad UI and restore the outline state, then remove the panel entirely.
+	EndInteraction();
+	Destroy();
+}
+
 void APanelInteractable::SetOutlineSuppressed(bool bSuppressed)
 {
 	if (UOutlineComponent* Outline = FindComponentByClass<UOutlineComponent>())

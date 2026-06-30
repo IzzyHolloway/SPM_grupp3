@@ -28,6 +28,11 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Interactable|Prompt")
 	TSubclassOf<UUserWidget> InteractPromptWidgetClass;
 
+	// Uncheck on interactables that shouldn't show the "Interact" prompt (e.g. ones that already
+	// have an outline). SetPromptVisible respects this regardless of InteractPromptWidgetClass.
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Interactable|Prompt")
+	bool bShowInteractPrompt = true;
+
 	UPROPERTY()
 	TObjectPtr<UUserWidget> InteractPromptWidgetInstance;
 

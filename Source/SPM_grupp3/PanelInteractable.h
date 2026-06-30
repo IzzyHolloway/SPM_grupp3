@@ -29,6 +29,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	virtual void EndInteraction();
 
+	// Call from the Blueprint the moment the code is entered correctly: closes the keypad UI,
+	// restores outline state, and removes the panel actor from the world.
+	UFUNCTION(BlueprintCallable, Category = "Panel")
+	void OnPuzzleSolved();
+
 	UPROPERTY(BlueprintReadWrite)
 	TArray<int32> PlayerInput;
 
