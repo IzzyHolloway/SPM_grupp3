@@ -3,7 +3,6 @@
 #include "CoreMinimal.h"
 #include "GameFramework/Character.h"
 #include "InputActionValue.h"
-#include "Engine/TimerHandle.h"
 #include "CharacterAimi.generated.h"
 
 class UInputMappingContext;
@@ -14,7 +13,8 @@ class AInteractableActor;
 class ABoatFunctionality;
 class ALevelScriptActor;
 class FBoolProperty;
-class UUserWidget;
+class FIntProperty;
+class AExponentialHeightFog;
 
 /*
  * Main player character used for movement, interaction
@@ -228,23 +228,45 @@ protected:
 		TWeakObjectPtr<ALevelScriptActor> CachedLevelScript;
 		const FBoolProperty* CachedCutsceneFlagProp = nullptr;
 
-		// ------------------------- LEVEL-LOAD INTERACTION SUPPRESS -------------------------
+		// ------------------------------ CUTSCENE FOG ------------------------------
 
-		// Hide the interact prompt for a moment right after a level loads, so it doesn't flash
-		// over the loading screen. Tunable per Blueprint; raise it if your loading screen lingers.
-		UPROPERTY(EditAnywhere, Category = "Interaction")
-		float LevelLoadInteractionSuppressSeconds = 1.5f;
+		// While a BP_CameraDirector cutscene runs, drop the level's Exponential Height Fog density so
+		// the in-engine cutscene shots read clearly, then restore it when the cutscene ends. Polled
+		// from Tick on the true<->false edge -- same reflection approach as UpdateCutsceneLock, no
+		// Blueprint wiring. The cutscene state is read off the BP_CameraDirector's own bools.
+		void UpdateCutsceneFog();
 
-		FTimerHandle LevelLoadSuppressTimer;
-		void EndLevelLoadInteractionSuppress();
+		// Density forced on the Exponential Height Fog while a cutscene plays. Tweakable per-instance
+		// in the player Blueprint's Details panel.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		float CutsceneFogDensity = 0.005f;
 
-		// ------------------------- GATE CUTSCENE VIDEO SUPPRESS -------------------------
+		bool bCutsceneFogActive = false;
 
-		// True while the gate cutscene video (WBP_Cutscene) is on screen. The player is NOT
-		// movement-locked during that video, so the MOVE_None rule doesn't catch it -- instead we
-		// hide the interact prompt whenever that widget is in the viewport.
-		bool IsGateCutsceneWidgetOnScreen();
+		// The fog density to restore when the cutscene ends, captured live just before lowering it.
+		float DefaultFogDensity = 0.02f;
 
-		UPROPERTY()
-		TSubclassOf<UUserWidget> CachedGateCutsceneWidgetClass;
+		TWeakObjectPtr<AExponentialHeightFog> CachedHeightFog;
+		TWeakObjectPtr<AActor> CachedCameraDirector;
+		// "Any cutscene active" is the OR of these BP_CameraDirector bools, resolved once per level.
+		TArray<const FBoolProperty*> CachedCutsceneFlagProps;
+
+		// ------------------------------ CUTSCENE FADE ------------------------------
+
+		// Hides the lighthouse cutscene's hard camera cuts behind a black fade -- fully in C++, no
+		// Blueprint wiring. The director snaps the camera to IslandLighthouseLocation/Rotation[CurrentIndex]
+		// and advances CurrentIndex every few seconds. We poll that index (and bIsInCutsceneLighthouse)
+		// via reflection; on each change we snap the screen to black and fade back in over CutsceneFadeTime,
+		// so the cut lands while the screen is black. (Code only learns of the cut as it happens, so the
+		// out-fade is instant and the in-fade is smooth -- a symmetric pre-fade would need the BP to call us.)
+		void UpdateCutsceneFade();
+
+		// Fade-in duration (seconds) used to reveal each new lighthouse angle. Tweakable on the player BP.
+		UPROPERTY(EditAnywhere, Category = "Cutscene")
+		float CutsceneFadeTime = 0.4f;
+
+		bool bWasInLighthouseCutscene = false;
+		int32 LastLighthouseIndex = -1;
+		const FBoolProperty* CachedLighthouseFlagProp = nullptr;
+		const FIntProperty* CachedLighthouseIndexProp = nullptr;
 };

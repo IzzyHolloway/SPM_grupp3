@@ -16,9 +16,10 @@
 #include "UObject/UnrealType.h"
 #include "Engine/World.h"
 #include "Engine/LevelScriptActor.h"
-#include "TimerManager.h"
-#include "Blueprint/UserWidget.h"
-#include "Blueprint/WidgetBlueprintLibrary.h"
+#include "EngineUtils.h"
+#include "Engine/ExponentialHeightFog.h"
+#include "Components/ExponentialHeightFogComponent.h"
+#include "Camera/PlayerCameraManager.h"
 
 /* WARNING, THIS INCLUDE IS ONLY FOR DEBUGGING, REMOVE LATER!! */
 #include "AIController.h"
@@ -82,15 +83,6 @@ void ACharacterAimi::BeginPlay()
 			}
 		}
 	}
-
-	// Hide the interact prompt for a moment so it doesn't flash over the level-load / loading
-	// screen. The timer turns detection back on (unless a cutscene is still suppressing it).
-	SetInteractionDetectionEnabled(false);
-	if (UWorld* World = GetWorld())
-	{
-		World->GetTimerManager().SetTimer(LevelLoadSuppressTimer, this,
-			&ACharacterAimi::EndLevelLoadInteractionSuppress, LevelLoadInteractionSuppressSeconds, false);
-	}
 }
 
 void ACharacterAimi::Tick(float DeltaTime)
@@ -99,6 +91,8 @@ void ACharacterAimi::Tick(float DeltaTime)
 
 	UpdateInteractableCandidate();
 	UpdateCutsceneLock();
+	UpdateCutsceneFog();
+	UpdateCutsceneFade();
 }
 
 void ACharacterAimi::UpdateCutsceneLock()
@@ -169,13 +163,134 @@ void ACharacterAimi::UpdateCutsceneLock()
 	}
 }
 
-void ACharacterAimi::EndLevelLoadInteractionSuppress()
+void ACharacterAimi::UpdateCutsceneFog()
 {
-	// Don't re-enable detection if a cutscene (or another system) is still holding it off; that
-	// system turns it back on when it's done.
-	if (!bCutsceneLockActive)
+	UWorld* World = GetWorld();
+	if (!World)
 	{
-		SetInteractionDetectionEnabled(true);
+		return;
+	}
+
+	// Resolve (and cache) the BP_CameraDirector instance plus its set of "cutscene running" bools.
+	// Found by class-name prefix because the director is a Blueprint class with no C++ parent.
+	if (!CachedCameraDirector.IsValid())
+	{
+		CachedCutsceneFlagProps.Reset();
+		for (TActorIterator<AActor> It(World); It; ++It)
+		{
+			if (It->GetClass()->GetName().StartsWith(TEXT("BP_CameraDirector")))
+			{
+				CachedCameraDirector = *It;
+
+				// "Any cutscene active" = OR of these. We poll several so the fog drops for every
+				// cutscene the director runs, whichever flag it happens to flip.
+				static const TCHAR* FlagNames[] = {
+					TEXT("bCutsceneActive"),
+					TEXT("bIsInCutsceneLighthouse"),
+					TEXT("bIsInCutscene1"),
+					TEXT("bIsInCutscene2"),
+					TEXT("bIsInCutscene3"),
+					TEXT("bIsInEntityCutscene"),
+				};
+				for (const TCHAR* Name : FlagNames)
+				{
+					if (const FBoolProperty* Prop = CastField<FBoolProperty>(It->GetClass()->FindPropertyByName(Name)))
+					{
+						CachedCutsceneFlagProps.Add(Prop);
+					}
+				}
+				break;
+			}
+		}
+	}
+
+	// Resolve (and cache) the level's Exponential Height Fog, remembering its authored density.
+	if (!CachedHeightFog.IsValid())
+	{
+		for (TActorIterator<AExponentialHeightFog> It(World); It; ++It)
+		{
+			CachedHeightFog = *It;
+			if (const UExponentialHeightFogComponent* Comp = It->GetComponent())
+			{
+				DefaultFogDensity = Comp->FogDensity;
+			}
+			break;
+		}
+	}
+
+	const AActor* Director = CachedCameraDirector.Get();
+	bool bInCutscene = false;
+	if (Director)
+	{
+		for (const FBoolProperty* Prop : CachedCutsceneFlagProps)
+		{
+			if (Prop->GetPropertyValue_InContainer(Director))
+			{
+				bInCutscene = true;
+				break;
+			}
+		}
+	}
+
+	// --- Drop / restore the fog on the edge ---
+	if (bInCutscene && !bCutsceneFogActive)
+	{
+		bCutsceneFogActive = true;
+		if (UExponentialHeightFogComponent* Comp = CachedHeightFog.IsValid() ? CachedHeightFog->GetComponent() : nullptr)
+		{
+			DefaultFogDensity = Comp->FogDensity; // capture the live value right before lowering it
+			Comp->SetFogDensity(CutsceneFogDensity);
+		}
+	}
+	else if (!bInCutscene && bCutsceneFogActive)
+	{
+		bCutsceneFogActive = false;
+		if (UExponentialHeightFogComponent* Comp = CachedHeightFog.IsValid() ? CachedHeightFog->GetComponent() : nullptr)
+		{
+			Comp->SetFogDensity(DefaultFogDensity);
+		}
+	}
+}
+
+void ACharacterAimi::UpdateCutsceneFade()
+{
+	// The BP_CameraDirector instance is resolved/cached by UpdateCutsceneFog (called just before this).
+	AActor* Director = CachedCameraDirector.Get();
+	if (!Director)
+	{
+		bWasInLighthouseCutscene = false;
+		return;
+	}
+
+	// Resolve the lighthouse "is active" bool and the "CurrentIndex" int once.
+	if (!CachedLighthouseFlagProp || !CachedLighthouseIndexProp)
+	{
+		UClass* DirClass = Director->GetClass();
+		CachedLighthouseFlagProp = CastField<FBoolProperty>(DirClass->FindPropertyByName(TEXT("bIsInCutsceneLighthouse")));
+		CachedLighthouseIndexProp = CastField<FIntProperty>(DirClass->FindPropertyByName(TEXT("CurrentIndex")));
+	}
+	if (!CachedLighthouseFlagProp || !CachedLighthouseIndexProp)
+	{
+		return;
+	}
+
+	const bool bInLighthouse = CachedLighthouseFlagProp->GetPropertyValue_InContainer(Director);
+	const int32 Index = CachedLighthouseIndexProp->GetPropertyValue_InContainer(Director);
+
+	// Fade when the cutscene first starts, and on every angle change while it runs.
+	const bool bShouldFade = bInLighthouse && (!bWasInLighthouseCutscene || Index != LastLighthouseIndex);
+
+	bWasInLighthouseCutscene = bInLighthouse;
+	LastLighthouseIndex = Index;
+
+	if (bShouldFade)
+	{
+		if (APlayerCameraManager* Mgr = UGameplayStatics::GetPlayerCameraManager(this, 0))
+		{
+			// FromAlpha = 1 means the screen is fully black THIS frame -- which hides the hard cut that
+			// the director just made -- then it interpolates to clear (0) over CutsceneFadeTime.
+			Mgr->StartCameraFade(1.f, 0.f, CutsceneFadeTime, FLinearColor::Black, false, /*bHoldWhenFinished*/ false);
+		}
 	}
 }
 
@@ -414,29 +529,7 @@ void ACharacterAimi::UpdateInteractableCandidate()
 		SetCurrentInteractable(nullptr);
 		return;
 	}
-
-	// While the player is movement-locked (MOVE_None) -- a cutscene, the gate cutscene video,
-	// or a level transition where SetMovementLocked(true) was called -- hide the interact
-	// prompt: if you can't move, you can't interact. Keeps the prompt off the gate video and
-	// the black loading screen with no Blueprint wiring.
-	if (const UCharacterMovementComponent* Movement = GetCharacterMovement())
-	{
-		if (Movement->MovementMode == MOVE_None)
-		{
-			SetCurrentInteractable(nullptr);
-			return;
-		}
-	}
-
-	// Hide the prompt while the gate cutscene video (WBP_Cutscene) is on screen. The player can
-	// still walk during that video (it isn't movement-locked), so the MOVE_None rule above misses
-	// it -- detect the widget directly instead.
-	if (IsGateCutsceneWidgetOnScreen())
-	{
-		SetCurrentInteractable(nullptr);
-		return;
-	}
-
+	
 	APlayerController* PC = UGameplayStatics::GetPlayerController(GetWorld(), 0);
 
 	if (PC && PC->bShowMouseCursor)
@@ -537,31 +630,6 @@ void ACharacterAimi::UpdateInteractableCandidate()
 
 	
 	SetCurrentInteractable(BestCandidate);
-}
-
-bool ACharacterAimi::IsGateCutsceneWidgetOnScreen()
-{
-	// Resolve the WBP_Cutscene class once (the widget BP_Gate shows for the gate cutscene video).
-	if (!CachedGateCutsceneWidgetClass)
-	{
-		CachedGateCutsceneWidgetClass = LoadClass<UUserWidget>(nullptr,
-			TEXT("/Game/Blueprints/WBP/CutScenes/WBP_Cutscene.WBP_Cutscene_C"));
-		if (!CachedGateCutsceneWidgetClass)
-		{
-			return false;
-		}
-	}
-
-	TArray<UUserWidget*> Found;
-	UWidgetBlueprintLibrary::GetAllWidgetsOfClass(GetWorld(), Found, CachedGateCutsceneWidgetClass, false);
-	for (const UUserWidget* Widget : Found)
-	{
-		if (Widget && Widget->IsInViewport())
-		{
-			return true;
-		}
-	}
-	return false;
 }
 
 void ACharacterAimi::SetCurrentInteractable(AInteractableActor* NewInteractable)
