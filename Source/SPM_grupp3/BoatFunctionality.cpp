@@ -20,6 +20,7 @@
 #include "GameFramework/FloatingPawnMovement.h"
 #include "GameFramework/MovementComponent.h"
 #include "Kismet/GameplayStatics.h"
+#include "Engine/OverlapResult.h"
 
 #include "BehaviorTree/BlackboardComponent.h"
 #include "Blueprint/WidgetBlueprintLibrary.h"
@@ -41,6 +42,10 @@ ABoatFunctionality::ABoatFunctionality()
 	CollisionComponent->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
 	CollisionComponent->SetCollisionObjectType(ECC_Pawn);
 	CollisionComponent->SetCollisionResponseToAllChannels(ECR_Block);
+
+	// Report contacts so we can shove floating objects out of the way (see OnBoatHit).
+	CollisionComponent->SetNotifyRigidBodyCollision(true);
+	CollisionComponent->OnComponentHit.AddDynamic(this, &ABoatFunctionality::OnBoatHit);
 	
 	// ------------------------------------ MESH ------------------------------------
     
@@ -108,6 +113,78 @@ void ABoatFunctionality::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	// Shove floating objects aside as the boat moves through them.
+	PushNearbyFloatingObjects();
+}
+
+// Sweeps a sphere around the boat each frame and pushes any physics-simulating objects (the
+// floating objects) out of the way. Done here instead of relying on a blocking hit because the
+// boat's collision box is smaller than the visible hull, so objects would otherwise clip through.
+void ABoatFunctionality::PushNearbyFloatingObjects()
+{
+	// Only push while the boat is actually moving.
+	const float BoatSpeed = MovementComponent ? MovementComponent->Velocity.Size2D() : 0.f;
+	if (BoatSpeed < 1.f)
+	{
+		return;
+	}
+
+	FVector TravelDir = MovementComponent->Velocity;
+	TravelDir.Z = 0.f;
+	TravelDir = TravelDir.GetSafeNormal();
+	if (TravelDir.IsNearlyZero())
+	{
+		return;
+	}
+
+	UWorld* World = GetWorld();
+	if (!World)
+	{
+		return;
+	}
+
+	// Find physics-body objects within PushRadius of the boat.
+	FCollisionObjectQueryParams ObjectParams;
+	ObjectParams.AddObjectTypesToQuery(ECC_PhysicsBody);
+
+	FCollisionQueryParams QueryParams;
+	QueryParams.AddIgnoredActor(this);
+
+	TArray<FOverlapResult> Overlaps;
+	World->OverlapMultiByObjectType(
+		Overlaps, GetActorLocation(), FQuat::Identity, ObjectParams,
+		FCollisionShape::MakeSphere(PushRadius), QueryParams);
+
+	for (const FOverlapResult& Overlap : Overlaps)
+	{
+		UPrimitiveComponent* Comp = Overlap.GetComponent();
+		if (!Comp || !Comp->IsSimulatingPhysics())
+		{
+			continue;
+		}
+
+		// Shove the object away from the boat and along its travel direction.
+		FVector Radial = Comp->GetComponentLocation() - GetActorLocation();
+		Radial.Z = 0.f;
+		Radial = Radial.GetSafeNormal();
+
+		FVector PushDir = (Radial + TravelDir).GetSafeNormal();
+		if (PushDir.IsNearlyZero())
+		{
+			PushDir = TravelDir;
+		}
+
+		// Only nudge the object up to a small target speed (capped by MaxPushSpeed), so it drifts
+		// a little instead of being flung at the boat's full speed. Capping also stops the
+		// repeated per-frame push from building up runaway velocity.
+		const float TargetSpeed = FMath::Min(BoatSpeed, MaxPushSpeed);
+		const float ObjectSpeed = FVector::DotProduct(Comp->GetPhysicsLinearVelocity(), PushDir);
+		if (ObjectSpeed < TargetSpeed)
+		{
+			const float DeltaSpeed = FMath::Min(PushStrength, TargetSpeed - ObjectSpeed);
+			Comp->AddImpulse(PushDir * DeltaSpeed, NAME_None, /*bVelChange=*/true);
+		}
+	}
 }
 
 // ------------------------------------------------------------------ INPUT ------------------------------------------------------------------
@@ -241,6 +318,44 @@ void ABoatFunctionality::OnEnterTriggerEndOverlap(UPrimitiveComponent* Overlappe
 	{
 		CoatPickupInReach = nullptr;
 		HideInteractPrompt();
+	}
+}
+
+// ------------------------------------------------ PUSHING FLOATING OBJECTS ------------------------------------------------
+
+// Gives physics-simulating actors a shove in the boat's travel direction when the boat bumps them.
+// FloatingPawnMovement moves the boat kinematically, so it doesn't transfer momentum on its own.
+void ABoatFunctionality::OnBoatHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit)
+{
+	// Only push other actors that actually simulate physics (the floating objects do).
+	if (OtherActor == this || !OtherComp || !OtherComp->IsSimulatingPhysics())
+	{
+		return;
+	}
+
+	// Only push while the boat is actually moving, so parked boats don't nudge things away.
+	const float BoatSpeed = MovementComponent ? MovementComponent->Velocity.Size2D() : 0.f;
+	if (BoatSpeed < 1.f)
+	{
+		return;
+	}
+
+	// Push along the boat's travel direction, kept flat on the water plane.
+	FVector PushDir = MovementComponent->Velocity;
+	PushDir.Z = 0.f;
+	PushDir = PushDir.GetSafeNormal();
+	if (PushDir.IsNearlyZero())
+	{
+		return;
+	}
+
+	// Bring the object up to (but not past) the boat's speed in that direction, so it glides along
+	// instead of either ignoring the boat or shooting off. PushStrength caps how snappy that is.
+	const float ObjectSpeedAlongBoat = FVector::DotProduct(OtherComp->GetPhysicsLinearVelocity(), PushDir);
+	if (ObjectSpeedAlongBoat < BoatSpeed)
+	{
+		const float DeltaSpeed = FMath::Min(PushStrength, BoatSpeed - ObjectSpeedAlongBoat);
+		OtherComp->AddImpulse(PushDir * DeltaSpeed, NAME_None, /*bVelChange=*/true);
 	}
 }
 
