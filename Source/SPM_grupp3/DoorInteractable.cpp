@@ -52,6 +52,11 @@ void ADoorInteractable::Interact()
 
 	OnDoorInteract();
 
+	// Hide our own "Interact" prompt the instant we start going through, so it doesn't linger on
+	// top of the loading/fade screen during the transition. The player's movement is locked for the
+	// transition, so CurrentInteractable never changes and nothing else would hide it.
+	SetPromptVisible(false);
+
 	// Arm the safety net: if the Blueprint transition stalls, this frees the player anyway.
 	if (UWorld* World = GetWorld())
 	{
