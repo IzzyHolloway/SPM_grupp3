@@ -72,25 +72,12 @@ public:
 
 	// --------------------------- PUSHING FLOATING OBJECTS ---------------------------
 
-	// Pushes physics-simulating actors (e.g. the floating objects) when the boat bumps into them.
-	UFUNCTION()
-	void OnBoatHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, FVector NormalImpulse, const FHitResult& Hit);
-
-	// How hard each contact can shove a floating object (cm/s of velocity change per hit).
+	// Radius (cm) around the boat in which floating objects get pushed. Make it a bit larger than
+	// the boat hull's half-length so objects are shoved aside before the bow reaches them.
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boat|Pushing")
-	float PushStrength = 400.f;
+	float PushRadius = 550.f;
 
-	// Radius (cm) around the boat in which floating physics objects get pushed while moving.
-	// Make this roughly cover the boat hull.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boat|Pushing")
-	float PushRadius = 400.f;
-
-	// Top speed (cm/s) a pushed object can reach, no matter how fast the boat goes. Keep this low
-	// for a gentle nudge (e.g. 150). Without this they would be flung at full boat speed.
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Boat|Pushing")
-	float MaxPushSpeed = 150.f;
-
-	// Pushes nearby physics-simulating objects out of the way while the boat is moving.
+	// Pushes nearby physics objects so they keep pace with the boat (so it can't clip into them).
 	void PushNearbyFloatingObjects();
 	
 	// Communicates to the player character that entering the boat is possible now and hands over a reference to this boat
