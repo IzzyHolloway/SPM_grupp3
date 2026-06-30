@@ -85,11 +85,20 @@ void ADialogueManager::HideMessage()
 
 void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 {
-	
+
 	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
 	bDialogueSkipTriggered = false;
 	bDialogueSkipHoldActive = false;
-	
+
+	// Auto-advance is only on if a caller (StartDialogueFromDataAssetAutoAdvance) requested it for
+	// this dialogue; otherwise we wait for player input. ShowCurrentDialogueLine arms the timer.
+	GetWorldTimerManager().ClearTimer(AutoAdvanceTimerHandle);
+	bAutoAdvanceActive = PendingAutoAdvanceSeconds >= 0.f;
+	if (bAutoAdvanceActive)
+	{
+		AutoAdvanceSeconds = FMath::Max(0.1f, PendingAutoAdvanceSeconds);
+	}
+
 	if (InLines.IsEmpty())
 	{
 		return;
@@ -112,6 +121,35 @@ void ADialogueManager::StartDialogue(const TArray<FDialogueLines>& InLines)
 	UpdateConversationSkipHint();
 	SetPlayerMovementEnabled(false);
 	ShowCurrentDialogueLine();
+}
+
+void ADialogueManager::StartDialogueAutoAdvance(const TArray<FDialogueLines>& InLines, float SecondsPerLine)
+{
+	// Run the normal start (shows the first line, locks movement, etc.), then switch on
+	// auto-advance and arm the timer for the line that's now on screen.
+	StartDialogue(InLines);
+
+	if (!bDialogueActive)
+	{
+		return;
+	}
+
+	bAutoAdvanceActive = true;
+	AutoAdvanceSeconds = FMath::Max(0.1f, SecondsPerLine);
+	ScheduleAutoAdvance();
+}
+
+void ADialogueManager::ScheduleAutoAdvance()
+{
+	if (!GetWorld())
+	{
+		return;
+	}
+
+	// Restart the countdown for the current line; AdvanceDialogue moves to the next one (or ends).
+	GetWorldTimerManager().ClearTimer(AutoAdvanceTimerHandle);
+	GetWorldTimerManager().SetTimer(AutoAdvanceTimerHandle, this,
+		&ADialogueManager::AdvanceDialogue, AutoAdvanceSeconds, false);
 }
 
 void ADialogueManager::AdvanceDialogue()
@@ -233,8 +271,10 @@ void ADialogueManager::EndDialogue()
 	{
 		GetWorld()->GetTimerManager().ClearTimer(DialogueSkipTimerHandle);
 		GetWorldTimerManager().ClearTimer(DialogueSkipPromptDelayTimerHandle);
+		GetWorldTimerManager().ClearTimer(AutoAdvanceTimerHandle);
 	}
 
+	bAutoAdvanceActive = false;
 	bDialogueSkipTriggered = false;
 	bDialogueSkipHoldActive = false;
 	bDialogueSkipPromptVisualActive = false;
@@ -302,6 +342,12 @@ void ADialogueManager::ShowCurrentDialogueLine()
 		DialogueWidgetInstance->SetVisibility(ESlateVisibility::Visible);
 		DialogueWidgetInstance->SetDialogueData(CurrentLine.SpeakerName, CurrentLine.LineText);
 	}
+
+	// In cutscene/auto mode, queue the jump to the next line without waiting for input.
+	if (bAutoAdvanceActive)
+	{
+		ScheduleAutoAdvance();
+	}
 }
 
 void ADialogueManager::SetPlayerMovementEnabled(bool bEnabled)
@@ -333,7 +379,14 @@ void ADialogueManager::StartDialogueWithFlag(const TArray<FDialogueLines>& InLin
 	GetWorldTimerManager().ClearTimer(DialogueSkipTimerHandle);
 	bDialogueSkipTriggered = false;
 	bDialogueSkipHoldActive = false;
-	
+
+	GetWorldTimerManager().ClearTimer(AutoAdvanceTimerHandle);
+	bAutoAdvanceActive = PendingAutoAdvanceSeconds >= 0.f;
+	if (bAutoAdvanceActive)
+	{
+		AutoAdvanceSeconds = FMath::Max(0.1f, PendingAutoAdvanceSeconds);
+	}
+
 	if (InLines.IsEmpty())
 	{
 		return;
@@ -382,6 +435,10 @@ void ADialogueManager::StartDialogueFromDataAsset(UDialogueDataAsset* DialogueAs
 			continue;
 		}
 
+		// Cutscene dialogue advances itself; set this so StartDialogue/StartDialogueWithFlag arm the
+		// auto-advance timer for this entry, then clear it afterwards so later dialogues are unaffected.
+		PendingAutoAdvanceSeconds = Entry.bAutoAdvance ? FMath::Max(0.1f, Entry.AutoAdvanceSecondsPerLine) : -1.0f;
+
 		if (Entry.bSetFlagOnDialogueEnd && !Entry.FlagToSetOnDialogueEnd.IsNone())
 		{
 			StartDialogueWithFlag(Entry.DialogueLines, Entry.FlagToSetOnDialogueEnd);
@@ -391,10 +448,22 @@ void ADialogueManager::StartDialogueFromDataAsset(UDialogueDataAsset* DialogueAs
 			StartDialogue(Entry.DialogueLines);
 		}
 
+		PendingAutoAdvanceSeconds = -1.0f;
+
 		return;
 	}
 
 	UE_LOG(LogTemp, Warning, TEXT("StartDialogueFromDataAsset found no matching dialogue entry in asset %s."), *DialogueAsset->GetName());
+}
+
+void ADialogueManager::StartDialogueFromDataAssetAutoAdvance(UDialogueDataAsset* DialogueAsset, float SecondsPerLine)
+{
+	// Flag auto-advance for the dialogue that StartDialogueFromDataAsset is about to start
+	// (it routes through StartDialogue / StartDialogueWithFlag, which read PendingAutoAdvanceSeconds),
+	// then clear the flag so later input-driven dialogues aren't affected.
+	PendingAutoAdvanceSeconds = FMath::Max(0.1f, SecondsPerLine);
+	StartDialogueFromDataAsset(DialogueAsset);
+	PendingAutoAdvanceSeconds = -1.0f;
 }
 
 bool ADialogueManager::IsDialogueOrMessageVisible() const

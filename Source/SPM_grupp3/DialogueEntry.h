@@ -56,4 +56,14 @@ struct FDialogueEntry
 	// Progression flag added when the dialogue ends.
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Progression")
 	FName FlagToSetOnDialogueEnd;
+
+	// If true, this dialogue advances itself (no player input). Use for cutscene dialogue like the
+	// lighthouse: each line shows for AutoAdvanceSecondsPerLine, then it moves on / ends on its own.
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene")
+	bool bAutoAdvance = false;
+
+	// Seconds each line stays on screen when bAutoAdvance is true. For a single-line cutscene this is
+	// effectively "show the line for this long, then end" (which fires OnDialogueEnded).
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "Cutscene", meta = (EditCondition = "bAutoAdvance", ClampMin = "0.1"))
+	float AutoAdvanceSecondsPerLine = 3.0f;
 };

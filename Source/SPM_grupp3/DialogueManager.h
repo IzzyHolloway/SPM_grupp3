@@ -51,6 +51,11 @@ public:
 	// Starts a dialogue sequence with miltiple lines
 	UFUNCTION(BlueprintCallable)
 	void StartDialogue(const TArray<FDialogueLines>& InLines);
+
+	// Starts a dialogue that advances itself every SecondsPerLine instead of waiting for input.
+	// Use this for cutscene dialogue (e.g. the lighthouse) so the player doesn't click through it.
+	UFUNCTION(BlueprintCallable)
+	void StartDialogueAutoAdvance(const TArray<FDialogueLines>& InLines, float SecondsPerLine = 3.0f);
 	
 	// Starts dialogue sequence and stores a flag that should be added when the dialogue ends successfully
 	UFUNCTION(BlueprintCallable)
@@ -59,6 +64,11 @@ public:
 	// Starts the first matching dialogue entry from a data asset without needing a physical NPC actor.
 	UFUNCTION(BlueprintCallable, Category = "Dialogue")
 	void StartDialogueFromDataAsset(UDialogueDataAsset* DialogueAsset);
+
+	// Same as StartDialogueFromDataAsset, but the dialogue advances itself every SecondsPerLine
+	// instead of waiting for player input. Use this for cutscene dialogue (e.g. the lighthouse).
+	UFUNCTION(BlueprintCallable, Category = "Dialogue")
+	void StartDialogueFromDataAssetAutoAdvance(UDialogueDataAsset* DialogueAsset, float SecondsPerLine = 3.0f);
 
 	// ADvance the dialogue to the next line
 	UFUNCTION(BlueprintCallable)
@@ -166,4 +176,17 @@ protected:
 	
 private:
 	bool bMessageVisible = false;
+
+	// Auto-advance (cutscene dialogue): when active, each shown line schedules the next one after
+	// AutoAdvanceSeconds instead of waiting for the player to press the advance button.
+	FTimerHandle AutoAdvanceTimerHandle;
+	bool bAutoAdvanceActive = false;
+	float AutoAdvanceSeconds = 3.0f;
+
+	// Set by StartDialogueFromDataAssetAutoAdvance just before it routes through StartDialogue/
+	// StartDialogueWithFlag, so those know to arm auto-advance. Negative = off (normal input-driven).
+	float PendingAutoAdvanceSeconds = -1.0f;
+
+	// (Re)starts the auto-advance timer for the line currently on screen.
+	void ScheduleAutoAdvance();
 };
